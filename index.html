@@ -232,6 +232,47 @@ textarea{min-height:80px;resize:vertical}
 @media (max-width:900px){.board{grid-template-columns:repeat(7,82vw)}}
 @media (prefers-reduced-motion:no-preference){.card,.btn,.dcard{transition:background .15s,border-color .15s,opacity .15s}}
 
+/* loading */
+.top{position:sticky}
+.busy{position:absolute;left:0;right:0;bottom:-1px;height:3px;overflow:hidden;background:transparent}
+.busy i{position:absolute;top:0;bottom:0;width:30%;background:var(--accent);border-radius:2px;animation:busy 1s ease-in-out infinite}
+@keyframes busy{0%{left:-30%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){.busy i{animation:none;left:0;width:100%;opacity:.6}}
+.sk{background:linear-gradient(90deg,var(--sunk) 0%,var(--surface) 50%,var(--sunk) 100%);background-size:200% 100%;border-radius:10px;height:64px;animation:sk 1.2s ease-in-out infinite}
+.col .sk{background:linear-gradient(90deg,var(--line) 0%,var(--surface) 50%,var(--line) 100%);background-size:200% 100%}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}}
+main[aria-busy="true"] .board{transition:opacity .2s}
+
+/* recipe colours */
+.card.rc{border-left-color:var(--rc);background:color-mix(in srgb,var(--rc) 7%,var(--surface))}
+.card.rc .dots i.on{background:color-mix(in srgb,var(--rc) 45%,var(--surface))}
+.card.rc .dots i.cur{background:var(--rc)}
+.card.rc .dots i{background:color-mix(in srgb,var(--rc) 18%,var(--surface))}
+.card.rc .rname{color:color-mix(in srgb,var(--rc) 70%,var(--ink));font-weight:600}
+.dots i{width:7px;height:7px}
+.pdot{display:none;width:8px;height:8px;border-radius:50%;background:var(--rc);margin-right:5px;vertical-align:middle;flex:0 0 auto}
+[style*="--rc"] > span > .pdot,.sheet-h .pdot{display:inline-block}
+.pcard.rc{border-left:5px solid var(--rc)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{position:relative;width:32px;height:32px;cursor:pointer}
+.sw input[type=radio]{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.sw span{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--c);border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.sw input:checked + span{box-shadow:0 0 0 2px var(--ink)}
+.sw input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.sw.none span{background:var(--bg);color:var(--muted);font-weight:700}
+.sw.custom{width:auto;display:flex;align-items:center}
+.sw.custom input[type=radio]{width:0;height:0}
+.sw.custom input[type=color]{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;padding:2px;background:var(--surface);cursor:pointer}
+.sw.custom input[type=radio]:checked ~ input[type=color]{box-shadow:0 0 0 2px var(--ink)}
+
+/* lab */
+.labwrap{display:flex;flex-direction:column;height:calc(100dvh - 58px)}
+.labwrap.hidden{display:none}
+.labbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:var(--accent-soft);color:var(--ink);font-size:14px;border-bottom:1px solid var(--line)}
+.labbar.hidden{display:none}
+#labFrame{flex:1;width:100%;border:0;background:var(--bg)}
+
 </style>
 </head>
 <body>
@@ -240,8 +281,9 @@ textarea{min-height:80px;resize:vertical}
   <header class="top"><div class="top-in">
     <div class="brand">Bakery <span>Planner</span></div>
     <nav class="nav" id="nav" aria-label="Views"></nav>
-  </div></header>
+  </div><div id="busy" class="busy" hidden><i></i></div></header>
   <main id="main" aria-live="polite"></main>
+  <section id="labWrap" class="labwrap hidden" aria-label="Filling Lab"><div id="labBar" class="labbar hidden"></div></section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -336,6 +378,10 @@ const partsOf = pid => S.parts.filter(x => x.product_id === pid).sort((a, b) => 
 const stepsOf = rid => S.steps.filter(s => s.recipe_id === rid).sort((a, b) => a.day - b.day || a.position - b.position);
 const daysOf = rid => Math.max(1, ...stepsOf(rid).map(s => s.day));
 const order = id => S.orders.find(o => o.id === id);
+const PALETTE = ["#d19a10", "#c4a516", "#6f9a2e", "#1f9486", "#3f7fd0", "#55637d", "#8a55c2", "#d6437c", "#c0405e", "#e07800", "#c96a2b", "#9c5a2c", "#b08a4e", "#6d4535"];
+const recColor = id => rec(id)?.color || null;
+const prodColor = pid => { for (const x of partsOf(pid)) { const c = recColor(x.recipe_id); if (c) return c; } return prod(pid)?.color || null; };
+const cvar = c => c ? ` style="--rc:${esc(c)}"` : "";
 const itemsOf = oid => S.oitems.filter(i => i.order_id === oid);
 const setting = (k, d = {}) => S.settings[k] || d;
 
@@ -403,25 +449,31 @@ function desiredTasks(plans, A, B) {
   return want;
 }
 const readyOfKey = k => (k || "").split("|")[2] || "";
-async function syncTasks(A, B) {
-  const plans = await DB.sel("bk_plan", { gte: { date: A }, lte: { date: addDays(B, 14) } });
+async function syncTasks(A, B, pre) {
+  const [plans, all] = pre ? [pre.plans, pre.tasks] : await Promise.all([
+    DB.sel("bk_plan", { gte: { date: A }, lte: { date: addDays(B, 14) } }),
+    DB.sel("bk_tasks", { gte: { date: addDays(A, -14) }, lte: { date: B }, order: [["date"], ["position"]] })
+  ]);
   if (plans.some(pl => pl.order_id && !order(pl.order_id))) await loadOrders();
-  const want = desiredTasks(plans, A, B);
-  const have = (await DB.sel("bk_tasks", { gte: { date: addDays(A, -14) }, lte: { date: B }, notnull: "gen_key" }))
-    .filter(t => t.kind === "step" && readyOfKey(t.gen_key) >= A && readyOfKey(t.gen_key) <= B);
+  const want = desiredTasks(plans.filter(pl => pl.date >= A && pl.date <= addDays(B, 14)), A, B);
+  const have = all.filter(t => t.gen_key && t.kind === "step" && readyOfKey(t.gen_key) >= A && readyOfKey(t.gen_key) <= B);
   const haveMap = new Map(have.map(t => [t.gen_key, t]));
   const ins = [], dels = [], ups = [];
   for (const [k, t] of want) {
     const h = haveMap.get(k);
     if (!h) ins.push(t);
     else if (JSON.stringify(h.sources) !== JSON.stringify(t.sources) || h.title !== t.title || h.day_count !== t.day_count || h.day_index !== t.day_index)
-      ups.push([h.id, { sources: t.sources, title: t.title, day_count: t.day_count, day_index: t.day_index }]);
+      ups.push({ ...h, sources: t.sources, title: t.title, day_count: t.day_count, day_index: t.day_index });
   }
   for (const h of have) if (!want.has(h.gen_key) && h.status !== "done") dels.push(h.id);
-  if (ins.length) await DB.ins("bk_tasks", ins);
-  for (const [id, patch] of ups) await DB.upd("bk_tasks", id, patch);
-  if (dels.length) await DB.del("bk_tasks", dels);
-  return { ins: ins.length, ups: ups.length, del: dels.length };
+  const [insd, upsd] = await Promise.all([
+    ins.length ? DB.ins("bk_tasks", ins) : [],
+    ups.length ? DB.ups("bk_tasks", ups, "id") : [],
+    dels.length ? DB.del("bk_tasks", dels) : null
+  ]);
+  const upMap = new Map((upsd || []).map(u => [u.id, u]));
+  const tasks = all.filter(t => !dels.includes(t.id)).map(t => upMap.get(t.id) || t).concat(insd || []);
+  return { ins: ins.length, ups: ups.length, del: dels.length, tasks };
 }
 
 /* decisions: planned items whose product needs a choice that hasn't been made */
@@ -447,34 +499,71 @@ function decisionCard(g, t) {
 const lowStock = () => S.stock.filter(s => +s.in_stock < +s.min_stock);
 
 /* ================= RENDER: SHELL ================= */
-const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["setup", "Setup"]];
+const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["lab", "Lab"], ["setup", "Setup"]];
 function renderNav() {
   $("#nav").innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "orders" && S.requests ? `<span class="dot" aria-label="${S.requests} new requests">${S.requests}</span>` : ""}</button>`).join("");
 }
-async function go(view) { S.view = view; store.set("bk.view", view); await refresh(); window.scrollTo({ top: 0 }); }
-async function refresh() {
+async function go(view) { S.view = view; store.set("bk.view", view); window.scrollTo({ top: 0 }); await refresh({ nav: true }); }
+/* Views render instantly from cache (or a skeleton), then refresh in the background. */
+const CACHE = new Map(); let REQ = 0;
+function busy(on) { const b = $("#busy"); if (b) b.hidden = !on; $("#main")?.setAttribute("aria-busy", on ? "true" : "false"); }
+async function fetchRange(pA, pB, tA, tB) {
+  const [plans, tasks] = await Promise.all([
+    DB.sel("bk_plan", { gte: { date: pA }, lte: { date: pB }, order: [["date"]] }),
+    DB.sel("bk_tasks", { gte: { date: tA }, lte: { date: tB }, order: [["date"], ["position"]] })
+  ]);
+  return { plans, tasks };
+}
+function viewSpec() {
+  if (S.view === "week") { const w = S.week; return { key: "w" + w, sync: [w, addDays(w, 27)], range: [w, addDays(w, 41), addDays(w, -14), addDays(w, 27)], show: [w, addDays(w, 27), w, addDays(w, 6)], render: renderWeek, skeleton: renderWeekSkeleton }; }
+  if (S.view === "today") { const t = todayISO(); return { key: "t" + t, sync: [t, addDays(t, 13)], range: [t, addDays(t, 27), addDays(t, -14), addDays(t, 13)], show: [t, addDays(t, 13), t, addDays(t, 1)], render: renderToday, skeleton: () => { $("#main").innerHTML = `<div class="today-wrap"><div class="bar"><h2>${DOWL[weekday(todayISO()) - 1]}, ${fmtShort(todayISO())}</h2></div>${skel(5)}</div>`; } }; }
+  if (S.view === "month") {
+    const g0 = mondayOf(S.month), last = addDays(addDays(S.month.slice(0, 8) + "28", 4).slice(0, 8) + "01", -1), g1 = addDays(mondayOf(last), 6);
+    return { key: "m" + S.month, sync: null, range: [g0, g1, g0, g1], show: [g0, g1, g0, g1], render: () => renderMonth(g0, g1), skeleton: () => { S.plan = []; S.tasks = []; renderMonth(g0, g1); } };
+  }
+  return null;
+}
+function applyData(spec, d) { const [pA, pB, tA, tB] = spec.show; S.plan = d.plans.filter(p => p.date >= pA && p.date <= pB); S.tasks = d.tasks.filter(t => t.date >= tA && t.date <= tB); }
+const skel = n => Array.from({ length: n }, () => `<div class="sk"></div>`).join("");
+async function prefetch(view, base) {
+  const keep = { view: S.view, week: S.week, month: S.month };
+  Object.assign(S, { view, week: base, month: base }); const spec = viewSpec(); Object.assign(S, keep);
+  if (!spec || CACHE.has(spec.key)) return;
+  try { CACHE.set(spec.key, await fetchRange(...spec.range)); } catch {}
+}
+async function refresh(o = {}) {
   renderNav();
-  const main = $("#main");
+  showLab(S.view === "lab");
+  if (S.view === "lab") return;
+  if (!o.nav) CACHE.clear();
+  const spec = viewSpec();
+  if (!spec) {
+    await guard(async () => { if (S.view === "orders") renderOrders(); else if (S.view === "setup") { await loadKitchenIngredients(); renderSetup(); } });
+    renderNav(); return;
+  }
+  const my = ++REQ, cached = CACHE.get(spec.key);
+  if (cached) { applyData(spec, cached); spec.render(); }
+  else if (o.nav || !$("#main").innerHTML) spec.skeleton();
+  busy(true);
   await guard(async () => {
-    if (S.view === "week") {
-      await syncTasks(S.week, addDays(S.week, 27));
-      await loadRange(S.week, addDays(S.week, 27), S.week, addDays(S.week, 6));
-      renderWeek();
-    } else if (S.view === "today") {
-      const t = todayISO();
-      await syncTasks(t, addDays(t, 13));
-      await loadRange(t, addDays(t, 13), t, addDays(t, 1));
-      renderToday();
-    } else if (S.view === "month") {
-      const g0 = mondayOf(S.month); const last = addDays(addDays(S.month.slice(0, 8) + "28", 4).slice(0, 8) + "01", -1);
-      const g1 = addDays(mondayOf(last), 6);
-      await loadRange(g0, g1, g0, g1);
-      renderMonth(g0, g1);
-    } else if (S.view === "orders") { renderOrders(); }
-    else if (S.view === "setup") { await loadKitchenIngredients(); renderSetup(); }
-    renderNav();
+    const d = await fetchRange(...spec.range);
+    if (my !== REQ) return;
+    if (spec.sync) { const r = await syncTasks(spec.sync[0], spec.sync[1], d); d.tasks = r.tasks; }
+    CACHE.set(spec.key, d);
+    if (my !== REQ) return;
+    applyData(spec, d); spec.render(); renderNav();
+    if (S.view === "week") { prefetch("week", addDays(S.week, 7)); prefetch("week", addDays(S.week, -7)); }
+    if (S.view === "month") { const m = parse(S.month); m.setDate(1); m.setMonth(m.getMonth() + 1); prefetch("month", iso(m)); }
   });
-  if (!main.innerHTML) main.innerHTML = `<div class="empty-state">Something went wrong loading this view.</div>`;
+  if (my === REQ) busy(false);
+}
+function renderWeekSkeleton() {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(S.week, i)), t = todayISO();
+  $("#main").innerHTML = `
+    <div class="bar"><h2>Week ${weekNo(S.week)} <span class="muted" style="font-weight:500;font-size:16px">${fmtShort(S.week)} – ${fmtShort(days[6])}</span></h2>
+      <div class="weeknav"><button type="button" data-act="wk" data-d="-7" aria-label="Previous week">‹</button><button type="button" class="btn sm" data-act="wk" data-d="0">This week</button><button type="button" data-act="wk" data-d="7" aria-label="Next week">›</button></div></div>
+    <section class="lane"><h3>Needs attention</h3><div class="lane-items"><div class="sk" style="width:220px;height:62px"></div><div class="sk" style="width:220px;height:62px"></div></div></section>
+    <div class="board">${days.map((d, i) => `<section class="col ${d === t ? "today" : ""}"><div class="colh"><b>${DOW[i]}</b><span class="small">${fmtShort(d)}</span></div><div class="sk" style="height:120px"></div>${skel(3)}</section>`).join("")}</div>`;
 }
 
 /* ================= RENDER: WEEK ================= */
@@ -494,12 +583,13 @@ function taskCard(t, big) {
   const hasOrder = (t.sources || []).some(s => s.o) || o;
   const kind = t.kind === "step" ? (hasOrder ? "k-order" : "k-step") : "k-" + t.kind;
   const meta = [];
-  if (t.kind === "step") meta.push(`${dots(t.day_index, t.day_count)} ${esc(r ? r.name : "Recipe")}${t.day_count > 1 ? ` · day ${t.day_index}/${t.day_count}` : ""}`);
+  if (t.kind === "step") meta.push(`${dots(t.day_index, t.day_count)} <span class="rname">${esc(r ? r.name : "Recipe")}</span>${t.day_count > 1 ? ` · day ${t.day_index}/${t.day_count}` : ""}`);
   if (t.kind === "order" && o) meta.push(`<span class="b spe">${esc(o.code)}</span> ${esc(o.customer_name)}${o.pickup_time ? " · " + esc(o.pickup_time) : ""}`);
   if (t.kind === "restock") meta.push(`<span class="b acc">Freezer</span>`);
   if (t.time_hint && big) meta.push(esc(t.time_hint));
   if (t.notes) meta.push("📝");
-  return `<div class="card ${kind} ${t.status === "done" ? "done" : ""}" draggable="true" data-task="${t.id}">
+  const col = t.kind === "step" && r ? r.color : null;
+  return `<div class="card ${kind} ${col ? "rc" : ""} ${t.status === "done" ? "done" : ""}" draggable="true" data-task="${t.id}"${cvar(col)}>
     <button type="button" class="chk ${t.status === "done" ? "on" : ""}" data-act="toggle" data-id="${t.id}" aria-label="${t.status === "done" ? "Mark not done" : "Mark done"}: ${esc(t.title)}">${t.status === "done" ? CHECK : ""}</button>
     <div class="cbody" data-act="task" data-id="${t.id}" role="button" tabindex="0">
       <div class="ct">${t.status === "doing" ? "▶ " : ""}${esc(t.title)}</div>
@@ -513,7 +603,7 @@ function saleBox(date) {
     const p = prod(pl.product_id); if (!p) return "";
     const o = pl.order_id ? order(pl.order_id) : null;
     const miss = p.choice_label && !pl.choice && !pl.order_id;
-    return `<li><span class="q">${pl.qty}</span><span>${esc(p.name)}${o ? ` <span class="b spe">${esc(o.code)}</span>` : ""}${p.kind === "seasonal" ? ` <span class="b sea">S</span>` : ""}
+    return `<li${cvar(prodColor(p.id))}><span class="q">${pl.qty}</span><span><i class="pdot"></i>${esc(p.name)}${o ? ` <span class="b spe">${esc(o.code)}</span>` : ""}${p.kind === "seasonal" ? ` <span class="b sea">S</span>` : ""}
       ${pl.choice ? `<br><span class="ch">${esc(pl.choice)}</span>` : miss ? `<br><span class="miss">${esc(p.choice_label)}?</span>` : ""}</span></li>`;
   }).join("");
   return `<button type="button" class="sale" data-act="day" data-date="${date}"><div class="sale-h">On sale <span class="spacer"></span>${items.length ? items.reduce((a, b) => a + b.qty, 0) + " pcs" : ""}</div>${li ? `<ul>${li}</ul>` : `<div class="empty">Nothing planned. Tap to add.</div>`}</button>`;
@@ -712,7 +802,7 @@ function renderSetup() {
       return `<section class="sec"><h4>${KIND[k][0]}s <span class="muted">${list.length}</span></h4><div class="cards">${list.map(p => {
         const parts = partsOf(p.id).map(x => rec(x.recipe_id)).filter(Boolean);
         const days = Math.max(1, ...partsOf(p.id).map(x => daysOf(x.recipe_id) - (x.ready_offset || 0)));
-        return `<button type="button" class="pcard" data-act="product" data-id="${p.id}"><div class="row"><h4>${esc(p.name)}</h4><span class="spacer"></span>${p.active ? "" : `<span class="b">Off</span>`}${p.orderable ? `<span class="b spe">Orderable</span>` : ""}</div>
+        return `<button type="button" class="pcard ${prodColor(p.id) ? "rc" : ""}" data-act="product" data-id="${p.id}"${cvar(prodColor(p.id))}><div class="row"><h4>${esc(p.name)}</h4><span class="spacer"></span>${p.active ? "" : `<span class="b">Off</span>`}${p.orderable ? `<span class="b spe">Orderable</span>` : ""}</div>
           <div class="small muted">${parts.length ? esc(parts.map(r => r.name).join(" + ")) : "No recipe linked"} · ${days} day${days > 1 ? "s" : ""}</div>
           <div class="small">${p.choice_label ? `Decide: <b>${esc(p.choice_label)}</b> ${p.decide_days} d before` : ""}${p.price != null ? ` · ${money(p.price)}` : ""}</div></button>`;
       }).join("")}<button type="button" class="pcard" data-act="product" data-kind="${k}" style="align-items:center;justify-content:center;color:var(--muted)">+ Add ${KIND[k][0].toLowerCase()}</button></div></section>`;
@@ -722,7 +812,7 @@ function renderSetup() {
     body = `<p class="muted small">Each recipe is a chain of days. The last day is when it's ready. Products use one or more recipes; recipes shared by several products (like bun dough) become one card with the total.</p>
       <div class="cards">${S.recipes.slice().sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || a.position - b.position).map(r => {
         const st = stepsOf(r.id), n = daysOf(r.id), used = S.parts.filter(x => x.recipe_id === r.id).map(x => prod(x.product_id)?.name).filter(Boolean);
-        return `<button type="button" class="pcard" data-act="recipe" data-id="${r.id}"><div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b">${esc(r.kind)}</span></div>
+        return `<button type="button" class="pcard ${r.color ? "rc" : ""}" data-act="recipe" data-id="${r.id}"${cvar(r.color)}><div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b">${esc(r.kind)}</span></div>
           <div class="small muted">${n} day${n > 1 ? "s" : ""} · ${st.length} step${st.length === 1 ? "" : "s"}${S.ings.some(i => i.recipe_id === r.id) ? " · ingredients" : ""}</div>
           <div class="small">${st.map(s => `D${s.day} ${esc(s.title)}`).slice(0, 4).join("<br>")}</div>
           ${used.length ? `<div class="small muted">Used in: ${esc([...new Set(used)].join(", "))}</div>` : `<div class="small muted">Not used by any product</div>`}</button>`;
@@ -790,7 +880,7 @@ async function taskSheet(id) {
   const ings = r ? S.ings.filter(i => i.recipe_id === r.id) : [];
   const factor = total && r && r.yield_g ? total / r.yield_g : null;
   const step = t.step_id ? S.steps.find(s => s.id === t.step_id) : null;
-  openSheet(`${head(esc(t.title), `${fmtD(t.date)}${r ? " · " + esc(r.name) : ""}${t.day_count > 1 ? ` · day ${t.day_index} of ${t.day_count}` : ""}`)}
+  openSheet(`${head(esc(t.title), `${fmtD(t.date)}${r ? ` · ${r.color ? `<i class="pdot" style="--rc:${esc(r.color)}"></i>` : ""}` + esc(r.name) : ""}${t.day_count > 1 ? ` · day ${t.day_index} of ${t.day_count}` : ""}`)}
     <div class="row" role="group" aria-label="Status">${["todo", "doing", "done"].map(s => `<button type="button" class="btn sm ${t.status === s ? "primary" : ""}" data-act="tstatus" data-id="${t.id}" data-s="${s}">${{ todo: "To do", doing: "Doing", done: "Done" }[s]}</button>`).join("")}</div>
     ${step && step.notes ? `<p class="note">${esc(step.notes)}</p>` : ""}
     ${(t.sources || []).length ? `<div class="sec"><h4>For</h4><div class="list">${t.sources.map(s => `<div class="li"><span class="grow">${esc(s.p)}${s.o ? ` <span class="b spe">${esc(s.o)}</span>` : ""}${s.c ? `<br><span class="small muted">${esc(s.c)}</span>` : ""}</span><b>${s.q}</b>${s.a != null ? `<span class="small muted">${fmtAmt(s.a, s.u)}</span>` : ""}</div>`).join("")}
@@ -834,7 +924,7 @@ function planRow(pl) {
 }
 
 /* --- decision sheet --- */
-async function decisionSheet(planId) {
+async function decisionSheet(planId, add) {
   const pl = S.plan.find(x => x.id === planId) || (await DB.sel("bk_plan", { eq: { id: planId } }))[0]; if (!pl) return;
   const p = prod(pl.product_id);
   const hist = (await DB.sel("bk_plan", { eq: { product_id: p.id }, notnull: "choice", order: [["date", false]], limit: 60 })).map(x => x.choice);
@@ -843,10 +933,10 @@ async function decisionSheet(planId) {
   const same = S.plan.filter(x => x.product_id === p.id && !x.order_id && !x.choice && x.id !== pl.id && x.date >= todayISO() && mondayOf(x.date) === mondayOf(pl.date)).sort((a, b) => a.date.localeCompare(b.date));
   const fl = setting("links").filling_lab || CFG.fillingLab;
   openSheet(`${head(`${esc(p.name)}: ${esc(p.choice_label)}`, `For ${fmtD(pl.date)} · decide by ${fmtD(addDays(pl.date, -(p.decide_days || 0)))}`)}
-    <label class="f">${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count}, one per line or comma-separated)` : ""}<textarea id="dcVal" placeholder="e.g. Plum, thyme & brown butter">${esc(pl.choice || "")}</textarea></label>
+    <label class="f">${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count}, one per line or comma-separated)` : ""}<textarea id="dcVal" placeholder="e.g. Plum, thyme & brown butter">${esc(add != null ? add : (pl.choice || ""))}</textarea></label>
     ${past.length ? `<div class="sec"><h4>Used before</h4><div class="pills">${past.map(c => `<button type="button" class="pill" data-act="dcpick" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>` : ""}
     ${ideas.length ? `<div class="sec"><h4>Ideas</h4><div class="pills">${ideas.map(c => `<button type="button" class="pill" data-act="dcpick" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>` : ""}
-    <div class="sec"><a href="${esc(fl)}" target="_blank" rel="noopener" class="btn">Open the Filling Lab ↗</a> <span class="small muted">Generator, pairings and trios for new ideas.</span></div>
+    <div class="sec"><button type="button" class="btn" data-act="labpick" data-id="${pl.id}">Find it in the Lab →</button> <span class="small muted">Browse recipes, trios, pairings or the generator, then tap “Use in planner”.</span></div>
     ${same.length ? `<label class="f inline sec"><input type="checkbox" id="dcSame" checked> Use for the other ${same.length} day${same.length > 1 ? "s" : ""} this week too (${same.map(x => DOW[weekday(x.date) - 1]).join(", ")})</label>` : ""}
     <label class="f inline"><input type="checkbox" id="dcIdea"> Save to ideas for ${esc(cat)}</label>
     <div class="row sec"><button type="button" class="btn primary" data-act="dcsave" data-id="${pl.id}" data-same="${same.map(x => x.id).join(",")}">Save</button></div>`);
@@ -973,6 +1063,11 @@ function recipeSheet(id) {
     <form id="rForm" class="list">
       <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(r.name)}"></label>
       <label class="f">Kind<select name="kind">${["dough", "filling", "topping", "glaze", "bake", "other"].map(k => `<option ${k === r.kind ? "selected" : ""}>${k}</option>`).join("")}</select></label></div>
+      <div class="sec"><h4>Colour on the board</h4><div class="swatches" role="radiogroup" aria-label="Colour">
+        ${PALETTE.map(c => `<label class="sw" style="--c:${c}" title="${c}"><input type="radio" name="color" value="${c}" ${r.color === c ? "checked" : ""}><span></span></label>`).join("")}
+        <label class="sw custom" title="Custom colour"><input type="radio" name="color" value="custom" ${r.color && !PALETTE.includes(r.color) ? "checked" : ""}><input type="color" name="color_custom" value="${r.color && !PALETTE.includes(r.color) ? esc(r.color) : "#888888"}" aria-label="Custom colour"></label>
+        <label class="sw none" title="No colour"><input type="radio" name="color" value="" ${!r.color ? "checked" : ""}><span>×</span></label></div>
+        <p class="small muted">Every card made from this recipe uses it, and products show it next to their name.</p></div>
       <div class="sec"><h4>Days & steps</h4><div id="rDays">${Array.from({ length: maxDay }, (_, i) => dayBox(i + 1)).join("")}</div>
         <button type="button" class="btn sm" data-act="addday">+ Day</button>
         <template id="stepTpl">${stepRow({ day: 1 })}</template></div>
@@ -985,12 +1080,13 @@ function recipeSheet(id) {
       <label class="f">Notes<textarea name="notes">${esc(r.notes || "")}</textarea></label>
       <label class="f">Source<input type="text" name="source" value="${esc(r.source || "")}" placeholder="Book, page, link"></label>
       <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="rdel" data-id="${id}">Delete</button>` : ""}</div>
-    </form>`, sh => { sh.querySelector("#rForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); });
+    </form>`, sh => { const f = sh.querySelector("#rForm"); f.addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); f.color_custom.addEventListener("input", () => { f.querySelector('[name=color][value=custom]').checked = true; }); });
 }
 function relabelDays(form) { const boxes = $$("#rDays .stepday", form); boxes.forEach((b, i) => { b.dataset.day = i + 1; $("h5", b).textContent = `Day ${i + 1}${i === boxes.length - 1 ? " · ready" : ""}`; $$("[data-f=day]", b).forEach(h => h.value = i + 1); $("[data-act=addstep]", b).dataset.day = i + 1; }); }
 async function saveRecipe(r, form) {
   const fd = new FormData(form), g = k => fd.get(k);
-  const row = { name: g("name").trim(), kind: g("kind"), yield_g: g("yield_g") === "" ? null : +g("yield_g"), yield_note: g("yield_note") || null, method: g("method") || null, notes: g("notes") || null, source: g("source") || null, updated_at: new Date().toISOString() };
+  const color = g("color") === "custom" ? g("color_custom") : (g("color") || null);
+  const row = { name: g("name").trim(), kind: g("kind"), color, yield_g: g("yield_g") === "" ? null : +g("yield_g"), yield_note: g("yield_note") || null, method: g("method") || null, notes: g("notes") || null, source: g("source") || null, updated_at: new Date().toISOString() };
   if (!row.name) throw new Error("Give the recipe a name.");
   let id = r.id;
   if (id) await DB.upd("bk_recipes", id, row); else { row.position = S.recipes.length + 1; id = (await DB.ins("bk_recipes", row))[0].id; }
@@ -1020,12 +1116,48 @@ function stockSheet(id) {
       await loadStatic(); closeSheet(); toast("Saved."); await refresh(); }); }));
 }
 
+/* ================= FILLING LAB ================= */
+let PICK = null;
+function showLab(on) {
+  const w = $("#labWrap"); $("#main").classList.toggle("hidden", on); w.classList.toggle("hidden", !on);
+  if (!on) return;
+  if (!$("#labFrame")) w.insertAdjacentHTML("beforeend", `<iframe id="labFrame" src="lab.html" title="Filling Lab"></iframe>`);
+  const bar = $("#labBar");
+  if (PICK) {
+    const p = prod(PICK.product_id);
+    bar.innerHTML = `<span><b>Picking ${esc(p?.choice_label || "an idea")}</b> for ${esc(p?.name || "")} · ${fmtD(PICK.date)}. Tap “Use in planner” on any recipe, trio, pairing or generator idea.</span><span class="spacer"></span><button type="button" class="btn sm" data-act="labcancel">Back without picking</button>`;
+    bar.classList.remove("hidden");
+  } else { bar.innerHTML = `<span class="small">Tap “Use in planner” anywhere in the Lab to save an idea for later decisions.</span>`; bar.classList.remove("hidden"); }
+  const fr = $("#labFrame"); const tell = () => { try { fr.contentWindow.postMessage({ type: "bk:pick", on: !!PICK }, location.origin); } catch {} };
+  tell(); fr.onload = tell;
+}
+function ideaSheet(text, src) {
+  const cats = [...new Set(S.products.filter(p => p.choice_label && p.active).map(p => p.category || p.name))];
+  openSheet(`${head("Save idea", src ? `From the Lab · ${esc(src)}` : "From the Lab")}
+    <div class="list"><label class="f">Idea<textarea id="idText">${esc(text)}</textarea></label>
+    <label class="f">For<select id="idCat">${cats.map(c => `<option>${esc(c)}</option>`).join("")}<option value="General">General</option></select></label>
+    <p class="small muted">Saved ideas appear as quick picks whenever you decide toppings, fillings or flavours for that category.</p></div>
+    <div class="row sec"><button type="button" class="btn primary" data-act="idsave">Save idea</button></div>`);
+}
+window.addEventListener("message", e => {
+  if (e.origin !== location.origin || !e.data || e.data.type !== "bk:idea") return;
+  guard(async () => {
+    const text = String(e.data.text || "").slice(0, 300);
+    if (PICK) {
+      const pk = PICK; PICK = null;
+      S.view = pk.view; store.set("bk.view", S.view); await refresh({ nav: true });
+      const cur = (pk.draft || "").trim();
+      await decisionSheet(pk.id, cur ? (cur.includes(text) ? cur : cur + ", " + text) : text);
+    } else ideaSheet(text, e.data.src);
+  });
+});
+
 /* ================= EVENTS ================= */
 function rerender() { ({ week: renderWeek, today: renderToday, orders: renderOrders, setup: renderSetup })[S.view]?.(); renderNav(); }
 const ACT = {
   close: () => closeSheet(),
-  wk: el => { const d = +el.dataset.d; S.week = d === 0 ? mondayOf(todayISO()) : addDays(S.week, d); return refresh(); },
-  mo: el => { const d = +el.dataset.d; const m = parse(S.month); if (d === 0) S.month = todayISO().slice(0, 8) + "01"; else { m.setDate(1); m.setMonth(m.getMonth() + d); S.month = iso(m).slice(0, 8) + "01"; } return refresh(); },
+  wk: el => { const d = +el.dataset.d; S.week = d === 0 ? mondayOf(todayISO()) : addDays(S.week, d); return refresh({ nav: true }); },
+  mo: el => { const d = +el.dataset.d; const m = parse(S.month); if (d === 0) S.month = todayISO().slice(0, 8) + "01"; else { m.setDate(1); m.setMonth(m.getMonth() + d); S.month = iso(m).slice(0, 8) + "01"; } return refresh({ nav: true }); },
   fill: async el => { const n = await fillFromTemplate(S.week, 7 * (+el.dataset.weeks || 1)); toast(n ? `Added ${n} products to the plan.` : "Everything from the template is already planned."); await refresh(); },
   toggle: async el => {
     const t = S.tasks.find(x => x.id === el.dataset.id); if (!t) return;
@@ -1105,6 +1237,18 @@ const ACT = {
     await syncTasks(addDays(date, -14), date); closeSheet(); toast("Day saved. Steps updated."); await refresh();
   },
   dpfill: async el => { const n = await fillFromTemplate(el.dataset.date, 1); closeSheet(); toast(n ? `Added ${n} products.` : "Nothing missing."); await refresh(); },
+  /* lab */
+  labpick: async el => {
+    const pl = S.plan.find(x => x.id === el.dataset.id) || (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0];
+    PICK = { id: el.dataset.id, product_id: pl.product_id, date: pl.date, draft: $("#dcVal")?.value || "", view: S.view === "lab" ? "week" : S.view };
+    closeSheet(true); S.view = "lab"; renderNav(); showLab(true); window.scrollTo({ top: 0 });
+  },
+  labcancel: async () => { const pk = PICK; PICK = null; S.view = pk ? pk.view : "week"; await refresh({ nav: true }); if (pk) await decisionSheet(pk.id, pk.draft); },
+  idsave: async () => {
+    const v = $("#idText").value.trim(), cat = $("#idCat").value; if (!v) return;
+    const ideas = { ...setting("ideas") }; ideas[cat] = [...new Set([...(ideas[cat] || []), v])];
+    await DB.ups("bk_settings", { key: "ideas", value: ideas }, "key"); await loadStatic(); closeSheet(); toast(`Saved to ideas for ${cat}.`);
+  },
   /* decision sheet */
   dcpick: el => { const ta = $("#dcVal"); const v = el.dataset.v; ta.value = ta.value.trim() ? (ta.value.trim().includes(v) ? ta.value : ta.value.trim() + ", " + v) : v; ta.focus(); },
   dcsave: async el => {
@@ -1189,7 +1333,7 @@ async function boot() {
   if (!ok) { showLogin("This login isn't allowed here yet, or its email isn't confirmed.", true); return; }
   S.user = sess.user;
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
-  await guard(async () => { await loadStatic(); await loadOrders(); });
+  await guard(async () => { await Promise.all([loadStatic(), loadOrders()]); });
   await refresh();
   if (!booted) { booted = true; setInterval(() => { if (document.visibilityState === "visible" && !$("#scrim")) guard(async () => { const before = S.requests; await loadOrders(); if (S.requests !== before) { renderNav(); if (S.requests > before) toast("New order request."); } }); }, 120000); }
 }
