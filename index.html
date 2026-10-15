@@ -278,6 +278,25 @@ main[aria-busy="true"] .board{transition:opacity .2s}
 .drawer.hidden{display:none}
 .li.fresh{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 
+/* stock */
+.scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:12px}
+.scard{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--rc,var(--line));border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.scard h3{font-size:19px;display:flex;align-items:center}
+.onhand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.onhand > div:first-child{flex:1;min-width:140px}
+.onhand .big{font-family:var(--f-display);font-size:34px;font-weight:800;line-height:1}
+.strip{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:3px}
+.strip .cell{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--ok-soft);border-radius:7px;padding:4px 0;font-size:11px;min-width:0}
+.strip .cell b{font-size:13px;font-family:var(--f-mono)}
+.strip .cell .dw{color:var(--muted);font-weight:700;text-transform:uppercase}
+.strip .cell .dn{color:var(--muted)}
+.strip .cell .nd{color:var(--muted);font-family:var(--f-mono)}
+.strip .cell.low{background:var(--sea-soft)}
+.strip .cell.short{background:var(--warn-soft);color:var(--warn)}
+.strip .cell.inc{box-shadow:inset 0 0 0 2px var(--accent)}
+.warnt{color:var(--warn)}
+@media (max-width:560px){.strip{grid-template-columns:repeat(7,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -428,16 +447,14 @@ async function loadRange(planA, planB, taskA, taskB) {
    A product sold on day D is made of parts. Each part is a recipe whose steps are spread over N days;
    the last day of the recipe is its "ready" day = D + ready_offset. Step on recipe day d lands on ready − (N − d).
    Steps of the same recipe ready on the same day are merged into one card (shared doughs). */
-function desiredTasks(plans, A, B) {
+function desiredTasks(plans, A, B, batches = []) {
   const want = new Map();
-  for (const pl of plans) {
-    if (pl.status === "cancelled" || !(pl.qty > 0)) continue;
-    const p = prod(pl.product_id); if (!p) continue;
-    const o = pl.order_id ? order(pl.order_id) : null;
-    for (const part of partsOf(pl.product_id)) {
+  const add = (pid, date, qty, src) => {
+    const p = prod(pid); if (!p) return;
+    for (const part of partsOf(pid)) {
       const steps = stepsOf(part.recipe_id); if (!steps.length) continue;
       const N = daysOf(part.recipe_id);
-      const ready = addDays(pl.date, part.ready_offset || 0);
+      const ready = addDays(date, src.batch ? 0 : (part.ready_offset || 0));
       if (ready < A || ready > B) continue;
       for (const s of steps) {
         const key = `${part.recipe_id}|${s.id}|${ready}`;
@@ -447,20 +464,28 @@ function desiredTasks(plans, A, B) {
                 chain_key: `${part.recipe_id}|${ready}`, day_index: s.day, day_count: N, time_hint: s.time_hint || null, position: s.position || 0, sources: [] };
           want.set(key, t);
         }
-        t.sources.push({ plan: pl.id, p: p.name, q: pl.qty, a: part.qty_per_unit ? Math.round(part.qty_per_unit * pl.qty * 10) / 10 : null, u: part.unit, c: pl.choice || null, o: o ? o.code : null });
+        t.sources.push({ ...src, p: p.name, q: qty, a: part.qty_per_unit ? Math.round(part.qty_per_unit * qty * 10) / 10 : null, u: part.unit });
       }
     }
+  };
+  for (const pl of plans) {
+    if (pl.status === "cancelled" || !(pl.qty > 0)) continue;
+    const p = prod(pl.product_id); if (!p || (p.stock_mode && !pl.order_id)) continue;
+    const o = pl.order_id ? order(pl.order_id) : null;
+    add(pl.product_id, pl.date, pl.qty, { plan: pl.id, c: pl.choice || null, o: o ? o.code : null });
   }
+  for (const b of batches) if (b.status !== "cancelled" && b.qty > 0) add(b.product_id, b.date, b.qty, { batch: b.id, c: null, o: null });
   return want;
 }
 const readyOfKey = k => (k || "").split("|")[2] || "";
 async function syncTasks(A, B, pre) {
-  const [plans, all] = pre ? [pre.plans, pre.tasks] : await Promise.all([
+  const [plans, all, batches] = pre ? [pre.plans, pre.tasks, pre.batches || []] : await Promise.all([
     DB.sel("bk_plan", { gte: { date: A }, lte: { date: addDays(B, 14) } }),
-    DB.sel("bk_tasks", { gte: { date: addDays(A, -14) }, lte: { date: B }, order: [["date"], ["position"]] })
+    DB.sel("bk_tasks", { gte: { date: addDays(A, -14) }, lte: { date: B }, order: [["date"], ["position"]] }),
+    DB.sel("bk_batches", { gte: { date: A }, lte: { date: addDays(B, 14) } })
   ]);
   if (plans.some(pl => pl.order_id && !order(pl.order_id))) await loadOrders();
-  const want = desiredTasks(plans.filter(pl => pl.date >= A && pl.date <= addDays(B, 14)), A, B);
+  const want = desiredTasks(plans.filter(pl => pl.date >= A && pl.date <= addDays(B, 14)), A, B, batches.filter(b => b.date >= A && b.date <= addDays(B, 14)));
   const have = all.filter(t => t.gen_key && t.kind === "step" && readyOfKey(t.gen_key) >= A && readyOfKey(t.gen_key) <= B);
   const haveMap = new Map(have.map(t => [t.gen_key, t]));
   const ins = [], dels = [], ups = [];
@@ -504,7 +529,7 @@ function decisionCard(g, t) {
 const lowStock = () => S.stock.filter(s => +s.in_stock < +s.min_stock);
 
 /* ================= RENDER: SHELL ================= */
-const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["lab", "Lab"], ["setup", "Setup"]];
+const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["stock", "Stock"], ["lab", "Lab"], ["setup", "Setup"]];
 function renderNav() {
   $("#nav").innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "orders" && S.requests ? `<span class="dot" aria-label="${S.requests} new requests">${S.requests}</span>` : ""}</button>`).join("");
 }
@@ -513,11 +538,12 @@ async function go(view) { S.view = view; store.set("bk.view", view); window.scro
 const CACHE = new Map(); let REQ = 0;
 function busy(on) { const b = $("#busy"); if (b) b.hidden = !on; $("#main")?.setAttribute("aria-busy", on ? "true" : "false"); }
 async function fetchRange(pA, pB, tA, tB) {
-  const [plans, tasks] = await Promise.all([
+  const [plans, tasks, batches] = await Promise.all([
     DB.sel("bk_plan", { gte: { date: pA }, lte: { date: pB }, order: [["date"]] }),
-    DB.sel("bk_tasks", { gte: { date: tA }, lte: { date: tB }, order: [["date"], ["position"]] })
+    DB.sel("bk_tasks", { gte: { date: tA }, lte: { date: tB }, order: [["date"], ["position"]] }),
+    DB.sel("bk_batches", { gte: { date: pA }, lte: { date: pB } })
   ]);
-  return { plans, tasks };
+  return { plans, tasks, batches };
 }
 function viewSpec() {
   if (S.view === "week") { const w = S.week; return { key: "w" + w, sync: [w, addDays(w, 27)], range: [w, addDays(w, 41), addDays(w, -14), addDays(w, 27)], show: [w, addDays(w, 27), w, addDays(w, 6)], render: renderWeek, skeleton: renderWeekSkeleton }; }
@@ -543,7 +569,10 @@ async function refresh(o = {}) {
   if (!o.nav) CACHE.clear();
   const spec = viewSpec();
   if (!spec) {
-    await guard(async () => { if (S.view === "orders") renderOrders(); else if (S.view === "setup") { await loadKitchenIngredients(); renderSetup(); } });
+    if (S.view === "stock" && !$("#main .scards")) $("#main").innerHTML = `<div class="bar"><h2>Stock</h2></div>${skel(3)}`;
+    busy(true);
+    await guard(async () => { if (S.view === "orders") renderOrders(); else if (S.view === "setup") { await loadKitchenIngredients(); renderSetup(); } else if (S.view === "stock") { await loadStock(); renderStock(); } });
+    busy(false);
     renderNav(); return;
   }
   const my = ++REQ, cached = CACHE.get(spec.key);
@@ -551,7 +580,7 @@ async function refresh(o = {}) {
   else if (o.nav || !$("#main").innerHTML) spec.skeleton();
   busy(true);
   await guard(async () => {
-    const d = await fetchRange(...spec.range);
+    const [d] = await Promise.all([fetchRange(...spec.range), S.view === "month" ? null : loadStock()]);
     if (my !== REQ) return;
     if (spec.sync) { const r = await syncTasks(spec.sync[0], spec.sync[1], d); d.tasks = r.tasks; }
     CACHE.set(spec.key, d);
@@ -608,7 +637,8 @@ function saleBox(date) {
     const p = prod(pl.product_id); if (!p) return "";
     const o = pl.order_id ? order(pl.order_id) : null;
     const miss = p.choice_label && !pl.choice && !pl.order_id;
-    return `<li${cvar(prodColor(p.id))}><span class="q">${pl.qty}</span><span><i class="pdot"></i>${esc(p.name)}${o ? ` <span class="b spe">${esc(o.code)}</span>` : ""}${p.kind === "seasonal" ? ` <span class="b sea">S</span>` : ""}
+    const pj = p.stock_mode && !pl.order_id ? projAt(p, date) : null;
+    return `<li${cvar(prodColor(p.id))}><span class="q">${pl.qty}</span><span><i class="pdot"></i>${esc(p.name)}${o ? ` <span class="b spe">${esc(o.code)}</span>` : ""}${p.kind === "seasonal" ? ` <span class="b sea">S</span>` : ""}${p.stock_mode && !pl.order_id ? ` <span class="b acc" title="Sold from stock">stock</span>` : ""}${pj && pj.end < 0 ? `<br><span class="miss">short ${-pj.end}</span>` : ""}
       ${pl.choice ? `<br><span class="ch">${esc(pl.choice)}</span>` : miss ? `<br><span class="miss">${esc(p.choice_label)}?</span>` : ""}</span></li>`;
   }).join("");
   return `<button type="button" class="sale" data-act="day" data-date="${date}"><div class="sale-h">On sale <span class="spacer"></span>${items.length ? items.reduce((a, b) => a + b.qty, 0) + " pcs" : ""}</div>${li ? `<ul>${li}</ul>` : `<div class="empty">Nothing planned. Tap to add.</div>`}</button>`;
@@ -617,11 +647,12 @@ function renderWeek() {
   const t = todayISO(), days = Array.from({ length: 7 }, (_, i) => addDays(S.week, i));
   const dec = decisionGroups(S.plan).filter(g => g.due <= addDays(S.week, 13));
   const reqs = S.orders.filter(o => o.status === "request");
-  const low = lowStock();
+  const low = lowStock(), alerts = stockAlerts();
   const weekHasPlan = S.plan.some(pl => pl.date >= S.week && pl.date <= days[6]);
   const lane = [
     ...reqs.map(o => `<button type="button" class="dcard late" data-act="order" data-id="${o.id}"><b>Order request ${esc(o.code)}</b><span class="small">${esc(o.customer_name)} · pickup ${fmtD(o.pickup_date)}</span><span class="small">${esc(itemsOf(o.id).map(i => i.qty + "× " + i.name).join(", "))}</span></button>`),
     ...dec.map(g => decisionCard(g, t)),
+    ...alerts.map(a => alertCard(a, t)),
     ...low.map(s => `<button type="button" class="dcard" data-act="restock" data-id="${s.id}"><b>Restock: ${esc(s.name)}</b><span class="small">${+s.in_stock} of ${+s.min_stock} ${esc(s.unit)} in the freezer</span></button>`)
   ];
   $("#main").innerHTML = `
@@ -672,7 +703,7 @@ function renderToday() {
   const done = tasks.filter(x => x.status === "done").length;
   $("#main").innerHTML = `<div class="today-wrap">
     <div class="bar"><h2>${DOWL[weekday(t) - 1]}, ${fmtShort(t)}</h2><span class="b ${done === tasks.length && tasks.length ? "ok" : ""}">${done}/${tasks.length} done</span><span class="spacer"></span><button type="button" class="btn" data-act="newtask" data-date="${t}">+ Task</button></div>
-    ${dec.length ? `<section class="lane"><h3>Decide soon <span class="b warn">${dec.length}</span></h3><div class="lane-items">${dec.map(g => decisionCard(g, t)).join("")}</div></section>` : ""}
+    ${dec.length || stockAlerts().length ? `<section class="lane"><h3>Needs attention <span class="b warn">${dec.length + stockAlerts().length}</span></h3><div class="lane-items">${stockAlerts().map(a => alertCard(a, t)).join("")}${dec.map(g => decisionCard(g, t)).join("")}</div></section>` : ""}
     ${pick.length ? `<section class="sec"><h4>Pickups today</h4><div class="list">${pick.map(o => `<button type="button" class="li" data-act="order" data-id="${o.id}" style="text-align:left"><span class="b spe">${esc(o.code)}</span><span class="grow"><b>${esc(o.customer_name)}</b> ${o.pickup_time ? "· " + esc(o.pickup_time) : ""}<br><span class="small muted">${esc(itemsOf(o.id).map(i => i.qty + "× " + i.name).join(", "))}</span></span>${o.status === "ready" ? `<span class="b ok">Ready</span>` : ""}</button>`).join("")}</div></section>` : ""}
     <section class="sec big"><h4>Tasks</h4><div class="tl">${tasks.length ? tasks.map(x => taskCard(x, true)).join("") : `<div class="empty-state">Nothing scheduled today.</div>`}</div></section>
     ${tomorrow.length ? `<section class="sec"><h4>Tomorrow</h4><div class="tl">${tomorrow.map(x => taskCard(x)).join("")}</div></section>` : ""}
@@ -797,9 +828,9 @@ async function unplanOrder(o) {
 }
 
 /* ================= SETUP ================= */
-const STABS = [["products", "Products"], ["recipes", "Recipes & chains"], ["template", "Week template"], ["freezer", "Freezer"], ["settings", "Settings"]];
+const STABS = [["products", "Products"], ["recipes", "Recipes & chains"], ["template", "Week template"], ["settings", "Settings"]];
 function renderSetup() {
-  const tab = S.stab;
+  const tab = S.stab === "freezer" ? "products" : S.stab;
   let body = "";
   if (tab === "products") {
     body = ["regular", "seasonal", "special"].map(k => {
@@ -807,7 +838,7 @@ function renderSetup() {
       return `<section class="sec"><h4>${KIND[k][0]}s <span class="muted">${list.length}</span></h4><div class="cards">${list.map(p => {
         const parts = partsOf(p.id).map(x => rec(x.recipe_id)).filter(Boolean);
         const days = Math.max(1, ...partsOf(p.id).map(x => daysOf(x.recipe_id) - (x.ready_offset || 0)));
-        return `<button type="button" class="pcard ${prodColor(p.id) ? "rc" : ""}" data-act="product" data-id="${p.id}"${cvar(prodColor(p.id))}><div class="row"><h4>${esc(p.name)}</h4><span class="spacer"></span>${p.active ? "" : `<span class="b">Off</span>`}${p.orderable ? `<span class="b spe">Orderable</span>` : ""}</div>
+        return `<button type="button" class="pcard ${prodColor(p.id) ? "rc" : ""}" data-act="product" data-id="${p.id}"${cvar(prodColor(p.id))}><div class="row"><h4>${esc(p.name)}</h4><span class="spacer"></span>${p.active ? "" : `<span class="b">Off</span>`}${p.stock_mode ? `<span class="b acc">From stock</span>` : ""}${p.orderable ? `<span class="b spe">Orderable</span>` : ""}</div>
           <div class="small muted">${parts.length ? esc(parts.map(r => r.name).join(" + ")) : "No recipe linked"} · ${days} day${days > 1 ? "s" : ""}</div>
           <div class="small">${p.choice_label ? `Decide: <b>${esc(p.choice_label)}</b> ${p.decide_days} d before` : ""}${p.price != null ? ` · ${money(p.price)}` : ""}</div></button>`;
       }).join("")}<button type="button" class="pcard" data-act="product" data-kind="${k}" style="align-items:center;justify-content:center;color:var(--muted)">+ Add ${KIND[k][0].toLowerCase()}</button></div></section>`;
@@ -1026,6 +1057,10 @@ function productSheet(id, kind) {
       <div class="sec"><h4>Made from</h4><p class="small muted">Recipes this product needs, when each must be ready, and how much per piece (for batch totals).</p><div id="pParts">${parts.map(partRow).join("")}</div>
         <button type="button" class="btn sm" data-act="addpart">+ Recipe</button>
         <template id="partTpl">${partRow({ recipe_id: S.recipes[0]?.id, ready_offset: 0, unit: "g" })}</template></div>
+      <div class="sec"><h4>Sold from stock</h4><label class="f inline"><input type="checkbox" name="stock_mode" ${p.stock_mode ? "checked" : ""}> Made in batches and sold from stock (e.g. almond cookies, tinginys)</label>
+        <div class="grid2" style="margin-top:8px"><label class="f">Keeps for (days)<input type="number" name="shelf_days" min="1" value="${p.shelf_days || 7}"></label>
+        <label class="f">Usual batch size<input type="number" name="batch_size" min="1" value="${p.batch_size ?? ""}"></label></div>
+        <p class="small muted">Daily quantities then mean how many you expect to sell. Instead of baking every day, the Stock tab tracks what's on hand and tells you when to make the next batch.</p></div>
       <div class="sec"><h4>Open choice</h4><div class="grid3">
         <label class="f">What to decide<input type="text" name="choice_label" value="${esc(p.choice_label || "")}" placeholder="Toppings, Flavours…"></label>
         <label class="f">How many<input type="number" name="choice_count" min="1" value="${p.choice_count}"></label>
@@ -1044,7 +1079,7 @@ async function saveProduct(p, form) {
   const row = { name: g("name").trim(), kind: g("kind"), category: g("category") || null, price: g("price") === "" ? null : +g("price"), default_qty: +g("default_qty") || 0,
     choice_label: g("choice_label").trim() || null, choice_count: Math.max(1, +g("choice_count") || 1), decide_days: Math.max(0, +g("decide_days") || 0),
     orderable: !!g("orderable"), lead_days: Math.max(0, +g("lead_days") || 0), deposit_pct: Math.min(100, Math.max(0, +g("deposit_pct") || 0)), unit_label: g("unit_label") || "pcs",
-    order_note: g("order_note") || null, active: !!g("active") };
+    order_note: g("order_note") || null, active: !!g("active"), stock_mode: !!g("stock_mode"), shelf_days: Math.max(1, +g("shelf_days") || 7), batch_size: g("batch_size") === "" ? null : Math.max(1, +g("batch_size")) };
   if (!row.name) throw new Error("Give the product a name.");
   let id = p.id;
   if (id) await DB.upd("bk_products", id, row); else { row.position = S.products.length + 1; id = (await DB.ins("bk_products", row))[0].id; }
@@ -1172,8 +1207,142 @@ window.addEventListener("message", e => {
   });
 });
 
+/* ================= STOCK (pastries made in batches) =================
+   Daily plan quantities for stock products are expected sales. On hand + planned batches − expected sales
+   gives a projection; when it goes below zero, a batch is suggested in time for the recipe's chain. */
+S.sPlan = []; S.batches = [];
+const stockProducts = () => S.products.filter(p => p.stock_mode && p.active);
+async function loadStock() {
+  const ids = S.products.filter(p => p.stock_mode).map(p => p.id);
+  if (!ids.length) { S.sPlan = []; S.batches = []; return; }
+  const t = todayISO();
+  const [pl, bt, fresh] = await Promise.all([
+    DB.sel("bk_plan", { in: { product_id: ids }, gte: { date: t }, lte: { date: addDays(t, 27) } }),
+    DB.sel("bk_batches", { in: { product_id: ids }, gte: { date: addDays(t, -60) }, order: [["date"]] }),
+    DB.sel("bk_products", { in: { id: ids }, cols: "id,on_hand,counted_at" })
+  ]);
+  S.sPlan = pl; S.batches = bt;
+  for (const f of fresh) { const p = prod(f.id); if (p) { p.on_hand = f.on_hand; p.counted_at = f.counted_at; } }
+}
+function projection(p, days = 21) {
+  const t = todayISO(), out = []; let s = +p.on_hand || 0;
+  const planned = S.batches.filter(b => b.product_id === p.id && b.status === "planned");
+  for (let i = 0; i < days; i++) {
+    const d = addDays(t, i);
+    const inc = planned.filter(b => (i === 0 ? b.date <= d : b.date === d)).reduce((a, b) => a + b.qty, 0);
+    const need = S.sPlan.filter(x => x.product_id === p.id && x.date === d && x.status !== "cancelled" && !x.order_id && x.sold == null).reduce((a, x) => a + x.qty, 0);
+    const start = s + inc, end = start - need;
+    out.push({ d, need, inc, start, end }); s = Math.max(0, end);
+  }
+  return out;
+}
+const projAt = (p, d) => d < todayISO() ? null : projection(p, Math.min(28, diffDays(todayISO(), d) + 1)).find(x => x.d === d) || null;
+const leadDays = p => Math.max(1, ...partsOf(p.id).map(x => daysOf(x.recipe_id)));
+function coverage(p) {
+  const pr = projection(p), short = pr.find(x => x.end < 0);
+  return { pr, short, lastsUntil: short ? (pr.indexOf(short) > 0 ? pr[pr.indexOf(short) - 1].d : null) : null, days: short ? pr.indexOf(short) : pr.length };
+}
+function stockAlerts() {
+  const t = todayISO();
+  return stockProducts().map(p => { const c = coverage(p); if (!c.short) return null; const makeBy = addDays(c.short.d, -(leadDays(p) - 1)); return { p, c, makeBy, late: makeBy <= t }; })
+    .filter(Boolean).sort((a, b) => a.makeBy.localeCompare(b.makeBy));
+}
+function suggestQty(p, from) { if (p.batch_size) return p.batch_size; const pr = projection(p, 28).filter(x => x.d >= from).slice(0, p.shelf_days || 7); return Math.max(1, pr.reduce((a, x) => a + x.need, 0)); }
+function alertCard(a, t) {
+  return `<button type="button" class="dcard ${a.late ? "late" : ""}" data-act="batch" data-pid="${a.p.id}" data-date="${a.c.short.d}" data-qty="${suggestQty(a.p, a.c.short.d)}"><b>${esc(a.p.name)}: runs out ${fmtD(a.c.short.d)}</b><span class="small">${+a.p.on_hand || 0} on hand · ${a.c.short.need} needed that day</span><span class="small">Make a batch by ${a.late ? "<b>today</b>" : fmtD(a.makeBy)}</span></button>`;
+}
+function oldestInStock(p) {
+  let left = +p.on_hand || 0, oldest = null;
+  for (const b of S.batches.filter(x => x.product_id === p.id && x.status === "made").sort((a, b) => (b.made_at || b.date).localeCompare(a.made_at || a.date))) {
+    if (left <= 0) break; oldest = b; left -= b.qty;
+  }
+  if (!oldest) return null;
+  const made = (oldest.made_at || oldest.date).slice(0, 10);
+  return { made, until: addDays(made, p.shelf_days || 7), unknownOlder: left > 0 };
+}
+const ago = ts => { if (!ts) return "not counted yet"; const d = diffDays(ts.slice(0, 10), todayISO()); const hm = new Date(ts); return d === 0 ? `counted today ${pad(hm.getHours())}:${pad(hm.getMinutes())}` : d === 1 ? "counted yesterday" : `counted ${d} days ago`; };
+async function setOnHand(p, v) {
+  const row = { on_hand: v, counted_at: new Date().toISOString() };
+  await DB.upd("bk_products", p.id, row); Object.assign(p, row); rerender();
+}
+async function markBatch(b, made) {
+  const p = prod(b.product_id); if (!p) return;
+  const fresh = (await DB.sel("bk_products", { eq: { id: p.id } }))[0] || p;
+  const oh = Math.max(0, (+fresh.on_hand || 0) + (made ? b.qty : -b.qty));
+  await DB.upd("bk_products", p.id, { on_hand: oh }); p.on_hand = oh;
+  await DB.upd("bk_batches", b.id, { status: made ? "made" : "planned", made_at: made ? new Date().toISOString() : null });
+  const lb = S.batches.find(x => x.id === b.id); if (lb) Object.assign(lb, { status: made ? "made" : "planned", made_at: made ? new Date().toISOString() : null });
+  toast(made ? `${p.name}: +${b.qty} in stock (${oh} on hand).` : `${p.name}: batch back to planned (${oh} on hand).`);
+}
+async function batchHook(t, status) {
+  if (!t || t.kind !== "step" || t.day_index !== t.day_count) return;
+  for (const s of t.sources || []) {
+    if (!s.batch) continue;
+    const b = (await DB.sel("bk_batches", { eq: { id: s.batch } }))[0]; if (!b) continue;
+    if (status === "done" && b.status === "planned") await markBatch(b, true);
+    else if (status !== "done" && b.status === "made") await markBatch(b, false);
+  }
+}
+
+function renderStock() {
+  const t = todayISO(), list = stockProducts();
+  const cards = list.map(p => {
+    const c = coverage(p), old = oldestInStock(p), lead = leadDays(p);
+    const status = c.short ? (diffDays(t, c.short.d) <= lead ? ["warn", `Runs out ${fmtD(c.short.d)}`] : ["sea", `Lasts until ${fmtD(c.lastsUntil || t)}`]) : ["ok", `Enough for ${c.pr.length}+ days`];
+    const bs = S.batches.filter(b => b.product_id === p.id && b.status !== "cancelled" && (b.status === "planned" || b.date >= addDays(t, -(p.shelf_days || 7))));
+    return `<article class="scard"${cvar(prodColor(p.id))}>
+      <div class="row"><h3><i class="pdot" style="display:inline-block"></i>${esc(p.name)}</h3><span class="spacer"></span><span class="b ${status[0]}">${status[1]}</span></div>
+      <div class="onhand"><div><span class="big">${+p.on_hand || 0}</span> <span class="muted">${esc(p.unit_label || "pcs")} on hand</span><br><span class="small muted">${ago(p.counted_at)}</span></div>
+        <div class="stepper"><button type="button" data-act="oh" data-id="${p.id}" data-d="-1" aria-label="One less">−</button><input type="number" inputmode="numeric" min="0" data-onhand="${p.id}" value="${+p.on_hand || 0}" aria-label="${esc(p.name)} on hand"><button type="button" data-act="oh" data-id="${p.id}" data-d="1" aria-label="One more">+</button></div>
+        <button type="button" class="btn sm" data-act="ohcount" data-id="${p.id}">Counted</button></div>
+      <div class="strip" role="table" aria-label="Next two weeks">${c.pr.slice(0, 14).map(x => `<div class="cell ${x.end < 0 ? "short" : x.end < x.need ? "low" : ""} ${x.inc ? "inc" : ""}" role="row" title="${fmtD(x.d)}: need ${x.need}${x.inc ? `, batch +${x.inc}` : ""}, left ${Math.max(0, x.end)}${x.end < 0 ? `, short ${-x.end}` : ""}">
+        <span class="dw">${DOW[weekday(x.d) - 1].slice(0, 2)}</span><span class="dn">${parse(x.d).getDate()}</span><b>${Math.max(0, x.end)}</b><span class="nd">${x.inc ? `+${x.inc}` : x.need ? `−${x.need}` : "·"}</span></div>`).join("")}</div>
+      <div class="list">${bs.map(b => `<div class="li"><span class="b ${b.status === "made" ? "ok" : "acc"}">${b.status === "made" ? "Made" : "Planned"}</span><span class="grow">${b.qty} ${esc(p.unit_label || "pcs")} · ${b.status === "made" ? `made ${fmtD((b.made_at || b.date).slice(0, 10))}` : `ready ${fmtD(b.date)}`}</span>
+        <button type="button" class="btn sm ghost" data-act="bmade" data-id="${b.id}">${b.status === "made" ? "Undo" : "Mark made"}</button><button type="button" class="btn sm ghost" data-act="batch" data-pid="${p.id}" data-id="${b.id}">Edit</button></div>`).join("") || `<div class="small muted">No batches planned.</div>`}</div>
+      <div class="row"><button type="button" class="btn primary sm" data-act="batch" data-pid="${p.id}" data-date="${c.short ? c.short.d : addDays(t, lead)}" data-qty="${suggestQty(p, c.short ? c.short.d : t)}">Plan a batch</button>
+        <span class="small muted">Keeps ${p.shelf_days || 7} days · ${lead}-day recipe${p.batch_size ? ` · batch of ${p.batch_size}` : ""}${old ? ` · oldest made ${fmtShort(old.made)}, use by <b class="${old.until <= t ? "warnt" : ""}">${fmtShort(old.until)}</b>` : ""}</span></div>
+    </article>`;
+  }).join("");
+  $("#main").innerHTML = `<div class="bar"><h2>Stock</h2><span class="spacer"></span></div>
+    <p class="muted small" style="max-width:760px;margin-top:-6px">Pastries made in batches and sold over several days. Daily quantities in the plan are what you expect to sell. Count what's on hand now and then; end-of-day sales and finished batches update it automatically.</p>
+    <p class="small muted">Each day shows what's <b>left at close</b>, with the day's sales (−) or a batch (+) below. Red means you run short.</p>
+    ${list.length ? `<div class="scards">${cards}</div>` : `<div class="empty-state">No products are sold from stock yet. Open a product in Setup and tick <b>Made in batches and sold from stock</b>.</div>`}
+    <section class="sec"><h4>Freezer prep</h4><p class="muted small">Doughs and parts you prep ahead and freeze. Below the minimum, a restock card appears on the week board.</p>
+      <div class="list">${S.stock.map(s => `<div class="li"><div class="grow"><b>${esc(s.name)}</b><div class="meter ${+s.in_stock < +s.min_stock ? "low" : ""}"><i style="width:${Math.min(100, s.min_stock ? 100 * s.in_stock / s.min_stock : 100)}%"></i></div><span class="small muted">min ${+s.min_stock} ${esc(s.unit)}</span></div>
+        <div class="stepper"><button type="button" data-act="stk" data-id="${s.id}" data-d="-12" aria-label="Remove 12">−</button><input type="number" inputmode="numeric" data-stock="${s.id}" value="${+s.in_stock}" aria-label="${esc(s.name)} in stock"><button type="button" data-act="stk" data-id="${s.id}" data-d="12" aria-label="Add 12">+</button></div>
+        <button type="button" class="btn sm ghost" data-act="stockedit" data-id="${s.id}">Edit</button></div>`).join("")}</div>
+      <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="stockedit">+ Freezer item</button></div></section>`;
+}
+
+function batchSheet(pid, date, qty, id) {
+  const b = id ? S.batches.find(x => x.id === id) : null;
+  const p = prod(b ? b.product_id : pid); if (!p) return;
+  const d = b ? b.date : (date || addDays(todayISO(), leadDays(p))), q = b ? b.qty : (+qty || suggestQty(p, d));
+  const chain = partsOf(p.id).flatMap(x => { const n = daysOf(x.recipe_id); return stepsOf(x.recipe_id).map(s => ({ d: s.day - n, t: s.title, r: rec(x.recipe_id)?.name })); }).sort((a, b) => a.d - b.d);
+  openSheet(`${head(b ? `Batch: ${esc(p.name)}` : `Plan a batch: ${esc(p.name)}`, `${+p.on_hand || 0} on hand · keeps ${p.shelf_days || 7} days`)}
+    <div class="grid2"><label class="f">Ready on<input type="date" id="bDate" value="${d}"></label><label class="f">Quantity (${esc(p.unit_label || "pcs")})<input type="number" id="bQty" min="1" value="${q}"></label></div>
+    ${chain.length ? `<div class="sec"><h4>Steps it adds</h4><div class="chain" id="bChain">${chain.map(c => `<div class="st"><span class="d" data-off="${c.d}">${fmtD(addDays(d, c.d))}</span><span class="grow">${esc(c.t)}</span></div>`).join("")}</div></div>` : `<p class="note">This product has no recipe yet, so the batch adds stock but no steps.</p>`}
+    <p class="small muted">Ticking the last step done adds the batch to what's on hand.</p>
+    <label class="f">Notes<textarea id="bNotes">${esc(b?.notes || "")}</textarea></label>
+    <div class="row sec"><button type="button" class="btn primary" data-act="bsave" data-pid="${p.id}" data-id="${b ? b.id : ""}">${b ? "Save" : "Add batch"}</button>
+      ${b ? `<button type="button" class="btn" data-act="bmade" data-id="${b.id}">${b.status === "made" ? "Undo made" : "Mark made now"}</button><span class="spacer"></span><button type="button" class="btn warn" data-act="bdel" data-id="${b.id}">Delete</button>` : ""}</div>`,
+    sh => sh.querySelector("#bDate").addEventListener("change", e => $$("#bChain .d", sh).forEach(el => { el.textContent = fmtD(addDays(e.target.value, +el.dataset.off)); })));
+}
+async function saveBatch(pid, id) {
+  const date = $("#bDate").value, qty = Math.max(1, +$("#bQty").value || 1), notes = $("#bNotes").value.trim() || null;
+  if (!date) throw new Error("Pick the day it should be ready.");
+  const old = id ? S.batches.find(x => x.id === id) : null;
+  if (old) {
+    await DB.upd("bk_batches", id, { date, qty, notes });
+    if (old.status === "made" && old.qty !== qty) { const p = prod(pid); const oh = Math.max(0, (+p.on_hand || 0) + qty - old.qty); await DB.upd("bk_products", pid, { on_hand: oh }); p.on_hand = oh; }
+    if (old.date !== date) await syncTasks(addDays(old.date, -14), old.date);
+  } else await DB.ins("bk_batches", { product_id: pid, date, qty, notes });
+  await syncTasks(addDays(date, -14), date);
+  closeSheet(); toast(old ? "Batch saved." : `Batch planned for ${fmtD(date)}. Its steps are on the calendar.`); await refresh();
+}
+
 /* ================= EVENTS ================= */
-function rerender() { ({ week: renderWeek, today: renderToday, orders: renderOrders, setup: renderSetup })[S.view]?.(); renderNav(); }
+function rerender() { ({ week: renderWeek, today: renderToday, orders: renderOrders, setup: renderSetup, stock: renderStock })[S.view]?.(); renderNav(); }
 const ACT = {
   close: () => closeSheet(),
   wk: el => { const d = +el.dataset.d; S.week = d === 0 ? mondayOf(todayISO()) : addDays(S.week, d); return refresh({ nav: true }); },
@@ -1182,7 +1351,7 @@ const ACT = {
   toggle: async el => {
     const t = S.tasks.find(x => x.id === el.dataset.id); if (!t) return;
     const status = t.status === "done" ? "todo" : "done";
-    await DB.upd("bk_tasks", t.id, { status }); t.status = status; rerender();
+    await DB.upd("bk_tasks", t.id, { status }); t.status = status; await batchHook(t, status); rerender();
   },
   task: el => taskSheet(el.dataset.id),
   day: el => dayPlanSheet(el.dataset.date),
@@ -1213,7 +1382,13 @@ const ACT = {
   rdel: async el => { const r = rec(el.dataset.id); if (!r || !confirm(`Delete ${r.name}? Products using it lose this part.`)) return; await DB.del("bk_recipes", r.id); await afterStructureChange(); closeSheet(); await refresh(); },
   sdel: async el => { if (!confirm("Delete this freezer item?")) return; await DB.del("bk_stock", el.dataset.id); await loadStatic(); closeSheet(); await refresh(); },
   stockedit: el => stockSheet(el.dataset.id),
-  stk: async el => { const s = S.stock.find(x => x.id === el.dataset.id); if (!s) return; const v = Math.max(0, +s.in_stock + +el.dataset.d); await DB.upd("bk_stock", s.id, { in_stock: v, updated_at: new Date().toISOString() }); s.in_stock = v; renderSetup(); },
+  stk: async el => { const s = S.stock.find(x => x.id === el.dataset.id); if (!s) return; const v = Math.max(0, +s.in_stock + +el.dataset.d); await DB.upd("bk_stock", s.id, { in_stock: v, updated_at: new Date().toISOString() }); s.in_stock = v; rerender(); },
+  oh: async el => { const p = prod(el.dataset.id); await setOnHand(p, Math.max(0, (+p.on_hand || 0) + +el.dataset.d)); },
+  ohcount: async el => { const p = prod(el.dataset.id); const inp = $(`[data-onhand="${p.id}"]`); await setOnHand(p, Math.max(0, +inp.value || 0)); toast(`${p.name}: ${p.on_hand} counted.`); },
+  batch: el => batchSheet(el.dataset.pid, el.dataset.date, el.dataset.qty, el.dataset.id),
+  bsave: async el => saveBatch(el.dataset.pid, el.dataset.id),
+  bdel: async el => { if (!confirm("Delete this batch? Its steps are removed from the calendar.")) return; const b = S.batches.find(x => x.id === el.dataset.id); if (b && b.status === "made") await markBatch(b, false); await DB.del("bk_batches", el.dataset.id); if (b) await syncTasks(addDays(b.date, -14), b.date); closeSheet(); await refresh(); },
+  bmade: async el => { const b = S.batches.find(x => x.id === el.dataset.id) || (await DB.sel("bk_batches", { eq: { id: el.dataset.id } }))[0]; if (b) await markBatch(b, b.status !== "made"); closeSheet(); rerender(); },
   savetmpl: async () => {
     const ins = [], ups = [], dels = [];
     for (const inp of $$("[data-tmpl]")) {
@@ -1230,7 +1405,7 @@ const ACT = {
   theme: () => { const r = document.documentElement; const cur = r.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); r.dataset.theme = cur === "dark" ? "light" : "dark"; store.set("bk.theme", r.dataset.theme); },
   signout: async () => { await AUTH.signOut(); location.reload(); },
   /* task sheet */
-  tstatus: async el => { await DB.upd("bk_tasks", el.dataset.id, { status: el.dataset.s }); const t = S.tasks.find(x => x.id === el.dataset.id); if (t) t.status = el.dataset.s; closeSheet(); rerender(); },
+  tstatus: async el => { await DB.upd("bk_tasks", el.dataset.id, { status: el.dataset.s }); const t = S.tasks.find(x => x.id === el.dataset.id) || (await DB.sel("bk_tasks", { eq: { id: el.dataset.id } }))[0]; if (t) { t.status = el.dataset.s; await batchHook(t, el.dataset.s); } closeSheet(); rerender(); },
   tsave: async el => {
     const patch = { date: $("#tDate").value, time_hint: $("#tTod").value || null, notes: $("#tNotes").value.trim() || null };
     if ($("#tTitle")) patch.title = $("#tTitle").value.trim() || "Task";
@@ -1286,11 +1461,17 @@ const ACT = {
     await syncTasks(addDays(dates[0], -14), dates[dates.length - 1]); closeSheet(); toast("Decided."); await refresh();
   },
   savelog: async () => {
+    const moved = [];
     for (const row of $$("[data-log]")) {
       const patch = {}; for (const inp of $$("[data-f]", row)) { const f = inp.dataset.f; patch[f] = inp.value === "" ? null : (f === "sold_out_at" ? inp.value : Math.max(0, +inp.value)); }
-      await DB.upd("bk_plan", row.dataset.log, patch);
+      const pl = S.plan.find(x => x.id === row.dataset.log), p = pl && prod(pl.product_id);
+      if (p && p.stock_mode && !pl.order_id) {
+        const delta = ((patch.sold || 0) + (patch.wasted || 0)) - ((pl.sold || 0) + (pl.wasted || 0));
+        if (delta) { const fresh = (await DB.sel("bk_products", { eq: { id: p.id } }))[0]; const oh = Math.max(0, (+fresh.on_hand || 0) - delta); await DB.upd("bk_products", p.id, { on_hand: oh }); p.on_hand = oh; moved.push(`${p.name} ${oh} left`); }
+      }
+      await DB.upd("bk_plan", row.dataset.log, patch); if (pl) Object.assign(pl, patch);
     }
-    toast("Day saved.");
+    toast(moved.length ? `Day saved. Stock: ${moved.join(", ")}.` : "Day saved.");
   }
 };
 document.addEventListener("click", e => {
@@ -1304,7 +1485,8 @@ document.addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches(".cbody[role=button]")) { e.preventDefault(); e.target.click(); }
 });
 document.addEventListener("change", e => {
-  if (e.target.matches("[data-stock]")) guard(async () => { const s = S.stock.find(x => x.id === e.target.dataset.stock); const v = Math.max(0, +e.target.value || 0); await DB.upd("bk_stock", s.id, { in_stock: v, updated_at: new Date().toISOString() }); s.in_stock = v; renderSetup(); });
+  if (e.target.matches("[data-stock]")) guard(async () => { const s = S.stock.find(x => x.id === e.target.dataset.stock); const v = Math.max(0, +e.target.value || 0); await DB.upd("bk_stock", s.id, { in_stock: v, updated_at: new Date().toISOString() }); s.in_stock = v; rerender(); });
+  if (e.target.matches("[data-onhand]")) guard(async () => { const p = prod(e.target.dataset.onhand); await setOnHand(p, Math.max(0, +e.target.value || 0)); });
 });
 document.addEventListener("submit", e => {
   if (e.target.id !== "setForm") return; e.preventDefault();
