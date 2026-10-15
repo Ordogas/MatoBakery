@@ -332,7 +332,7 @@ body.in-lab{overflow:hidden}
 
 /* sales */
 .srows{display:flex;flex-direction:column;gap:6px}
-.srow{display:grid;grid-template-columns:minmax(150px,1fr) 72px 150px 72px 176px 54px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.srow{display:grid;grid-template-columns:minmax(150px,1fr) 68px 148px 68px 112px 172px 48px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .srow.h{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border:0;padding:0}
 .srow input[type=number]{text-align:center;padding:6px}
 .srow .stepper input{width:64px}
@@ -353,6 +353,23 @@ body.in-lab{overflow:hidden}
 .wcol .tq{position:absolute;left:-3px;right:-3px;height:2px;background:var(--ink);border-radius:1px}
 .sugg{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .srow.h span:first-child{text-align:left}
+
+.leftbtn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px;font-weight:600;font-size:14px;min-height:36px;white-space:nowrap}
+.leftbtn.todo{border-color:var(--sea);background:var(--sea-soft);color:var(--sea)}
+.leftbtn .small{font-weight:500}
+.lsplit{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+.lsplit.hidden{display:none}
+.lsplit label.f{width:110px}
+.lsplit input{text-align:center;padding:6px}
+.lsplit .unassigned{margin-left:auto;align-self:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.tile span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tile b{font-family:var(--f-display);font-size:26px;line-height:1.1}
+.tile small{color:var(--muted);font-size:12px}
+.lbreak{white-space:normal}
+@media (max-width:700px){.srow{grid-template-columns:1fr 1fr}.lsplit label.f{width:calc(50% - 6px)}}
+.leftbtn span{pointer-events:none}
 
 </style>
 </head>
@@ -780,7 +797,7 @@ function renderToday() {
     ${pick.length ? `<section class="sec"><h4>Pickups today</h4><div class="list">${pick.map(o => `<button type="button" class="li" data-act="order" data-id="${o.id}" style="text-align:left"><span class="b spe">${esc(o.code)}</span><span class="grow"><b>${esc(o.customer_name)}</b> ${o.pickup_time ? "· " + esc(o.pickup_time) : ""}<br><span class="small muted">${esc(itemsOf(o.id).map(i => i.qty + "× " + i.name).join(", "))}</span></span>${o.status === "ready" ? `<span class="b ok">Ready</span>` : ""}</button>`).join("")}</div></section>` : ""}
     <section class="sec big"><h4>Tasks</h4><div class="tl">${tasks.length ? tasks.map(x => taskCard(x, true)).join("") : `<div class="empty-state">Nothing scheduled today.</div>`}</div></section>
     ${tomorrow.length ? `<section class="sec"><h4>Tomorrow</h4><div class="tl">${tomorrow.map(x => taskCard(x)).join("")}</div></section>` : ""}
-    ${sale.length ? `<section class="sec lane"><h3>End of day</h3><div class="row"><span>${sale.filter(x => x.sold != null).length} of ${sale.filter(x => !x.order_id).length} items logged today.</span><span class="spacer"></span><button type="button" class="btn primary" data-act="gosales">Log sales →</button></div><p class="small muted" style="margin:6px 0 0">Made, sold, waste and sold-out time per item. It feeds stock counts and next weeks' quantities.</p></section>` : ""}
+    ${sale.length ? `<section class="sec lane"><h3>End of day</h3><div class="row"><span>${sale.filter(x => x.sold != null).length} of ${sale.filter(x => !x.order_id).length} items logged today.</span><span class="spacer"></span><button type="button" class="btn primary" data-act="gosales">Log sales →</button></div><p class="small muted" style="margin:6px 0 0">Made, sold, discounted, leftovers and sold-out time per item. It feeds stock counts and next weeks' quantities.</p></section>` : ""}
   </div>`;
 }
 
@@ -1411,111 +1428,165 @@ async function saveBatch(pid, id) {
   closeSheet(); toast(old ? "Batch saved." : `Batch planned for ${fmtD(date)}. Its steps are on the calendar.`); await refresh();
 }
 
-/* ================= SALES: daily log + how items are selling ================= */
-S.salesDate = todayISO(); S.salesRange = store.get("bk.salesRange", 28); S.salesDay = []; S.salesHist = [];
+/* ================= SALES: daily log + how items are selling =================
+   Per item and day: made (baked), sold at full price, sold discounted, sold-out time, and what happened to
+   leftovers: carried over to sell tomorrow, reused in the kitchen, given away, or binned (stored as `wasted`). */
+S.salesDate = todayISO(); S.salesRange = store.get("bk.salesRange", 28); S.salesDay = []; S.salesPrev = []; S.salesHist = []; S.splitOpen = new Set();
+const LEFT_KEYS = [["carried", "Carry over", "Sell it tomorrow"], ["reused", "Reused", "Casserole, croutons, pangrattato…"], ["given", "Given away", "Staff, kids, neighbours"], ["wasted", "Binned", "Lost"]];
 async function loadSales() {
   const t = todayISO(), d = S.salesDate;
-  const [day, hist] = await Promise.all([
+  const [day, prev, hist] = await Promise.all([
     DB.sel("bk_plan", { eq: { date: d }, order: [["created_at"]] }),
-    DB.sel("bk_plan", { gte: { date: addDays(t, -S.salesRange) }, lte: { date: t } }),
+    DB.sel("bk_plan", { eq: { date: addDays(d, -1) } }),
+    DB.sel("bk_plan", { gte: { date: addDays(t, -S.salesRange - 1) }, lte: { date: t } }),
     loadStock()
   ]);
-  S.salesDay = day.filter(x => !x.order_id && x.status !== "cancelled");
-  S.salesHist = hist.filter(x => !x.order_id && x.status !== "cancelled");
+  const ok = x => !x.order_id && x.status !== "cancelled";
+  S.salesDay = day.filter(ok); S.salesPrev = prev.filter(ok); S.salesHist = hist.filter(ok);
 }
-/* save one product's numbers; stock products also move their on-hand count */
+const carryIn = (pid, rowsPrev) => rowsPrev.filter(x => x.product_id === pid).reduce((a, x) => a + (x.carried || 0), 0);
+const madeOf = pl => pl.baked ?? pl.qty ?? 0;
+const consumed = x => (x.sold || 0) + (x.discounted || 0) + (x.carried || 0) + (x.reused || 0) + (x.given || 0) + (x.wasted || 0);
+/* save one item's numbers; stock products also move their on-hand count (carry-over doesn't apply to stock) */
 async function saveSaleRow(pl, patch) {
   const p = prod(pl.product_id);
   if (p && p.stock_mode) {
-    const delta = ((patch.sold ?? pl.sold ?? 0) + (patch.wasted ?? pl.wasted ?? 0)) - ((pl.sold || 0) + (pl.wasted || 0));
+    const out = x => (x.sold || 0) + (x.discounted || 0) + (x.reused || 0) + (x.given || 0) + (x.wasted || 0);
+    const delta = out({ ...pl, ...patch }) - out(pl);
     if (delta) { const fresh = (await DB.sel("bk_products", { eq: { id: p.id } }))[0] || p; const oh = Math.max(0, (+fresh.on_hand || 0) - delta); await DB.upd("bk_products", p.id, { on_hand: oh }); p.on_hand = oh; }
   }
   await DB.upd("bk_plan", pl.id, patch); Object.assign(pl, patch);
 }
 const SAVE_T = {};
+function rowNums(r) {
+  const num = f => { const el = $(`[data-f="${f}"]`, r); if (!el) return undefined; return el.value === "" ? null : Math.max(0, +el.value); };
+  const o = { baked: num("baked"), sold: num("sold"), discounted: num("discounted"), sold_out_at: $(`[data-f="sold_out_at"]`, r).value || null };
+  for (const [k] of LEFT_KEYS) { const v = num(k); if (v !== undefined) o[k] = v; }
+  return o;
+}
+function updateLeftBadge(id) {
+  const r = $(`[data-sale="${id}"]`), pl = S.salesDay.find(x => x.id === id); if (!r || !pl) return;
+  const n = rowNums(r), avail = (n.baked ?? pl.qty ?? 0) + carryIn(pl.product_id, S.salesPrev);
+  const left = Math.max(0, avail - (n.sold || 0) - (n.discounted || 0));
+  const assigned = LEFT_KEYS.reduce((a, [k]) => a + ((n[k] ?? pl[k]) || 0), 0);
+  const p = prod(pl.product_id), logged = n.sold != null || n.discounted != null;
+  const b = $(".leftbtn", r);
+  if (b) {
+    if (p?.stock_mode) { const out = LEFT_KEYS.reduce((a, [k]) => a + (k === "carried" ? 0 : ((n[k] ?? pl[k]) || 0)), 0); $(".lc", b).textContent = out ? `${out} out of stock` : "Stays in stock"; $(".ls", b).textContent = ""; b.classList.remove("todo"); }
+    else if (!logged) { $(".lc", b).textContent = "Sort…"; $(".ls", b).textContent = ""; b.classList.remove("todo"); }
+    else { $(".lc", b).textContent = `${left} left`; $(".ls", b).textContent = left ? (assigned >= left ? " ✓" : ` ${left - assigned} to sort`) : ""; b.classList.toggle("todo", left > assigned); }
+  }
+  if (p?.stock_mode) { const u0 = $(".lsplit .unassigned", r); if (u0) u0.textContent = "Unsold pieces stay in stock. Note only what was reused, given away or binned."; return; }
+  const u = $(".lsplit .unassigned", r); if (u) u.textContent = left > assigned ? `${left - assigned} not sorted yet` : assigned > left ? `${assigned - left} more than left over` : "All leftovers sorted";
+}
 function queueSale(id) {
   clearTimeout(SAVE_T[id]);
   const row = $(`[data-sale="${id}"]`); if (row) row.dataset.state = "pending";
+  updateLeftBadge(id);
   SAVE_T[id] = setTimeout(() => guard(async () => {
     const r = $(`[data-sale="${id}"]`), pl = S.salesDay.find(x => x.id === id); if (!r || !pl) return;
-    const num = f => { const v = $(`[data-f="${f}"]`, r).value; return v === "" ? null : Math.max(0, +v); };
-    const so = $(`[data-f="sold_out_at"]`, r).value || null;
-    await saveSaleRow(pl, { baked: num("baked"), sold: num("sold"), wasted: num("wasted"), sold_out_at: so });
+    await saveSaleRow(pl, rowNums(r));
     r.dataset.state = "saved"; const st = $(".sstate", r); if (st) st.textContent = "Saved";
     renderSalesSummary();
   }), 700);
 }
 function salesStats() {
-  const by = new Map();
-  for (const x of S.salesHist) {
-    if (x.sold == null) continue;
+  const by = new Map(), hist = S.salesHist, t = todayISO(), from = addDays(t, -S.salesRange);
+  for (const x of hist) {
+    if (x.sold == null || x.date < from) continue;
     const p = prod(x.product_id); if (!p) continue;
     if (!by.has(p.id)) by.set(p.id, { p, rows: [] });
     by.get(p.id).rows.push(x);
   }
+  const prevOf = x => hist.filter(y => y.product_id === x.product_id && y.date === addDays(x.date, -1));
   return [...by.values()].map(({ p, rows }) => {
-    const sold = rows.reduce((a, x) => a + (x.sold || 0), 0), waste = rows.reduce((a, x) => a + (x.wasted || 0), 0);
-    const made = rows.reduce((a, x) => a + (x.baked ?? x.qty ?? 0), 0);
+    const sum = k => rows.reduce((a, x) => a + (x[k] || 0), 0);
+    const sold = sum("sold"), disc = sum("discounted"), carried = sum("carried"), reused = sum("reused"), given = sum("given"), binned = sum("wasted");
+    const avail = rows.reduce((a, x) => a + madeOf(x) + (p.stock_mode ? 0 : carryIn(x.product_id, prevOf(x))), 0);
+    const left = Math.max(0, avail - sold - disc);
     const outs = rows.filter(x => x.sold_out_at);
     const avgOut = outs.length ? Math.round(outs.reduce((a, x) => { const [h, m] = x.sold_out_at.split(":").map(Number); return a + h * 60 + m; }, 0) / outs.length) : null;
     const wd = Array.from({ length: 7 }, (_, i) => {
       const r = rows.filter(x => weekday(x.date) === i + 1);
       const tq = S.tmpl.find(ti => ti.product_id === p.id && ti.weekday === i + 1)?.qty || 0;
-      const n = r.length, avg = n ? r.reduce((a, x) => a + (x.sold || 0), 0) / n : null;
+      const n = r.length, avg = n ? r.reduce((a, x) => a + (x.sold || 0) + (x.discounted || 0), 0) / n : null;
       const outRate = n ? r.filter(x => x.sold_out_at).length / n : 0;
-      const wRate = n ? r.reduce((a, x) => a + (x.wasted || 0), 0) / Math.max(1, r.reduce((a, x) => a + (x.baked ?? x.qty ?? 0), 0)) : 0;
+      const made = r.reduce((a, x) => a + madeOf(x), 0);
+      const leftRate = made ? r.reduce((a, x) => a + Math.max(0, madeOf(x) - (x.sold || 0) - (x.discounted || 0)), 0) / made : 0;
       let sug = null;
-      if (n >= 2 && tq) {
+      if (n >= 2 && tq && !p.stock_mode) {
         if (outRate >= 0.5) sug = Math.max(tq + 2, Math.ceil(tq * 1.15));
-        else if (wRate > 0.15) sug = Math.max(1, Math.round(avg * 1.05));
+        else if (leftRate > 0.15) sug = Math.max(1, Math.round(avg * 1.05));
         if (sug === tq) sug = null;
       }
-      return { n, avg, tq, outRate, sug };
+      return { n, avg, tq, outRate, leftRate, sug };
     });
-    return { p, days: rows.length, sold, waste, made, through: made ? sold / made : null, outs: outs.length, avgOut, perDay: sold / rows.length, wd };
-  }).sort((a, b) => b.sold - a.sold);
+    return { p, days: rows.length, sold, disc, carried, reused, given, binned, avail, left, through: avail ? (sold + disc) / avail : null, outs: outs.length, avgOut, perDay: (sold + disc) / rows.length, wd };
+  }).sort((a, b) => (b.sold + b.disc) - (a.sold + a.disc));
 }
 function renderSalesSummary() {
   const box = $("#salesSummary"); if (!box) return;
   const st = salesStats();
   const maxAvg = Math.max(1, ...st.flatMap(s => s.wd.map(w => Math.max(w.avg || 0, w.tq || 0))));
-  box.innerHTML = st.length ? `<div class="tblwrap"><table class="tbl stbl"><thead><tr><th>Product</th><th>Sold</th><th>Per day</th><th>Waste</th><th>Sell-through</th><th>Sold out</th><th>By weekday <span class="muted" style="text-transform:none;letter-spacing:0">(avg sold · line = template)</span></th></tr></thead><tbody>
-    ${st.map(s => `<tr><td><b>${esc(s.p.name)}</b><br><span class="small muted">${s.days} day${s.days > 1 ? "s" : ""} logged</span></td>
-      <td class="num">${s.sold}</td><td class="num">${s.perDay.toFixed(1)}</td>
-      <td class="num ${s.made && s.waste / s.made > 0.15 ? "warnt" : ""}">${s.waste}${s.made ? ` <span class="small muted">${Math.round(100 * s.waste / s.made)}%</span>` : ""}</td>
+  const tot = st.reduce((a, s) => ({ sold: a.sold + s.sold, disc: a.disc + s.disc, carried: a.carried + s.carried, reused: a.reused + s.reused, given: a.given + s.given, binned: a.binned + s.binned, avail: a.avail + s.avail }), { sold: 0, disc: 0, carried: 0, reused: 0, given: 0, binned: 0, avail: 0 });
+  const pct = (n, d) => d ? Math.round(100 * n / d) + "%" : "–";
+  box.innerHTML = st.length ? `
+    <div class="tiles">
+      <div class="tile"><span>Sold</span><b>${tot.sold + tot.disc}</b><small>${pct(tot.sold + tot.disc, tot.avail)} of what was out${tot.disc ? ` · ${tot.disc} discounted` : ""}</small></div>
+      <div class="tile"><span>Carried over</span><b>${tot.carried}</b><small>sold the next day</small></div>
+      <div class="tile"><span>Reused</span><b>${tot.reused}</b><small>kitchen dishes, croutons…</small></div>
+      <div class="tile"><span>Given away</span><b>${tot.given}</b><small>staff, kids</small></div>
+      <div class="tile"><span>Binned</span><b class="${tot.avail && tot.binned / tot.avail > 0.05 ? "warnt" : ""}">${tot.binned}</b><small>${pct(tot.binned, tot.avail)} lost</small></div>
+    </div>
+    <div class="tblwrap"><table class="tbl stbl"><thead><tr><th>Product</th><th>Sold</th><th>Per day</th><th>Sell-through</th><th>Leftovers</th><th>Sold out</th><th>By weekday <span class="muted" style="text-transform:none;letter-spacing:0">(avg sold · line = template)</span></th></tr></thead><tbody>
+    ${st.map(s => `<tr><td><b>${esc(s.p.name)}</b><br><span class="small muted">${s.days} day${s.days > 1 ? "s" : ""} logged${s.p.stock_mode ? " · from stock" : ""}</span></td>
+      <td class="num">${s.sold + s.disc}${s.disc ? `<br><span class="small muted">${s.disc} disc.</span>` : ""}</td><td class="num">${s.perDay.toFixed(1)}</td>
       <td class="num">${s.through != null ? Math.round(100 * s.through) + "%" : "–"}</td>
+      <td class="num">${s.p.stock_mode ? `<span class="small muted">in stock</span>` : `${s.left} <span class="small muted">${pct(s.left, s.avail)}</span>`}<br><span class="small muted lbreak">${[["carry", s.carried], ["reuse", s.reused], ["give", s.given], ["bin", s.binned]].filter(x => x[1]).map(([l, n]) => `${l} ${n}`).join(" · ")}</span></td>
       <td class="num">${s.outs ? `${s.outs}× <span class="small muted">~${pad(Math.floor(s.avgOut / 60))}:${pad(s.avgOut % 60)}</span>` : "–"}</td>
-      <td><div class="wbars" role="img" aria-label="Average sold by weekday for ${esc(s.p.name)}">${s.wd.map((w, i) => `<div class="wb" title="${DOWL[i]}: ${w.n ? `avg ${w.avg.toFixed(1)} sold over ${w.n} day${w.n > 1 ? "s" : ""}` : "no data"}${w.tq ? `, template ${w.tq}` : ""}${w.outRate ? `, sold out ${Math.round(w.outRate * 100)}% of days` : ""}">
+      <td><div class="wbars" role="img" aria-label="Average sold by weekday for ${esc(s.p.name)}">${s.wd.map((w, i) => `<div class="wb" title="${DOWL[i]}: ${w.n ? `avg ${w.avg.toFixed(1)} sold over ${w.n} day${w.n > 1 ? "s" : ""}` : "no data"}${w.tq ? `, template ${w.tq}` : ""}${w.outRate ? `, sold out ${Math.round(w.outRate * 100)}% of days` : ""}${w.leftRate ? `, ${Math.round(w.leftRate * 100)}% left over` : ""}">
           <div class="wcol">${w.tq ? `<i class="tq" style="bottom:${100 * w.tq / maxAvg}%"></i>` : ""}${w.n ? `<i class="av ${w.outRate >= 0.5 ? "out" : ""}" style="height:${Math.max(3, 100 * w.avg / maxAvg)}%"></i>` : ""}</div><span>${DOW[i][0]}</span></div>`).join("")}</div>
         ${s.wd.some(w => w.sug) ? `<div class="sugg">${s.wd.map((w, i) => w.sug ? `<span class="b ${w.sug > w.tq ? "acc" : "sea"}">${DOW[i]} ${w.tq}→${w.sug}</span>` : "").join("")} <button type="button" class="btn sm" data-act="applysug" data-id="${s.p.id}">Update template</button></div>` : ""}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="small muted">Suggestions appear once a weekday has at least two logged days: more when it sold out on half of them or more, fewer when waste was over 15%. Darker bars mean it usually sold out that weekday.</p>`
+    <p class="small muted">Sell-through counts full-price and discounted sales against everything that was out (made plus carried over). Template suggestions need two logged days per weekday: more when it sold out on half of them, fewer when over 15% was left over. Darker bars mean it usually sold out.</p>`
     : `<div class="empty-state">No sales logged in this period yet. Fill in today's numbers above and they'll show up here.</div>`;
+}
+function saleRow(pl, d, t) {
+  const p = prod(pl.product_id), cin = p?.stock_mode ? 0 : carryIn(pl.product_id, S.salesPrev), open = S.splitOpen.has(pl.id);
+  const keys = LEFT_KEYS.filter(([k]) => !(p?.stock_mode && k === "carried"));
+  return `<div class="srow" data-sale="${pl.id}"${cvar(prodColor(pl.product_id))}>
+    <span class="sname"><span><i class="pdot"></i>${esc(p?.name || "")}</span><span class="small muted">planned ${pl.qty}${cin ? ` · <b>+${cin} from yesterday</b>` : ""}${p?.stock_mode ? ` · stock ${+p.on_hand || 0}` : ""}</span></span>
+    <input type="number" inputmode="numeric" min="0" data-f="baked" value="${pl.baked ?? ""}" placeholder="${pl.qty}" aria-label="Made">
+    <span class="stepper"><button type="button" data-act="sstep" data-id="${pl.id}" data-d="-1" aria-label="One less sold">−</button><input type="number" inputmode="numeric" min="0" data-f="sold" value="${pl.sold ?? ""}" placeholder="0" aria-label="Sold full price"><button type="button" data-act="sstep" data-id="${pl.id}" data-d="1" aria-label="One more sold">+</button></span>
+    <input type="number" inputmode="numeric" min="0" data-f="discounted" value="${pl.discounted ?? ""}" placeholder="0" aria-label="Sold discounted">
+    <button type="button" class="leftbtn" data-act="lsplit" data-id="${pl.id}" aria-expanded="${open}"><span class="lc">–</span><span class="small ls"></span></button>
+    <span class="soldout"><input type="time" data-f="sold_out_at" value="${pl.sold_out_at ? pl.sold_out_at.slice(0, 5) : ""}" aria-label="Sold out at">${d === t ? `<button type="button" class="btn sm" data-act="soldout" data-id="${pl.id}">Now</button>` : ""}</span>
+    <span class="sstate small muted">${pl.sold != null ? "Saved" : ""}</span>
+    <div class="lsplit ${open ? "" : "hidden"}"><span class="small muted">Leftovers:</span>${keys.map(([k, l, h]) => `<label class="f" title="${esc(h)}">${l}<input type="number" inputmode="numeric" min="0" data-f="${k}" value="${pl[k] ?? ""}" placeholder="0"></label>`).join("")}<span class="unassigned small muted"></span></div>
+  </div>`;
 }
 function renderSales() {
   const d = S.salesDate, t = todayISO();
   const rows = S.salesDay.slice().sort((a, b) => (prod(a.product_id)?.position || 0) - (prod(b.product_id)?.position || 0));
+  // items carried over from yesterday that aren't on today's plan still need a row
+  const carriedOnly = [...new Set(S.salesPrev.filter(x => x.carried > 0 && !rows.some(r => r.product_id === x.product_id)).map(x => x.product_id))];
   const notIn = S.products.filter(p => p.active && p.kind !== "special" && !rows.some(r => r.product_id === p.id));
   const logged = rows.filter(r => r.sold != null).length;
   $("#main").innerHTML = `
     <div class="bar"><h2>Sales</h2><div class="weeknav"><button type="button" data-act="sday" data-d="-1" aria-label="Previous day">‹</button><button type="button" class="btn sm" data-act="sday" data-d="0">Today</button><button type="button" data-act="sday" data-d="1" aria-label="Next day">›</button></div>
       <span class="muted">${DOWL[weekday(d) - 1]}, ${fmtShort(d)}</span><span class="spacer"></span><span class="b ${logged === rows.length && rows.length ? "ok" : ""}">${logged}/${rows.length} logged</span></div>
     <section class="lane"><h3>Day log</h3>
+      ${carriedOnly.length ? `<div class="note" style="margin-bottom:8px">Carried over from yesterday but not planned today: ${carriedOnly.map(pid => `<button type="button" class="pill" data-act="saleadd" data-id="${pid}">+ ${esc(prod(pid)?.name || "")}</button>`).join(" ")}</div>` : ""}
       ${rows.length ? `<div class="srows">
-        <div class="srow h"><span>Product</span><span>Made</span><span>Sold</span><span>Waste</span><span>Sold out at</span><span></span></div>
-        ${rows.map(pl => { const p = prod(pl.product_id); return `<div class="srow" data-sale="${pl.id}"${cvar(prodColor(pl.product_id))}>
-          <span class="sname"><span><i class="pdot"></i>${esc(p?.name || "")}</span><span class="small muted">planned ${pl.qty}${p?.stock_mode ? ` · stock ${+p.on_hand || 0}` : ""}</span></span>
-          <input type="number" inputmode="numeric" min="0" data-f="baked" value="${pl.baked ?? ""}" placeholder="${pl.qty}" aria-label="Made">
-          <span class="stepper"><button type="button" data-act="sstep" data-id="${pl.id}" data-d="-1" aria-label="One less sold">−</button><input type="number" inputmode="numeric" min="0" data-f="sold" value="${pl.sold ?? ""}" placeholder="0" aria-label="Sold"><button type="button" data-act="sstep" data-id="${pl.id}" data-d="1" aria-label="One more sold">+</button></span>
-          <input type="number" inputmode="numeric" min="0" data-f="wasted" value="${pl.wasted ?? ""}" placeholder="0" aria-label="Waste">
-          <span class="soldout"><input type="time" data-f="sold_out_at" value="${pl.sold_out_at ? pl.sold_out_at.slice(0, 5) : ""}" aria-label="Sold out at">${d === t ? `<button type="button" class="btn sm" data-act="soldout" data-id="${pl.id}">Now</button>` : ""}</span>
-          <span class="sstate small muted">${pl.sold != null ? "Saved" : ""}</span></div>`; }).join("")}</div>` : `<div class="empty-state">Nothing was planned for this day.</div>`}
+        <div class="srow h"><span>Product</span><span>Made</span><span>Sold</span><span>Discount</span><span>Leftovers</span><span>Sold out at</span><span></span></div>
+        ${rows.map(pl => saleRow(pl, d, t)).join("")}</div>` : `<div class="empty-state">Nothing was planned for this day.</div>`}
       <div class="row" style="margin-top:10px"><select id="saleAdd" aria-label="Add an item sold"><option value="">+ Add an item that sold…</option>${notIn.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select>
-        <span class="small muted">Numbers save as you type. Sold out: tap Now when the last one goes.</span></div>
+        <span class="small muted">Saves as you type. Tap a <b>left</b> count to sort leftovers: carry over, reuse, give away or bin.</span></div>
     </section>
     <section class="sec"><div class="row"><h4 style="margin:0">How items are selling</h4><span class="spacer"></span>
       <div class="otabs" role="group" aria-label="Period" style="margin:0">${[[7, "7 days"], [28, "4 weeks"], [120, "Season"]].map(([n, l]) => `<button type="button" data-act="srange" data-n="${n}" aria-pressed="${S.salesRange === n}">${l}</button>`).join("")}</div></div>
       <div id="salesSummary" style="margin-top:10px"></div></section>`;
+  rows.forEach(r => updateLeftBadge(r.id));
   renderSalesSummary();
   const sel = $("#saleAdd"); if (sel) sel.onchange = () => guard(async () => { if (!sel.value) return; await DB.ins("bk_plan", { date: d, product_id: sel.value, qty: 0 }); await loadSales(); renderSales(); });
 }
@@ -1616,7 +1687,9 @@ const ACT = {
   sday: async el => { const d = +el.dataset.d; S.salesDate = d === 0 ? todayISO() : addDays(S.salesDate, d); await refresh({ nav: true }); },
   srange: async el => { S.salesRange = +el.dataset.n; store.set("bk.salesRange", S.salesRange); await loadSales(); renderSales(); },
   sstep: el => { const r = $(`[data-sale="${el.dataset.id}"]`); const inp = $('[data-f="sold"]', r); inp.value = Math.max(0, (+inp.value || 0) + +el.dataset.d); queueSale(el.dataset.id); },
-  soldout: el => { const r = $(`[data-sale="${el.dataset.id}"]`); const n = new Date(); $('[data-f="sold_out_at"]', r).value = `${pad(n.getHours())}:${pad(n.getMinutes())}`; const made = $('[data-f="baked"]', r), sold = $('[data-f="sold"]', r); const pl = S.salesDay.find(x => x.id === el.dataset.id); if (!sold.value) sold.value = made.value || pl.qty; queueSale(el.dataset.id); },
+  soldout: el => { const r = $(`[data-sale="${el.dataset.id}"]`); const n = new Date(); $('[data-f="sold_out_at"]', r).value = `${pad(n.getHours())}:${pad(n.getMinutes())}`; const made = $('[data-f="baked"]', r), sold = $('[data-f="sold"]', r); const pl = S.salesDay.find(x => x.id === el.dataset.id); if (!sold.value) { const p = prod(pl.product_id); const avail = (+made.value || pl.qty) + (p?.stock_mode ? 0 : carryIn(pl.product_id, S.salesPrev)); sold.value = Math.max(0, avail - (+$('[data-f="discounted"]', r).value || 0)); } queueSale(el.dataset.id); },
+  lsplit: el => { const id = el.dataset.id; const r = $(`[data-sale="${id}"]`); const box = $(".lsplit", r); const open = box.classList.toggle("hidden") === false; el.setAttribute("aria-expanded", open); if (open) { S.splitOpen.add(id); $("input", box)?.focus(); } else S.splitOpen.delete(id); updateLeftBadge(id); },
+  saleadd: async el => { await DB.ins("bk_plan", { date: S.salesDate, product_id: el.dataset.id, qty: 0 }); await loadSales(); renderSales(); },
   applysug: async el => {
     const st = salesStats().find(x => x.p.id === el.dataset.id); if (!st) return;
     for (let i = 0; i < 7; i++) { const w = st.wd[i]; if (!w.sug) continue; const ti = S.tmpl.find(x => x.product_id === st.p.id && x.weekday === i + 1); if (ti) await DB.upd("bk_template_items", ti.id, { qty: w.sug }); }
@@ -1679,6 +1752,7 @@ document.addEventListener("change", e => {
   if (e.target.closest("[data-sale]") && e.target.matches("[data-f]")) queueSale(e.target.closest("[data-sale]").dataset.sale);
   if (e.target.matches("[data-onhand]")) guard(async () => { const p = prod(e.target.dataset.onhand); await setOnHand(p, Math.max(0, +e.target.value || 0)); });
 });
+document.addEventListener("input", e => { const r = e.target.closest?.("[data-sale]"); if (r) updateLeftBadge(r.dataset.sale); });
 document.addEventListener("submit", e => {
   if (e.target.id !== "setForm") return; e.preventDefault();
   guard(async () => {
