@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bakery Planner</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2316846f'/><path d='M14 40c0-11 8-20 18-20s18 9 18 20H14z' fill='%23fffdf9'/><path d='M22 40c1-6 4-11 10-13M32 40c0-6 2-10 6-12' stroke='%2316846f' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f2ea; --surface:#fffdf9; --sunk:#eee8dc; --line:#e2dacb; --ink:#1e1913; --muted:#6f6556; --faint:#a39a8a;
+  --accent:#16846f; --accent-ink:#ffffff; --accent-soft:#d9f1ea;
+  --reg:#5b5347; --reg-soft:#ece6da;
+  --sea:#a86410; --sea-soft:#fbead0;
+  --spe:#7b3fa0; --spe-soft:#efe2f7;
+  --warn:#b4321f; --warn-soft:#fbe1dc;
+  --ok:#2c7a3f; --ok-soft:#dcf0e0;
+  --shadow:0 1px 2px rgba(40,30,10,.06),0 2px 8px rgba(40,30,10,.05);
+  --f-display:"Bricolage Grotesque",system-ui,sans-serif; --f-body:"Source Sans 3",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16130f; --surface:#1f1b16; --sunk:#2a251e; --line:#3a3329; --ink:#f3ede3; --muted:#b5aa98; --faint:#7d7466;
+  --accent:#4fd1b5; --accent-ink:#0d1f1a; --accent-soft:#163a32;
+  --reg:#cfc5b4; --reg-soft:#2d281f; --sea:#f0b45c; --sea-soft:#3a2a12; --spe:#d3a6ee; --spe-soft:#33213f;
+  --warn:#ff8a75; --warn-soft:#45201a; --ok:#7fd396; --ok-soft:#1c3523; --shadow:none; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#16130f; --surface:#1f1b16; --sunk:#2a251e; --line:#3a3329; --ink:#f3ede3; --muted:#b5aa98; --faint:#7d7466;
+  --accent:#4fd1b5; --accent-ink:#0d1f1a; --accent-soft:#163a32;
+  --reg:#cfc5b4; --reg-soft:#2d281f; --sea:#f0b45c; --sea-soft:#3a2a12; --spe:#d3a6ee; --spe-soft:#33213f;
+  --warn:#ff8a75; --warn-soft:#45201a; --ok:#7fd396; --ok-soft:#1c3523; --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+h1,h2,h3,h4{font-family:var(--f-display);margin:0;line-height:1.15}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--f-mono);font-size:12px}
+
+/* app shell */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1500px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.02em;white-space:nowrap}
+.brand span{color:var(--accent)}
+.nav{display:flex;gap:2px;background:var(--sunk);padding:3px;border-radius:10px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{border:0;background:transparent;padding:7px 12px;border-radius:8px;font-weight:600;color:var(--muted);white-space:nowrap;position:relative}
+.nav button[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.nav .dot{position:absolute;top:-5px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--warn);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.top-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-weight:600;font-size:14px}
+main{max-width:1500px;margin:0 auto;padding:16px 16px 80px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;min-height:38px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.sm{padding:4px 10px;min-height:30px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.bar h2{font-size:24px;letter-spacing:-.02em}
+.weeknav{display:flex;align-items:center;gap:4px}
+.weeknav button{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:36px;height:36px;font-size:18px}
+.weeknav .btn{width:auto;white-space:nowrap;height:36px}
+
+/* badges */
+.b{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.b.reg{background:var(--reg-soft);color:var(--reg)}
+.b.sea{background:var(--sea-soft);color:var(--sea)}
+.b.spe{background:var(--spe-soft);color:var(--spe)}
+.b.warn{background:var(--warn-soft);color:var(--warn)}
+.b.ok{background:var(--ok-soft);color:var(--ok)}
+.b.acc{background:var(--accent-soft);color:var(--accent)}
+
+/* decision lane */
+.lane{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:14px}
+.lane h3{font-size:15px;display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.lane-items{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.dcard{flex:0 0 auto;min-width:200px;max-width:260px;text-align:left;border:1px dashed var(--line);background:var(--bg);border-radius:10px;padding:8px 10px}
+.dcard.late{border-color:var(--warn);background:var(--warn-soft)}
+.dcard b{display:block;font-size:14px}
+.dcard .small{display:block}
+.lane-empty{font-size:14px;color:var(--muted)}
+
+/* week board */
+.board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:10px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory}
+.col{background:var(--sunk);border-radius:14px;padding:8px;min-height:300px;display:flex;flex-direction:column;gap:8px;scroll-snap-align:start}
+.col.today{outline:2px solid var(--accent);outline-offset:-2px}
+.col.drop{background:var(--accent-soft)}
+.colh{display:flex;align-items:baseline;gap:6px;padding:2px 4px}
+.colh b{font-family:var(--f-display);font-size:17px}
+.colh .small{color:var(--muted)}
+.colh .add{margin-left:auto;border:0;background:transparent;font-size:20px;line-height:1;color:var(--muted);padding:0 4px}
+.sale{background:var(--surface);border-radius:10px;padding:8px;border:1px solid var(--line);text-align:left;width:100%}
+.sale-h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.sale ul{list-style:none;margin:0;padding:0;font-size:13px}
+.sale li{display:flex;gap:6px;align-items:baseline;padding:1px 0}
+.sale li .q{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:24px;text-align:right}
+.sale li .ch{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sale li .miss{color:var(--warn);font-weight:700;font-size:12px}
+.sale .empty{font-size:13px;color:var(--muted)}
+.tod{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:4px 4px 0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--reg);border-radius:10px;padding:8px 10px;text-align:left;width:100%;display:flex;gap:8px;align-items:flex-start;box-shadow:var(--shadow)}
+.card.k-order{border-left-color:var(--spe)}
+.card.k-restock{border-left-color:var(--accent)}
+.card.k-custom{border-left-color:var(--faint)}
+.card.sea{border-left-color:var(--sea)}
+.card.done{opacity:.55}
+.card.done .ct{text-decoration:line-through}
+.card[draggable="true"]{cursor:grab}
+.chk{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:2px solid var(--line);background:var(--bg);display:grid;place-items:center;margin-top:1px;padding:0}
+.chk.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chk svg{width:14px;height:14px}
+.cbody{flex:1;min-width:0;cursor:pointer}
+.ct{font-weight:600;font-size:14px;line-height:1.3}
+.cm{font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dots{display:inline-flex;gap:2px;vertical-align:middle}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.dots i.cur{background:var(--ink)}
+.csrc{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* sheets & dialogs */
+.scrim{position:fixed;inset:0;background:rgba(20,15,8,.45);z-index:50;display:flex;justify-content:flex-end}
+.sheet{background:var(--surface);width:min(560px,100%);height:100%;overflow:auto;padding:18px 18px 40px;box-shadow:-10px 0 40px rgba(0,0,0,.2)}
+.sheet-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.sheet-h h3{font-size:22px;letter-spacing:-.01em}
+.x{margin-left:auto;border:0;background:var(--sunk);border-radius:8px;width:34px;height:34px;font-size:20px;flex:0 0 auto}
+.sec{margin-top:18px}
+.sec h4{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:var(--f-body);font-weight:700}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+label.f.inline{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-weight:500;font-size:14px}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],input[type=password],input[type=time],select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;font-size:16px;color:var(--ink);width:100%;min-width:0}
+textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.li .grow{flex:1;min-width:0}
+.chain{display:flex;flex-direction:column;gap:4px}
+.chain .st{display:flex;gap:8px;align-items:center;font-size:14px;padding:6px 8px;border-radius:8px;background:var(--bg)}
+.chain .st.cur{outline:2px solid var(--accent)}
+.chain .st .d{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:84px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px;font-size:13px}
+.pill:hover{border-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:80;box-shadow:0 6px 24px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.toast.err{background:var(--warn);color:#fff}
+
+/* today */
+.today-wrap{max-width:760px}
+.tl{display:flex;flex-direction:column;gap:8px}
+.big .card{padding:12px}
+.big .ct{font-size:16px}
+.big .chk{width:28px;height:28px}
+.logrow{display:grid;grid-template-columns:1fr repeat(4,72px);gap:6px;align-items:center;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.logrow input{padding:6px;font-size:15px;text-align:center}
+.logrow.h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+@media (max-width:560px){.logrow{grid-template-columns:1fr repeat(4,56px)}}
+
+/* month */
+.month{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mh{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 4px}
+.md{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:96px;padding:6px;text-align:left;display:flex;flex-direction:column;gap:3px;font-size:12px}
+.md.out{opacity:.4}
+.md.today{outline:2px solid var(--accent)}
+.md .n{font-family:var(--f-display);font-weight:700;font-size:15px}
+.md .ln{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+@media (max-width:700px){.md{min-height:70px;padding:4px}.md .ln .t{display:none}}
+
+/* orders */
+.otabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.otabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
+.otabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.ocard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ocard.req{border-color:var(--sea);box-shadow:0 0 0 3px var(--sea-soft)}
+.oh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.oh b{font-family:var(--f-display);font-size:18px}
+.oitems{margin:0;padding-left:18px;font-size:14px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:14px}
+.kv span{color:var(--muted)}
+.links{display:flex;flex-direction:column;gap:8px}
+.linkbox{display:flex;gap:6px}
+.linkbox input{font-family:var(--f-mono);font-size:12px}
+
+/* setup */
+.stabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.stabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
+.stabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border-radius:12px;overflow:hidden}
+.tbl th,.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.tbl th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tbl td input{width:64px;text-align:center;padding:5px}
+.tbl tr.grp td{background:var(--sunk);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:6px}
+.pcard h4{font-size:16px}
+.stepday{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px}
+.stepday h5{margin:0 0 6px;font-size:13px;font-family:var(--f-body);font-weight:700;color:var(--muted)}
+.steprow{display:grid;grid-template-columns:1fr 120px 70px auto;gap:6px;margin-bottom:6px;align-items:center}
+.ingrow{display:grid;grid-template-columns:1fr 80px 70px auto;gap:6px;margin-bottom:6px}
+.partrow{display:grid;grid-template-columns:1fr 130px 80px 64px auto;gap:6px;margin-bottom:6px;align-items:center}
+@media (max-width:560px){.steprow,.partrow{grid-template-columns:1fr 1fr}.ingrow{grid-template-columns:1fr 70px 60px auto}}
+.stock{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:18px}
+.stepper input{width:70px;text-align:center}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter.low i{background:var(--warn)}
+
+/* login */
+.login{max-width:380px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.login h1{font-size:28px;letter-spacing:-.02em}
+.err{color:var(--warn);font-size:14px}
+.note{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted)}
+.empty-state{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--muted)}
+@media (max-width:900px){.board{grid-template-columns:repeat(7,82vw)}}
+@media (prefers-reduced-motion:no-preference){.card,.btn,.dcard{transition:background .15s,border-color .15s,opacity .15s}}
+
+</style>
+</head>
+<body>
+<div id="login" class="hidden"></div>
+<div id="app" class="hidden">
+  <header class="top"><div class="top-in">
+    <div class="brand">Bakery <span>Planner</span></div>
+    <nav class="nav" id="nav" aria-label="Views"></nav>
+  </div></header>
+  <main id="main" aria-live="polite"></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ================= CONFIG & DATA LAYER ================= */
+const CFG = Object.assign({
+  url: "https://qoawsxutvxwzdgerzunw.supabase.co",
+  key: "sb_publishable_6CxO-uSs9sAsFUQL5rrj-w_RWlsJc3t",
+  fillingLab: "https://claude.ai/artifact/8UoCucTi42c7fzcozt5N4H"
+}, window.BAKERY_CONFIG || {});
+
+function makeSupabaseDB(sb){
+  const apply = (q, o = {}) => {
+    for (const [k, v] of Object.entries(o.eq || {})) q = q.eq(k, v);
+    for (const [k, v] of Object.entries(o.gte || {})) q = q.gte(k, v);
+    for (const [k, v] of Object.entries(o.lte || {})) q = q.lte(k, v);
+    for (const [k, v] of Object.entries(o.in || {})) q = q.in(k, v);
+    if (o.notnull) q = q.not(o.notnull, "is", null);
+    for (const [c, asc] of (o.order || [])) q = q.order(c, { ascending: asc !== false });
+    return q;
+  };
+  const chk = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+  return {
+    sel: async (t, o = {}) => chk(await apply(sb.from(t).select(o.cols || "*"), o).limit(o.limit || 5000)),
+    ins: async (t, rows) => { rows = [].concat(rows); if (!rows.length) return []; return chk(await sb.from(t).insert(rows).select()); },
+    ups: async (t, rows, onConflict) => chk(await sb.from(t).upsert([].concat(rows), { onConflict }).select()),
+    upd: async (t, id, patch) => (chk(await sb.from(t).update(patch).eq("id", id).select()) || [])[0],
+    del: async (t, ids) => { ids = [].concat(ids).filter(Boolean); if (!ids.length) return; chk(await sb.from(t).delete().in("id", ids)); },
+    rpc: async (fn, args) => chk(await sb.rpc(fn, args || {}))
+  };
+}
+function makeSupabaseAuth(sb){
+  const here = () => location.href.split("#")[0].split("?")[0];
+  return {
+    session: async () => (await sb.auth.getSession()).data.session,
+    signIn: async (email, password) => { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw error; },
+    signUp: async (email, password) => { const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: here() } }); if (error) throw error; return data; },
+    reset: async (email) => { const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: here() }); if (error) throw error; },
+    setPassword: async (password) => { const { error } = await sb.auth.updateUser({ password }); if (error) throw error; },
+    signOut: async () => sb.auth.signOut(),
+    onChange: (cb) => sb.auth.onAuthStateChange((ev, session) => cb(ev, session))
+  };
+}
+let DB, AUTH;
+if (window.__BAKERY_MOCK) { DB = window.__BAKERY_MOCK.DB; AUTH = window.__BAKERY_MOCK.AUTH; }
+else { const sb = supabase.createClient(CFG.url, CFG.key); DB = makeSupabaseDB(sb); AUTH = makeSupabaseAuth(sb); }
+
+/* ================= UTILS ================= */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = String(s).slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d, 12); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const todayISO = () => iso(new Date());
+const weekday = s => { const g = parse(s).getDay(); return g === 0 ? 7 : g; };
+const mondayOf = s => addDays(s, 1 - weekday(s));
+const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DOWL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const fmtD = s => { const d = parse(s); return `${DOW[weekday(s) - 1]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+const weekNo = s => { const d = parse(s); const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); };
+const money = n => n == null || n === "" ? "–" : `€${(+n).toFixed(2).replace(/\.00$/, "")}`;
+const fmtAmt = (a, u) => { if (a == null) return ""; if (u === "g" && a >= 1000) return `${(a / 1000).toFixed(2).replace(/0$/, "")} kg`; return `${Math.round(a * 10) / 10} ${u}`; };
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "x" + Math.random().toString(36).slice(2));
+const TOD = ["early morning", "morning", "midday", "afternoon", "evening"];
+const todRank = t => { const i = TOD.indexOf((t || "").toLowerCase()); return i < 0 ? 9 : i; };
+const KIND = { regular: ["Regular", "reg"], seasonal: ["Seasonal", "sea"], special: ["Special order", "spe"] };
+const CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+let toastT;
+function toast(msg, err) {
+  let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.className = "toast" + (err ? " err" : ""); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, err ? 5000 : 2200);
+}
+async function guard(fn) { try { return await fn(); } catch (e) { console.error(e); toast(e.message || String(e), true); } }
+
+/* ================= STATE ================= */
+const S = {
+  view: store.get("bk.view", "week"), week: mondayOf(todayISO()), month: todayISO().slice(0, 8) + "01",
+  otab: "req", stab: store.get("bk.stab", "products"),
+  products: [], parts: [], recipes: [], steps: [], ings: [], tmpl: [], stock: [], settings: {}, kIngr: [],
+  plan: [], tasks: [], orders: [], oitems: [], requests: 0, user: null
+};
+const prod = id => S.products.find(p => p.id === id);
+const rec = id => S.recipes.find(r => r.id === id);
+const partsOf = pid => S.parts.filter(x => x.product_id === pid).sort((a, b) => a.position - b.position);
+const stepsOf = rid => S.steps.filter(s => s.recipe_id === rid).sort((a, b) => a.day - b.day || a.position - b.position);
+const daysOf = rid => Math.max(1, ...stepsOf(rid).map(s => s.day));
+const order = id => S.orders.find(o => o.id === id);
+const itemsOf = oid => S.oitems.filter(i => i.order_id === oid);
+const setting = (k, d = {}) => S.settings[k] || d;
+
+async function loadStatic() {
+  const [products, parts, recipes, steps, ings, tmpl, stock, settings] = await Promise.all([
+    DB.sel("bk_products", { order: [["position"], ["name"]] }),
+    DB.sel("bk_product_parts"), DB.sel("bk_recipes", { order: [["position"], ["name"]] }),
+    DB.sel("bk_recipe_steps"), DB.sel("bk_recipe_ingredients", { order: [["position"]] }),
+    DB.sel("bk_template_items"), DB.sel("bk_stock", { order: [["name"]] }), DB.sel("bk_settings")
+  ]);
+  Object.assign(S, { products, parts, recipes, steps, ings, tmpl, stock });
+  S.settings = Object.fromEntries(settings.map(r => [r.key, r.value]));
+}
+async function loadKitchenIngredients() {
+  if (S.kIngr.length) return;
+  try { S.kIngr = await DB.sel("ingredients", { cols: "id,name,unit,category", order: [["name"]] }); } catch { S.kIngr = []; }
+}
+async function loadOrders() {
+  const from = addDays(todayISO(), -45);
+  const [recent, reqs] = await Promise.all([
+    DB.sel("bk_orders", { gte: { pickup_date: from }, order: [["pickup_date"], ["created_at"]] }),
+    DB.sel("bk_orders", { eq: { status: "request" } })
+  ]);
+  const map = new Map(); [...recent, ...reqs].forEach(o => map.set(o.id, o));
+  S.orders = [...map.values()].sort((a, b) => a.pickup_date.localeCompare(b.pickup_date));
+  const ids = S.orders.map(o => o.id);
+  S.oitems = ids.length ? await DB.sel("bk_order_items", { in: { order_id: ids } }) : [];
+  S.requests = S.orders.filter(o => o.status === "request").length;
+}
+async function loadRange(planA, planB, taskA, taskB) {
+  const [plan, tasks] = await Promise.all([
+    DB.sel("bk_plan", { gte: { date: planA }, lte: { date: planB }, order: [["date"]] }),
+    DB.sel("bk_tasks", { gte: { date: taskA }, lte: { date: taskB }, order: [["date"], ["position"]] })
+  ]);
+  S.plan = plan; S.tasks = tasks;
+}
+
+/* ================= CHAIN ENGINE =================
+   A product sold on day D is made of parts. Each part is a recipe whose steps are spread over N days;
+   the last day of the recipe is its "ready" day = D + ready_offset. Step on recipe day d lands on ready − (N − d).
+   Steps of the same recipe ready on the same day are merged into one card (shared doughs). */
+function desiredTasks(plans, A, B) {
+  const want = new Map();
+  for (const pl of plans) {
+    if (pl.status === "cancelled" || !(pl.qty > 0)) continue;
+    const p = prod(pl.product_id); if (!p) continue;
+    const o = pl.order_id ? order(pl.order_id) : null;
+    for (const part of partsOf(pl.product_id)) {
+      const steps = stepsOf(part.recipe_id); if (!steps.length) continue;
+      const N = daysOf(part.recipe_id);
+      const ready = addDays(pl.date, part.ready_offset || 0);
+      if (ready < A || ready > B) continue;
+      for (const s of steps) {
+        const key = `${part.recipe_id}|${s.id}|${ready}`;
+        let t = want.get(key);
+        if (!t) {
+          t = { gen_key: key, date: addDays(ready, -(N - s.day)), title: s.title, kind: "step", recipe_id: part.recipe_id, step_id: s.id,
+                chain_key: `${part.recipe_id}|${ready}`, day_index: s.day, day_count: N, time_hint: s.time_hint || null, position: s.position || 0, sources: [] };
+          want.set(key, t);
+        }
+        t.sources.push({ plan: pl.id, p: p.name, q: pl.qty, a: part.qty_per_unit ? Math.round(part.qty_per_unit * pl.qty * 10) / 10 : null, u: part.unit, c: pl.choice || null, o: o ? o.code : null });
+      }
+    }
+  }
+  return want;
+}
+const readyOfKey = k => (k || "").split("|")[2] || "";
+async function syncTasks(A, B) {
+  const plans = await DB.sel("bk_plan", { gte: { date: A }, lte: { date: addDays(B, 14) } });
+  if (plans.some(pl => pl.order_id && !order(pl.order_id))) await loadOrders();
+  const want = desiredTasks(plans, A, B);
+  const have = (await DB.sel("bk_tasks", { gte: { date: addDays(A, -14) }, lte: { date: B }, notnull: "gen_key" }))
+    .filter(t => t.kind === "step" && readyOfKey(t.gen_key) >= A && readyOfKey(t.gen_key) <= B);
+  const haveMap = new Map(have.map(t => [t.gen_key, t]));
+  const ins = [], dels = [], ups = [];
+  for (const [k, t] of want) {
+    const h = haveMap.get(k);
+    if (!h) ins.push(t);
+    else if (JSON.stringify(h.sources) !== JSON.stringify(t.sources) || h.title !== t.title || h.day_count !== t.day_count || h.day_index !== t.day_index)
+      ups.push([h.id, { sources: t.sources, title: t.title, day_count: t.day_count, day_index: t.day_index }]);
+  }
+  for (const h of have) if (!want.has(h.gen_key) && h.status !== "done") dels.push(h.id);
+  if (ins.length) await DB.ins("bk_tasks", ins);
+  for (const [id, patch] of ups) await DB.upd("bk_tasks", id, patch);
+  if (dels.length) await DB.del("bk_tasks", dels);
+  return { ins: ins.length, ups: ups.length, del: dels.length };
+}
+
+/* decisions: planned items whose product needs a choice that hasn't been made */
+function decisionsIn(plans) {
+  const t = todayISO();
+  return plans.filter(pl => { const p = prod(pl.product_id); return p && p.choice_label && !pl.choice && pl.status === "planned" && !pl.order_id && pl.date >= t && pl.qty > 0; })
+    .map(pl => { const p = prod(pl.product_id); return { pl, p, due: addDays(pl.date, -(p.decide_days || 0)) }; })
+    .sort((a, b) => a.due.localeCompare(b.due) || a.pl.date.localeCompare(b.pl.date));
+}
+function decisionGroups(plans) {
+  const g = new Map();
+  for (const d of decisionsIn(plans)) {
+    const k = d.p.id + "|" + mondayOf(d.pl.date);
+    if (!g.has(k)) g.set(k, { p: d.p, items: [], due: d.due });
+    const x = g.get(k); x.items.push(d.pl); if (d.due < x.due) x.due = d.due;
+  }
+  return [...g.values()].map(x => ({ ...x, items: x.items.sort((a, b) => a.date.localeCompare(b.date)) })).sort((a, b) => a.due.localeCompare(b.due));
+}
+const dayRange = items => items.length === 1 ? fmtD(items[0].date) : `${fmtD(items[0].date).split(" ").slice(0, 2).join(" ")} – ${fmtD(items[items.length - 1].date)}`;
+function decisionCard(g, t) {
+  return `<button type="button" class="dcard ${g.due <= t ? "late" : ""}" data-act="decide" data-id="${g.items[0].id}"><b>${esc(g.p.name)}: ${esc(g.p.choice_label)}${g.p.choice_count > 1 ? ` (${g.p.choice_count})` : ""}?</b><span class="small">${g.items.length > 1 ? `${g.items.length} days: ` : "For "}${dayRange(g.items)}</span><span class="small">Decide by ${g.due <= t ? "<b>today</b>" : fmtD(g.due)}</span></button>`;
+}
+const lowStock = () => S.stock.filter(s => +s.in_stock < +s.min_stock);
+
+/* ================= RENDER: SHELL ================= */
+const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["setup", "Setup"]];
+function renderNav() {
+  $("#nav").innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "orders" && S.requests ? `<span class="dot" aria-label="${S.requests} new requests">${S.requests}</span>` : ""}</button>`).join("");
+}
+async function go(view) { S.view = view; store.set("bk.view", view); await refresh(); window.scrollTo({ top: 0 }); }
+async function refresh() {
+  renderNav();
+  const main = $("#main");
+  await guard(async () => {
+    if (S.view === "week") {
+      await syncTasks(S.week, addDays(S.week, 27));
+      await loadRange(S.week, addDays(S.week, 27), S.week, addDays(S.week, 6));
+      renderWeek();
+    } else if (S.view === "today") {
+      const t = todayISO();
+      await syncTasks(t, addDays(t, 13));
+      await loadRange(t, addDays(t, 13), t, addDays(t, 1));
+      renderToday();
+    } else if (S.view === "month") {
+      const g0 = mondayOf(S.month); const last = addDays(addDays(S.month.slice(0, 8) + "28", 4).slice(0, 8) + "01", -1);
+      const g1 = addDays(mondayOf(last), 6);
+      await loadRange(g0, g1, g0, g1);
+      renderMonth(g0, g1);
+    } else if (S.view === "orders") { renderOrders(); }
+    else if (S.view === "setup") { await loadKitchenIngredients(); renderSetup(); }
+    renderNav();
+  });
+  if (!main.innerHTML) main.innerHTML = `<div class="empty-state">Something went wrong loading this view.</div>`;
+}
+
+/* ================= RENDER: WEEK ================= */
+function srcLine(t) {
+  const src = t.sources || []; if (!src.length) return "";
+  const pre = src.length > 1 && src.every(s => s.p.includes(" – ")) && new Set(src.map(s => s.p.split(" – ")[0])).size === 1 ? src[0].p.split(" – ")[0] + " – " : "";
+  const parts = src.map(s => `${esc(pre ? s.p.slice(pre.length) : s.p)}${s.o ? ` <span class="b spe">${esc(s.o)}</span>` : ""} ${s.q}`);
+  const units = [...new Set(src.map(s => s.u))];
+  const total = units.length === 1 && src.every(s => s.a != null) ? src.reduce((a, s) => a + s.a, 0) : null;
+  const choices = src.filter(s => s.c).map(s => esc(s.c));
+  return `<div class="csrc">${pre ? esc(pre.slice(0, -3)) + ": " : ""}${parts.join(" · ")}${total != null && units[0] === "g" ? ` · ≈${fmtAmt(total, "g")}` : ""}${choices.length ? `<br><i>${choices.join(" · ")}</i>` : ""}</div>`;
+}
+function dots(i, n) { if (!n || n < 2) return ""; return `<span class="dots" aria-label="Day ${i} of ${n}">${Array.from({ length: n }, (_, k) => `<i class="${k + 1 < i ? "on" : k + 1 === i ? "cur" : ""}"></i>`).join("")}</span>`; }
+function taskCard(t, big) {
+  const r = t.recipe_id ? rec(t.recipe_id) : null;
+  const o = t.order_id ? order(t.order_id) : null;
+  const hasOrder = (t.sources || []).some(s => s.o) || o;
+  const kind = t.kind === "step" ? (hasOrder ? "k-order" : "k-step") : "k-" + t.kind;
+  const meta = [];
+  if (t.kind === "step") meta.push(`${dots(t.day_index, t.day_count)} ${esc(r ? r.name : "Recipe")}${t.day_count > 1 ? ` · day ${t.day_index}/${t.day_count}` : ""}`);
+  if (t.kind === "order" && o) meta.push(`<span class="b spe">${esc(o.code)}</span> ${esc(o.customer_name)}${o.pickup_time ? " · " + esc(o.pickup_time) : ""}`);
+  if (t.kind === "restock") meta.push(`<span class="b acc">Freezer</span>`);
+  if (t.time_hint && big) meta.push(esc(t.time_hint));
+  if (t.notes) meta.push("📝");
+  return `<div class="card ${kind} ${t.status === "done" ? "done" : ""}" draggable="true" data-task="${t.id}">
+    <button type="button" class="chk ${t.status === "done" ? "on" : ""}" data-act="toggle" data-id="${t.id}" aria-label="${t.status === "done" ? "Mark not done" : "Mark done"}: ${esc(t.title)}">${t.status === "done" ? CHECK : ""}</button>
+    <div class="cbody" data-act="task" data-id="${t.id}" role="button" tabindex="0">
+      <div class="ct">${t.status === "doing" ? "▶ " : ""}${esc(t.title)}</div>
+      ${meta.length ? `<div class="cm">${meta.join(" ")}</div>` : ""}
+      ${t.kind === "step" ? srcLine(t) : ""}
+    </div></div>`;
+}
+function saleBox(date) {
+  const items = S.plan.filter(pl => pl.date === date && pl.status !== "cancelled").sort((a, b) => (prod(a.product_id)?.position || 0) - (prod(b.product_id)?.position || 0));
+  const li = items.map(pl => {
+    const p = prod(pl.product_id); if (!p) return "";
+    const o = pl.order_id ? order(pl.order_id) : null;
+    const miss = p.choice_label && !pl.choice && !pl.order_id;
+    return `<li><span class="q">${pl.qty}</span><span>${esc(p.name)}${o ? ` <span class="b spe">${esc(o.code)}</span>` : ""}${p.kind === "seasonal" ? ` <span class="b sea">S</span>` : ""}
+      ${pl.choice ? `<br><span class="ch">${esc(pl.choice)}</span>` : miss ? `<br><span class="miss">${esc(p.choice_label)}?</span>` : ""}</span></li>`;
+  }).join("");
+  return `<button type="button" class="sale" data-act="day" data-date="${date}"><div class="sale-h">On sale <span class="spacer"></span>${items.length ? items.reduce((a, b) => a + b.qty, 0) + " pcs" : ""}</div>${li ? `<ul>${li}</ul>` : `<div class="empty">Nothing planned. Tap to add.</div>`}</button>`;
+}
+function renderWeek() {
+  const t = todayISO(), days = Array.from({ length: 7 }, (_, i) => addDays(S.week, i));
+  const dec = decisionGroups(S.plan).filter(g => g.due <= addDays(S.week, 13));
+  const reqs = S.orders.filter(o => o.status === "request");
+  const low = lowStock();
+  const weekHasPlan = S.plan.some(pl => pl.date >= S.week && pl.date <= days[6]);
+  const lane = [
+    ...reqs.map(o => `<button type="button" class="dcard late" data-act="order" data-id="${o.id}"><b>Order request ${esc(o.code)}</b><span class="small">${esc(o.customer_name)} · pickup ${fmtD(o.pickup_date)}</span><span class="small">${esc(itemsOf(o.id).map(i => i.qty + "× " + i.name).join(", "))}</span></button>`),
+    ...dec.map(g => decisionCard(g, t)),
+    ...low.map(s => `<button type="button" class="dcard" data-act="restock" data-id="${s.id}"><b>Restock: ${esc(s.name)}</b><span class="small">${+s.in_stock} of ${+s.min_stock} ${esc(s.unit)} in the freezer</span></button>`)
+  ];
+  $("#main").innerHTML = `
+    <div class="bar"><h2>Week ${weekNo(S.week)} <span class="muted" style="font-weight:500;font-size:16px">${fmtShort(S.week)} – ${fmtShort(days[6])}</span></h2>
+      <div class="weeknav"><button type="button" data-act="wk" data-d="-7" aria-label="Previous week">‹</button><button type="button" class="btn sm" data-act="wk" data-d="0">This week</button><button type="button" data-act="wk" data-d="7" aria-label="Next week">›</button></div>
+      <span class="spacer"></span>
+      <button type="button" class="btn ${weekHasPlan ? "" : "primary"}" data-act="fill" data-weeks="1">Fill from template</button>
+      <button type="button" class="btn" data-act="fill" data-weeks="2" title="This week and next">+ next week too</button>
+    </div>
+    <section class="lane" aria-label="Needs attention"><h3>Needs attention ${lane.length ? `<span class="b warn">${lane.length}</span>` : ""}</h3>
+      ${lane.length ? `<div class="lane-items">${lane.join("")}</div>` : `<div class="lane-empty">All decided. Nothing waiting.</div>`}</section>
+    ${weekHasPlan ? "" : `<div class="note" style="margin-bottom:12px">This week has no products planned yet. <b>Fill from template</b> adds your regular lineup for each day and builds every dough and prep step back from the sale day.</div>`}
+    <div class="board" id="board">${days.map((d, i) => {
+      const ts = S.tasks.filter(x => x.date === d).sort((a, b) => todRank(a.time_hint) - todRank(b.time_hint) || a.position - b.position || a.title.localeCompare(b.title));
+      let lastTod = null; const cards = ts.map(x => { const tod = x.time_hint && TOD.includes(x.time_hint.toLowerCase()) ? x.time_hint.toLowerCase() : null; const h = tod !== lastTod && tod ? `<div class="tod">${esc(tod)}</div>` : ""; lastTod = tod; return h + taskCard(x); }).join("");
+      return `<section class="col ${d === t ? "today" : ""}" data-col="${d}" aria-label="${DOWL[i]} ${fmtShort(d)}">
+        <div class="colh"><b>${DOW[i]}</b><span class="small">${fmtShort(d)}</span><button type="button" class="add" data-act="newtask" data-date="${d}" aria-label="Add task on ${DOWL[i]}">+</button></div>
+        ${saleBox(d)}${cards}</section>`;
+    }).join("")}</div>`;
+  const col = $(`.col.today`); if (col && window.innerWidth < 900) col.scrollIntoView({ inline: "start", block: "nearest" });
+}
+
+/* ================= TEMPLATE FILL ================= */
+async function fillFromTemplate(from, days) {
+  const to = addDays(from, days - 1);
+  const existing = await DB.sel("bk_plan", { gte: { date: from }, lte: { date: to } });
+  const rows = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(from, i), wd = weekday(d);
+    for (const ti of S.tmpl.filter(x => x.weekday === wd && x.qty > 0)) {
+      const p = prod(ti.product_id); if (!p || !p.active) continue;
+      if (existing.some(pl => pl.date === d && pl.product_id === ti.product_id && !pl.order_id)) continue;
+      rows.push({ date: d, product_id: ti.product_id, qty: ti.qty });
+    }
+  }
+  if (rows.length) await DB.ins("bk_plan", rows);
+  return rows.length;
+}
+
+/* ================= RENDER: TODAY ================= */
+function renderToday() {
+  const t = todayISO(), tm = addDays(t, 1);
+  const tasks = S.tasks.filter(x => x.date === t).sort((a, b) => (a.status === "done") - (b.status === "done") || todRank(a.time_hint) - todRank(b.time_hint) || a.position - b.position);
+  const tomorrow = S.tasks.filter(x => x.date === tm).sort((a, b) => todRank(a.time_hint) - todRank(b.time_hint));
+  const dec = decisionGroups(S.plan).filter(g => g.due <= addDays(t, 3));
+  const pick = S.orders.filter(o => o.pickup_date === t && ["confirmed", "ready"].includes(o.status));
+  const sale = S.plan.filter(pl => pl.date === t && pl.status !== "cancelled");
+  const done = tasks.filter(x => x.status === "done").length;
+  $("#main").innerHTML = `<div class="today-wrap">
+    <div class="bar"><h2>${DOWL[weekday(t) - 1]}, ${fmtShort(t)}</h2><span class="b ${done === tasks.length && tasks.length ? "ok" : ""}">${done}/${tasks.length} done</span><span class="spacer"></span><button type="button" class="btn" data-act="newtask" data-date="${t}">+ Task</button></div>
+    ${dec.length ? `<section class="lane"><h3>Decide soon <span class="b warn">${dec.length}</span></h3><div class="lane-items">${dec.map(g => decisionCard(g, t)).join("")}</div></section>` : ""}
+    ${pick.length ? `<section class="sec"><h4>Pickups today</h4><div class="list">${pick.map(o => `<button type="button" class="li" data-act="order" data-id="${o.id}" style="text-align:left"><span class="b spe">${esc(o.code)}</span><span class="grow"><b>${esc(o.customer_name)}</b> ${o.pickup_time ? "· " + esc(o.pickup_time) : ""}<br><span class="small muted">${esc(itemsOf(o.id).map(i => i.qty + "× " + i.name).join(", "))}</span></span>${o.status === "ready" ? `<span class="b ok">Ready</span>` : ""}</button>`).join("")}</div></section>` : ""}
+    <section class="sec big"><h4>Tasks</h4><div class="tl">${tasks.length ? tasks.map(x => taskCard(x, true)).join("") : `<div class="empty-state">Nothing scheduled today.</div>`}</div></section>
+    ${tomorrow.length ? `<section class="sec"><h4>Tomorrow</h4><div class="tl">${tomorrow.map(x => taskCard(x)).join("")}</div></section>` : ""}
+    ${sale.length ? `<section class="sec"><h4>End of day</h4>
+      <div class="logrow h"><span>Product</span><span>Baked</span><span>Sold</span><span>Waste</span><span>Sold out</span></div>
+      ${sale.map(pl => `<div class="logrow" data-log="${pl.id}"><span>${esc(prod(pl.product_id)?.name || "")} <span class="muted small">(${pl.qty})</span></span>
+        <input type="number" inputmode="numeric" min="0" data-f="baked" value="${pl.baked ?? ""}" placeholder="${pl.qty}" aria-label="Baked">
+        <input type="number" inputmode="numeric" min="0" data-f="sold" value="${pl.sold ?? ""}" aria-label="Sold">
+        <input type="number" inputmode="numeric" min="0" data-f="wasted" value="${pl.wasted ?? ""}" aria-label="Wasted">
+        <input type="time" data-f="sold_out_at" value="${pl.sold_out_at ? pl.sold_out_at.slice(0, 5) : ""}" aria-label="Sold out at"></div>`).join("")}
+      <div class="row" style="margin-top:10px"><button type="button" class="btn primary" data-act="savelog">Save day</button><span class="small muted">Sold-out time is the best signal for next week's quantities.</span></div></section>` : ""}
+  </div>`;
+}
+
+/* ================= RENDER: MONTH ================= */
+function renderMonth(g0, g1) {
+  const t = todayISO(), m = S.month.slice(0, 7);
+  const n = diffDays(g0, g1) + 1;
+  const dec = decisionsIn(S.plan);
+  const d0 = parse(S.month);
+  $("#main").innerHTML = `
+    <div class="bar"><h2>${["January","February","March","April","May","June","July","August","September","October","November","December"][d0.getMonth()]} ${d0.getFullYear()}</h2>
+      <div class="weeknav"><button type="button" data-act="mo" data-d="-1" aria-label="Previous month">‹</button><button type="button" class="btn sm" data-act="mo" data-d="0">Today</button><button type="button" data-act="mo" data-d="1" aria-label="Next month">›</button></div></div>
+    <div class="month">${DOW.map(d => `<div class="mh">${d}</div>`).join("")}
+    ${Array.from({ length: n }, (_, i) => {
+      const d = addDays(g0, i);
+      const pl = S.plan.filter(x => x.date === d && x.status !== "cancelled");
+      const os = S.orders.filter(o => o.pickup_date === d && !["declined", "cancelled"].includes(o.status));
+      const dc = dec.filter(x => x.pl.date === d).length;
+      const tk = S.tasks.filter(x => x.date === d);
+      const sea = pl.filter(x => prod(x.product_id)?.kind === "seasonal").length;
+      return `<button type="button" class="md ${d.slice(0, 7) !== m ? "out" : ""} ${d === t ? "today" : ""}" data-act="gotoweek" data-date="${d}">
+        <span class="n">${parse(d).getDate()}</span>
+        ${pl.length ? `<span class="ln"><span class="b reg">${pl.length}</span><span class="t muted">on sale</span></span>` : ""}
+        ${sea ? `<span class="ln"><span class="b sea">${sea}</span><span class="t muted">seasonal</span></span>` : ""}
+        ${os.length ? `<span class="ln">${os.map(o => `<span class="b ${o.status === "request" ? "warn" : "spe"}">${esc(o.code)}</span>`).join("")}</span>` : ""}
+        ${dc ? `<span class="ln"><span class="b warn">${dc}?</span><span class="t muted">to decide</span></span>` : ""}
+        ${tk.length ? `<span class="ln"><span class="t muted">${tk.filter(x => x.status === "done").length}/${tk.length} tasks</span></span>` : ""}
+      </button>`;
+    }).join("")}</div>
+    <p class="small muted" style="margin-top:10px">Tap a day to open its week. Tasks appear once a week has been opened or filled.</p>`;
+}
+
+/* ================= ORDERS ================= */
+const OSTAT = { request: ["Request", "warn"], confirmed: ["Confirmed", "acc"], ready: ["Ready", "ok"], collected: ["Collected", ""], declined: ["Declined", ""], cancelled: ["Cancelled", ""] };
+const OSRC = { online: "Online form", staff: "Staff link", in_person: "At the restaurant", manual: "Added by you" };
+const PSTAT = { unpaid: ["Unpaid", "warn"], deposit: ["Deposit paid", "sea"], paid: ["Paid", "ok"], refunded: ["Refunded", ""] };
+function orderLinks() {
+  const base = new URL("order.html", location.href.split("#")[0]).href.split("?")[0];
+  const tok = setting("staff").token;
+  return { online: base, staff: tok ? `${base}?staff=${tok}` : "" };
+}
+function orderCard(o) {
+  const items = itemsOf(o.id);
+  const st = OSTAT[o.status] || [o.status, ""], ps = PSTAT[o.payment_status] || [o.payment_status, ""];
+  const days = diffDays(todayISO(), o.pickup_date);
+  return `<article class="ocard ${o.status === "request" ? "req" : ""}">
+    <div class="oh"><b>${esc(o.code)}</b><span class="b ${st[1]}">${st[0]}</span><span class="b ${ps[1]}">${ps[0]}</span><span class="spacer"></span><span class="small muted">${esc(OSRC[o.source] || o.source)}</span></div>
+    <div><b>${esc(o.customer_name)}</b>${o.phone ? ` · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>` : ""}${o.email ? ` · <a href="mailto:${esc(o.email)}">${esc(o.email)}</a>` : ""}</div>
+    <div class="kv"><span>Pickup</span><b>${fmtD(o.pickup_date)}${o.pickup_time ? " · " + esc(o.pickup_time) : ""} <span class="muted small">${days === 0 ? "today" : days > 0 ? `in ${days} d` : `${-days} d ago`}</span></b>
+      <span>Payment</span><span>${money(o.paid)} paid of ${money(o.total)}${o.deposit ? ` · deposit ${money(o.deposit)}` : ""}${o.payment_method ? ` · ${esc(o.payment_method)}` : ""}</span>
+      ${o.entered_by ? `<span>Taken by</span><span>${esc(o.entered_by)}</span>` : ""}</div>
+    <ul class="oitems">${items.map(i => `<li>${i.qty}× ${esc(i.name)}${i.details ? ` <span class="muted">— ${esc(i.details)}</span>` : ""}</li>`).join("")}</ul>
+    ${o.allergies ? `<div class="small"><span class="b warn">Allergies</span> ${esc(o.allergies)}</div>` : ""}
+    ${o.notes ? `<div class="small muted">${esc(o.notes)}</div>` : ""}
+    <div class="row">
+      ${o.status === "request" ? `<button type="button" class="btn primary sm" data-act="oapprove" data-id="${o.id}">Approve → calendar</button><button type="button" class="btn sm warn" data-act="odecline" data-id="${o.id}">Decline</button>` : ""}
+      ${o.status === "confirmed" ? `<button type="button" class="btn sm" data-act="ostatus" data-s="ready" data-id="${o.id}">Mark ready</button>` : ""}
+      ${o.status === "ready" ? `<button type="button" class="btn sm" data-act="ostatus" data-s="collected" data-id="${o.id}">Collected</button>` : ""}
+      <button type="button" class="btn sm ghost" data-act="order" data-id="${o.id}">Edit</button>
+    </div></article>`;
+}
+function renderOrders() {
+  const t = todayISO();
+  const groups = {
+    req: S.orders.filter(o => o.status === "request"),
+    up: S.orders.filter(o => ["confirmed", "ready"].includes(o.status) && o.pickup_date >= t),
+    past: S.orders.filter(o => !["request"].includes(o.status) && !(["confirmed", "ready"].includes(o.status) && o.pickup_date >= t)).reverse()
+  };
+  const L = orderLinks();
+  const list = groups[S.otab] || [];
+  $("#main").innerHTML = `
+    <div class="bar"><h2>Orders</h2><span class="spacer"></span><button type="button" class="btn primary" data-act="neworder">+ New order</button></div>
+    <div class="otabs" role="group" aria-label="Order list">
+      <button type="button" data-act="otab" data-t="req" aria-pressed="${S.otab === "req"}">Requests ${groups.req.length ? `<span class="b warn">${groups.req.length}</span>` : ""}</button>
+      <button type="button" data-act="otab" data-t="up" aria-pressed="${S.otab === "up"}">Upcoming ${groups.up.length}</button>
+      <button type="button" data-act="otab" data-t="past" aria-pressed="${S.otab === "past"}">Past & closed</button>
+    </div>
+    ${list.length ? `<div class="ogrid">${list.map(orderCard).join("")}</div>` : `<div class="empty-state">${S.otab === "req" ? "No requests waiting." : "Nothing here yet."}</div>`}
+    <section class="sec lane" style="margin-top:20px"><h3>Order links</h3>
+      <div class="links">
+        <label class="f">Online form for customers<span class="linkbox"><input type="text" readonly value="${esc(L.online)}" aria-label="Online form link"><button type="button" class="btn sm" data-act="copy" data-v="${esc(L.online)}">Copy</button></span></label>
+        <label class="f">Staff link for colleagues (keep private)<span class="linkbox"><input type="text" readonly value="${esc(L.staff)}" aria-label="Staff link"><button type="button" class="btn sm" data-act="copy" data-v="${esc(L.staff)}">Copy</button></span></label>
+        <p class="small muted">Both only create requests. You approve each one before it reaches the calendar.</p>
+      </div></section>`;
+}
+async function orderPlanRows(o) {
+  return itemsOf(o.id).filter(i => i.product_id).map(i => ({ date: o.pickup_date, product_id: i.product_id, qty: i.qty, choice: i.details || null, order_id: o.id, order_item_id: i.id }));
+}
+async function pickupTask(o, remove) {
+  const key = `order|${o.id}`;
+  const ex = await DB.sel("bk_tasks", { eq: { gen_key: key } });
+  if (remove) { if (ex.length) await DB.del("bk_tasks", ex.map(x => x.id)); return; }
+  const row = { date: o.pickup_date, title: `Pickup ${o.code}: ${o.customer_name}`, kind: "order", order_id: o.id, gen_key: key, time_hint: null, notes: o.pickup_time ? `Pickup at ${o.pickup_time}` : null };
+  if (ex.length) await DB.upd("bk_tasks", ex[0].id, { date: row.date, title: row.title, notes: row.notes }); else await DB.ins("bk_tasks", row);
+}
+async function approveOrder(id) {
+  const o = order(id); if (!o) return;
+  await DB.del("bk_plan", (await DB.sel("bk_plan", { eq: { order_id: id } })).map(x => x.id));
+  await DB.ins("bk_plan", await orderPlanRows(o));
+  await DB.upd("bk_orders", id, { status: "confirmed", confirmed_at: new Date().toISOString() });
+  await loadOrders();
+  await pickupTask(order(id));
+  await syncTasks(addDays(o.pickup_date, -14), o.pickup_date);
+  toast(`${o.code} confirmed. Its steps are on the calendar.`);
+}
+async function unplanOrder(o) {
+  const rows = await DB.sel("bk_plan", { eq: { order_id: o.id } });
+  await DB.del("bk_plan", rows.map(x => x.id));
+  await pickupTask(o, true);
+  await syncTasks(addDays(o.pickup_date, -14), o.pickup_date);
+}
+
+/* ================= SETUP ================= */
+const STABS = [["products", "Products"], ["recipes", "Recipes & chains"], ["template", "Week template"], ["freezer", "Freezer"], ["settings", "Settings"]];
+function renderSetup() {
+  const tab = S.stab;
+  let body = "";
+  if (tab === "products") {
+    body = ["regular", "seasonal", "special"].map(k => {
+      const list = S.products.filter(p => p.kind === k);
+      return `<section class="sec"><h4>${KIND[k][0]}s <span class="muted">${list.length}</span></h4><div class="cards">${list.map(p => {
+        const parts = partsOf(p.id).map(x => rec(x.recipe_id)).filter(Boolean);
+        const days = Math.max(1, ...partsOf(p.id).map(x => daysOf(x.recipe_id) - (x.ready_offset || 0)));
+        return `<button type="button" class="pcard" data-act="product" data-id="${p.id}"><div class="row"><h4>${esc(p.name)}</h4><span class="spacer"></span>${p.active ? "" : `<span class="b">Off</span>`}${p.orderable ? `<span class="b spe">Orderable</span>` : ""}</div>
+          <div class="small muted">${parts.length ? esc(parts.map(r => r.name).join(" + ")) : "No recipe linked"} · ${days} day${days > 1 ? "s" : ""}</div>
+          <div class="small">${p.choice_label ? `Decide: <b>${esc(p.choice_label)}</b> ${p.decide_days} d before` : ""}${p.price != null ? ` · ${money(p.price)}` : ""}</div></button>`;
+      }).join("")}<button type="button" class="pcard" data-act="product" data-kind="${k}" style="align-items:center;justify-content:center;color:var(--muted)">+ Add ${KIND[k][0].toLowerCase()}</button></div></section>`;
+    }).join("");
+  } else if (tab === "recipes") {
+    const kinds = ["dough", "filling", "topping", "glaze", "bake", "other"];
+    body = `<p class="muted small">Each recipe is a chain of days. The last day is when it's ready. Products use one or more recipes; recipes shared by several products (like bun dough) become one card with the total.</p>
+      <div class="cards">${S.recipes.slice().sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || a.position - b.position).map(r => {
+        const st = stepsOf(r.id), n = daysOf(r.id), used = S.parts.filter(x => x.recipe_id === r.id).map(x => prod(x.product_id)?.name).filter(Boolean);
+        return `<button type="button" class="pcard" data-act="recipe" data-id="${r.id}"><div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b">${esc(r.kind)}</span></div>
+          <div class="small muted">${n} day${n > 1 ? "s" : ""} · ${st.length} step${st.length === 1 ? "" : "s"}${S.ings.some(i => i.recipe_id === r.id) ? " · ingredients" : ""}</div>
+          <div class="small">${st.map(s => `D${s.day} ${esc(s.title)}`).slice(0, 4).join("<br>")}</div>
+          ${used.length ? `<div class="small muted">Used in: ${esc([...new Set(used)].join(", "))}</div>` : `<div class="small muted">Not used by any product</div>`}</button>`;
+      }).join("")}<button type="button" class="pcard" data-act="recipe" style="align-items:center;justify-content:center;color:var(--muted)">+ Add recipe</button></div>`;
+  } else if (tab === "template") {
+    const list = S.products.filter(p => p.kind !== "special");
+    body = `<p class="muted small">Default quantities per weekday. "Fill from template" on the week board copies these into the plan; you then change single days there.</p>
+      <div class="tblwrap"><table class="tbl"><thead><tr><th>Product</th>${DOW.map(d => `<th>${d}</th>`).join("")}</tr></thead><tbody>
+      ${list.map(p => `<tr><td>${esc(p.name)}${p.active ? "" : ' <span class="b">Off</span>'}</td>${DOW.map((_, i) => { const ti = S.tmpl.find(x => x.product_id === p.id && x.weekday === i + 1); return `<td><input type="number" inputmode="numeric" min="0" data-tmpl="${p.id}|${i + 1}" value="${ti && ti.qty ? ti.qty : ""}" aria-label="${esc(p.name)} ${DOWL[i]}"></td>`; }).join("")}</tr>`).join("")}
+      </tbody></table></div><div class="row" style="margin-top:10px"><button type="button" class="btn primary" data-act="savetmpl">Save template</button></div>`;
+  } else if (tab === "freezer") {
+    body = `<p class="muted small">Things you prep ahead and freeze. When stock drops below the minimum, a restock card appears on the week board.</p>
+      <div class="list">${S.stock.map(s => `<div class="li"><div class="grow"><b>${esc(s.name)}</b><div class="meter ${+s.in_stock < +s.min_stock ? "low" : ""}"><i style="width:${Math.min(100, s.min_stock ? 100 * s.in_stock / s.min_stock : 100)}%"></i></div><span class="small muted">min ${+s.min_stock} ${esc(s.unit)}</span></div>
+        <div class="stepper"><button type="button" data-act="stk" data-id="${s.id}" data-d="-12" aria-label="Remove 12">−</button><input type="number" inputmode="numeric" data-stock="${s.id}" value="${+s.in_stock}" aria-label="${esc(s.name)} in stock"><button type="button" data-act="stk" data-id="${s.id}" data-d="12" aria-label="Add 12">+</button></div>
+        <button type="button" class="btn sm ghost" data-act="stockedit" data-id="${s.id}">Edit</button></div>`).join("")}</div>
+      <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="stockedit">+ Freezer item</button></div>`;
+  } else if (tab === "settings") {
+    const f = setting("form"), L = orderLinks(), links = setting("links"), ideas = setting("ideas");
+    const cats = [...new Set(S.products.filter(p => p.choice_label).map(p => p.category || p.name))];
+    body = `<form id="setForm" class="list" style="max-width:720px">
+      <section class="sec"><h4>Online order form</h4><div class="list">
+        <label class="f">Title<input type="text" name="title" value="${esc(f.title || "")}"></label>
+        <label class="f">Intro text<textarea name="intro">${esc(f.intro || "")}</textarea></label>
+        <label class="f">Pickup place<input type="text" name="pickup_place" value="${esc(f.pickup_place || "")}"></label>
+        <div class="grid2"><label class="f">Bank transfer recipient<input type="text" name="bank_recipient" value="${esc(f.bank_recipient || "")}"></label>
+        <label class="f">IBAN<input type="text" name="bank_iban" value="${esc(f.bank_iban || "")}"></label></div>
+        <label class="f">Payment note<textarea name="payment_note">${esc(f.payment_note || "")}</textarea></label>
+        <label class="f">Phone or email customers can contact<input type="text" name="contact" value="${esc(f.contact || "")}"></label>
+      </div></section>
+      <section class="sec"><h4>Ideas per category</h4><p class="small muted">One per line. They show up as quick picks when you decide toppings or flavours. Paste favourites from the Filling Lab here.</p>
+        <div class="list">${cats.map(c => `<label class="f">${esc(c)}<textarea data-idea="${esc(c)}">${esc((ideas[c] || []).join("\n"))}</textarea></label>`).join("")}</div></section>
+      <section class="sec"><h4>Links</h4><div class="list">
+        <label class="f">Filling Lab address<input type="text" name="filling_lab" value="${esc(links.filling_lab || CFG.fillingLab)}"></label>
+        <label class="f">Staff order link<span class="linkbox"><input type="text" readonly value="${esc(L.staff)}"><button type="button" class="btn sm" data-act="copy" data-v="${esc(L.staff)}">Copy</button></span></label>
+        <div><button type="button" class="btn sm warn" data-act="newtoken">Make a new staff link</button> <span class="small muted">The old link stops working.</span></div>
+      </div></section>
+      <div class="row"><button type="submit" class="btn primary">Save settings</button><span class="spacer"></span><button type="button" class="btn" data-act="theme">Light / dark</button><button type="button" class="btn" data-act="signout">Sign out</button></div>
+    </form>`;
+  }
+  $("#main").innerHTML = `<div class="bar"><h2>Setup</h2></div>
+    <div class="stabs" role="group" aria-label="Setup sections">${STABS.map(([k, l]) => `<button type="button" data-act="stab" data-t="${k}" aria-pressed="${tab === k}">${l}</button>`).join("")}</div>${body}`;
+}
+
+/* ================= SHEETS ================= */
+let lastFocus = null;
+function openSheet(html, onMount) {
+  closeSheet(true);
+  lastFocus = document.activeElement;
+  const sc = document.createElement("div"); sc.className = "scrim"; sc.id = "scrim";
+  sc.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">${html}</div>`;
+  document.body.appendChild(sc); document.body.style.overflow = "hidden";
+  sc.addEventListener("mousedown", e => { if (e.target === sc) closeSheet(); });
+  const f = sc.querySelector("input,select,textarea,button:not(.x)"); (f || sc.querySelector(".x"))?.focus();
+  onMount && onMount(sc.querySelector(".sheet"));
+}
+function closeSheet(silent) { const sc = $("#scrim"); if (!sc) return; sc.remove(); document.body.style.overflow = ""; if (!silent && lastFocus) lastFocus.focus?.(); }
+const head = (title, sub) => `<div class="sheet-h"><div><h3 id="shT">${title}</h3>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ""}</div><button type="button" class="x" data-act="close" aria-label="Close">×</button></div>`;
+
+/* --- task sheet --- */
+async function taskSheet(id) {
+  const t = S.tasks.find(x => x.id === id) || (await DB.sel("bk_tasks", { eq: { id } }))[0]; if (!t) return;
+  const r = t.recipe_id ? rec(t.recipe_id) : null;
+  const chain = t.chain_key ? (await DB.sel("bk_tasks", { eq: { chain_key: t.chain_key }, order: [["date"], ["position"]] })) : [];
+  const total = (t.sources || []).length && (t.sources || []).every(s => s.a != null && s.u === "g") ? t.sources.reduce((a, s) => a + s.a, 0) : null;
+  const ings = r ? S.ings.filter(i => i.recipe_id === r.id) : [];
+  const factor = total && r && r.yield_g ? total / r.yield_g : null;
+  const step = t.step_id ? S.steps.find(s => s.id === t.step_id) : null;
+  openSheet(`${head(esc(t.title), `${fmtD(t.date)}${r ? " · " + esc(r.name) : ""}${t.day_count > 1 ? ` · day ${t.day_index} of ${t.day_count}` : ""}`)}
+    <div class="row" role="group" aria-label="Status">${["todo", "doing", "done"].map(s => `<button type="button" class="btn sm ${t.status === s ? "primary" : ""}" data-act="tstatus" data-id="${t.id}" data-s="${s}">${{ todo: "To do", doing: "Doing", done: "Done" }[s]}</button>`).join("")}</div>
+    ${step && step.notes ? `<p class="note">${esc(step.notes)}</p>` : ""}
+    ${(t.sources || []).length ? `<div class="sec"><h4>For</h4><div class="list">${t.sources.map(s => `<div class="li"><span class="grow">${esc(s.p)}${s.o ? ` <span class="b spe">${esc(s.o)}</span>` : ""}${s.c ? `<br><span class="small muted">${esc(s.c)}</span>` : ""}</span><b>${s.q}</b>${s.a != null ? `<span class="small muted">${fmtAmt(s.a, s.u)}</span>` : ""}</div>`).join("")}
+      ${total != null ? `<div class="small"><b>Total ≈ ${fmtAmt(total, "g")}</b>${factor ? ` · ${(factor).toFixed(2)}× the recipe` : ""}</div>` : ""}</div></div>` : ""}
+    ${ings.length ? `<div class="sec"><h4>${factor ? "Scaled ingredients" : "Ingredients"}</h4><div class="list">${ings.map(i => `<div class="li"><span class="grow">${esc(i.name)}${i.note ? ` <span class="small muted">${esc(i.note)}</span>` : ""}</span><b>${i.qty != null ? fmtAmt(i.qty * (factor || 1), i.unit) : ""}</b></div>`).join("")}</div>${!factor && r && !r.yield_g ? `<p class="small muted">Add the recipe's yield in grams to scale this automatically.</p>` : ""}</div>` : ""}
+    ${chain.length > 1 ? `<div class="sec"><h4>Chain</h4><div class="chain">${chain.map(c => `<div class="st ${c.id === t.id ? "cur" : ""}"><span class="d">${fmtD(c.date)}</span><span class="grow">${esc(c.title)}</span>${c.status === "done" ? `<span class="b ok">Done</span>` : ""}</div>`).join("")}</div></div>` : ""}
+    <div class="sec"><h4>Details</h4><div class="list">
+      ${t.kind !== "step" ? `<label class="f">Title<input type="text" id="tTitle" value="${esc(t.title)}"></label>` : ""}
+      <div class="grid2"><label class="f">Date<input type="date" id="tDate" value="${t.date}"></label>
+      <label class="f">Time<select id="tTod"><option value="">Any time</option>${TOD.map(x => `<option ${x === (t.time_hint || "").toLowerCase() ? "selected" : ""}>${x}</option>`).join("")}</select></label></div>
+      <label class="f">Notes<textarea id="tNotes">${esc(t.notes || "")}</textarea></label>
+      ${t.kind === "step" ? `<p class="small muted">Moving a step only moves this card. To move the whole chain, change the sale day in the plan.</p>` : ""}
+    </div></div>
+    <div class="row sec"><button type="button" class="btn primary" data-act="tsave" data-id="${t.id}">Save</button><span class="spacer"></span>${t.kind !== "step" ? `<button type="button" class="btn warn" data-act="tdel" data-id="${t.id}">Delete</button>` : ""}</div>`);
+}
+function newTaskSheet(date, preset = {}) {
+  openSheet(`${head(preset.title ? "Restock task" : "New task", fmtD(date))}
+    <div class="list"><label class="f">What<input type="text" id="nTitle" value="${esc(preset.title || "")}" placeholder="e.g. Make cookie dough balls ×72"></label>
+    <div class="grid2"><label class="f">Date<input type="date" id="nDate" value="${date}"></label>
+    <label class="f">Time<select id="nTod"><option value="">Any time</option>${TOD.map(x => `<option>${x}</option>`).join("")}</select></label></div>
+    <label class="f">Notes<textarea id="nNotes"></textarea></label></div>
+    <div class="row sec"><button type="button" class="btn primary" data-act="tcreate" data-kind="${preset.kind || "custom"}">Add task</button></div>`);
+}
+
+/* --- day plan sheet --- */
+function dayPlanSheet(date) {
+  const rows = S.plan.filter(pl => pl.date === date && pl.status !== "cancelled");
+  const own = rows.filter(r => !r.order_id), ord = rows.filter(r => r.order_id);
+  const avail = S.products.filter(p => p.active && p.kind !== "special");
+  openSheet(`${head(`On sale · ${fmtD(date)}`, "Quantities and choices for this day. Steps are rebuilt when you save.")}
+    <div class="list" id="dpRows">${own.map(pl => planRow(pl)).join("")}</div>
+    <div class="row" style="margin-top:8px"><select id="dpAdd" aria-label="Add product"><option value="">+ Add product…</option>${avail.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></div>
+    ${ord.length ? `<div class="sec"><h4>From orders</h4><div class="list">${ord.map(pl => { const o = order(pl.order_id); return `<div class="li"><span class="b spe">${esc(o?.code || "")}</span><span class="grow">${pl.qty}× ${esc(prod(pl.product_id)?.name || "")}${pl.choice ? `<br><span class="small muted">${esc(pl.choice)}</span>` : ""}</span></div>`; }).join("")}</div></div>` : ""}
+    <div class="row sec"><button type="button" class="btn primary" data-act="dpsave" data-date="${date}">Save day</button><button type="button" class="btn" data-act="dpfill" data-date="${date}">Add missing from template</button></div>`,
+    sh => { sh.querySelector("#dpAdd").addEventListener("change", e => { const p = prod(e.target.value); if (!p) return; sh.querySelector("#dpRows").insertAdjacentHTML("beforeend", planRow({ id: "new-" + uid(), product_id: p.id, qty: p.default_qty || 0, choice: "" })); e.target.value = ""; }); });
+}
+function planRow(pl) {
+  const p = prod(pl.product_id);
+  return `<div class="li" data-plan="${pl.id}" data-product="${pl.product_id}"><div class="grow"><b>${esc(p?.name || "")}</b>${p?.choice_label ? `<input type="text" data-f="choice" value="${esc(pl.choice || "")}" placeholder="${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count})` : ""}" style="margin-top:4px" aria-label="${esc(p.choice_label)}">` : ""}</div>
+    <input type="number" inputmode="numeric" min="0" data-f="qty" value="${pl.qty}" style="width:76px" aria-label="Quantity"><button type="button" class="btn sm ghost" data-act="dprm" aria-label="Remove">✕</button></div>`;
+}
+
+/* --- decision sheet --- */
+async function decisionSheet(planId) {
+  const pl = S.plan.find(x => x.id === planId) || (await DB.sel("bk_plan", { eq: { id: planId } }))[0]; if (!pl) return;
+  const p = prod(pl.product_id);
+  const hist = (await DB.sel("bk_plan", { eq: { product_id: p.id }, notnull: "choice", order: [["date", false]], limit: 60 })).map(x => x.choice);
+  const past = [...new Set(hist)].slice(0, 12);
+  const cat = p.category || p.name, ideas = (setting("ideas")[cat] || []).filter(i => !past.includes(i));
+  const same = S.plan.filter(x => x.product_id === p.id && !x.order_id && !x.choice && x.id !== pl.id && x.date >= todayISO() && mondayOf(x.date) === mondayOf(pl.date)).sort((a, b) => a.date.localeCompare(b.date));
+  const fl = setting("links").filling_lab || CFG.fillingLab;
+  openSheet(`${head(`${esc(p.name)}: ${esc(p.choice_label)}`, `For ${fmtD(pl.date)} · decide by ${fmtD(addDays(pl.date, -(p.decide_days || 0)))}`)}
+    <label class="f">${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count}, one per line or comma-separated)` : ""}<textarea id="dcVal" placeholder="e.g. Plum, thyme & brown butter">${esc(pl.choice || "")}</textarea></label>
+    ${past.length ? `<div class="sec"><h4>Used before</h4><div class="pills">${past.map(c => `<button type="button" class="pill" data-act="dcpick" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>` : ""}
+    ${ideas.length ? `<div class="sec"><h4>Ideas</h4><div class="pills">${ideas.map(c => `<button type="button" class="pill" data-act="dcpick" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>` : ""}
+    <div class="sec"><a href="${esc(fl)}" target="_blank" rel="noopener" class="btn">Open the Filling Lab ↗</a> <span class="small muted">Generator, pairings and trios for new ideas.</span></div>
+    ${same.length ? `<label class="f inline sec"><input type="checkbox" id="dcSame" checked> Use for the other ${same.length} day${same.length > 1 ? "s" : ""} this week too (${same.map(x => DOW[weekday(x.date) - 1]).join(", ")})</label>` : ""}
+    <label class="f inline"><input type="checkbox" id="dcIdea"> Save to ideas for ${esc(cat)}</label>
+    <div class="row sec"><button type="button" class="btn primary" data-act="dcsave" data-id="${pl.id}" data-same="${same.map(x => x.id).join(",")}">Save</button></div>`);
+}
+
+/* --- order sheet --- */
+function orderSheet(id) {
+  const o = id ? order(id) : { id: null, code: "New", source: "in_person", status: "confirmed", customer_name: "", phone: "", email: "", pickup_date: addDays(todayISO(), 3), pickup_time: "", notes: "", allergies: "", total: null, deposit: null, paid: 0, payment_method: "", payment_status: "unpaid" };
+  const items = id ? itemsOf(id) : [{ id: "new-1", product_id: "", name: "", qty: 1, details: "" }];
+  const orderable = S.products.filter(p => p.active);
+  const optList = sel => `<option value="">Choose…</option>` + orderable.map(p => `<option value="${p.id}" ${p.id === sel ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+  openSheet(`${head(id ? `Order ${esc(o.code)}` : "New order", id ? `${esc(OSRC[o.source] || o.source)} · ${esc((OSTAT[o.status] || [o.status])[0])}` : "Taken in person or by phone")}
+    <form id="oForm" class="list">
+      <div class="grid2"><label class="f">Name<input type="text" name="customer_name" required value="${esc(o.customer_name)}"></label>
+      <label class="f">Phone<input type="tel" name="phone" value="${esc(o.phone || "")}"></label></div>
+      <label class="f">Email<input type="email" name="email" value="${esc(o.email || "")}"></label>
+      <div class="grid2"><label class="f">Pickup date<input type="date" name="pickup_date" required value="${o.pickup_date}"></label>
+      <label class="f">Pickup time<input type="text" name="pickup_time" value="${esc(o.pickup_time || "")}" placeholder="e.g. 14:00"></label></div>
+      <div class="sec"><h4>Items</h4><div class="list" id="oItems">${items.map(i => `<div class="li" data-item="${i.id}"><div class="grow"><select data-f="product_id" aria-label="Product">${optList(i.product_id)}</select><input type="text" data-f="details" value="${esc(i.details || "")}" placeholder="Details: size, flavours, lettering" style="margin-top:4px" aria-label="Details"></div><input type="number" data-f="qty" min="1" value="${i.qty}" style="width:70px" aria-label="Quantity"><button type="button" class="btn sm ghost" data-act="oirm" aria-label="Remove item">✕</button></div>`).join("")}</div>
+        <button type="button" class="btn sm" data-act="oiadd" style="margin-top:6px">+ Item</button></div>
+      <label class="f">Allergies<input type="text" name="allergies" value="${esc(o.allergies || "")}"></label>
+      <label class="f">Notes<textarea name="notes">${esc(o.notes || "")}</textarea></label>
+      <div class="sec"><h4>Payment</h4><div class="grid3">
+        <label class="f">Total €<input type="number" step="0.01" name="total" value="${o.total ?? ""}"></label>
+        <label class="f">Deposit €<input type="number" step="0.01" name="deposit" value="${o.deposit ?? ""}"></label>
+        <label class="f">Paid €<input type="number" step="0.01" name="paid" value="${o.paid ?? 0}"></label></div>
+        <div class="grid2" style="margin-top:8px"><label class="f">Method<select name="payment_method">${["", "cash", "card", "transfer"].map(m => `<option ${m === (o.payment_method || "") ? "selected" : ""} value="${m}">${m || "–"}</option>`).join("")}</select></label>
+        <label class="f">Status<select name="payment_status">${Object.entries(PSTAT).map(([k, v]) => `<option value="${k}" ${k === o.payment_status ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label></div></div>
+      ${!id ? `<label class="f inline"><input type="checkbox" name="confirm" checked> Confirm now and add to the calendar</label>` : ""}
+      <div class="row sec"><button type="submit" class="btn primary">${id ? "Save changes" : "Add order"}</button><span class="spacer"></span>
+        ${id && !["cancelled", "declined", "collected"].includes(o.status) ? `<button type="button" class="btn warn" data-act="ocancel" data-id="${o.id}">Cancel order</button>` : ""}
+        ${id && ["cancelled", "declined"].includes(o.status) ? `<button type="button" class="btn warn" data-act="odelete" data-id="${o.id}">Delete</button>` : ""}</div>
+      <template id="oiTpl"><div class="li" data-item="new"><div class="grow"><select data-f="product_id" aria-label="Product">${optList("")}</select><input type="text" data-f="details" placeholder="Details: size, flavours, lettering" style="margin-top:4px" aria-label="Details"></div><input type="number" data-f="qty" min="1" value="1" style="width:70px" aria-label="Quantity"><button type="button" class="btn sm ghost" data-act="oirm" aria-label="Remove item">✕</button></div></template>
+    </form>`, sh => { sh.querySelector("#oForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveOrder(o, e.target)); }); });
+}
+async function saveOrder(o, form) {
+  const fd = Object.fromEntries(new FormData(form));
+  const items = $$("#oItems [data-item]", form).map(el => ({ id: el.dataset.item, product_id: $("[data-f=product_id]", el).value, details: $("[data-f=details]", el).value.trim(), qty: Math.max(1, +$("[data-f=qty]", el).value || 1) })).filter(i => i.product_id);
+  if (!fd.customer_name.trim()) throw new Error("Add the customer's name.");
+  if (!items.length) throw new Error("Add at least one item.");
+  const num = v => v === "" || v == null ? null : +v;
+  const patch = { customer_name: fd.customer_name.trim(), phone: fd.phone || null, email: fd.email || null, pickup_date: fd.pickup_date, pickup_time: fd.pickup_time || null,
+    allergies: fd.allergies || null, notes: fd.notes || null, total: num(fd.total), deposit: num(fd.deposit), paid: num(fd.paid) || 0, payment_method: fd.payment_method || null, payment_status: fd.payment_status };
+  let id = o.id, oldDate = o.pickup_date;
+  if (!id) {
+    const confirm = !!fd.confirm;
+    const [row] = await DB.ins("bk_orders", { ...patch, source: "in_person", status: confirm ? "confirmed" : "request", confirmed_at: confirm ? new Date().toISOString() : null });
+    id = row.id;
+  } else await DB.upd("bk_orders", id, patch);
+  const old = itemsOf(id);
+  const keep = items.filter(i => !i.id.startsWith("new"));
+  await DB.del("bk_order_items", old.filter(x => !keep.some(k => k.id === x.id)).map(x => x.id));
+  for (const i of keep) { const p = prod(i.product_id); await DB.upd("bk_order_items", i.id, { product_id: i.product_id, name: p?.name || "Item", qty: i.qty, details: i.details || null, price: p?.price ?? null }); }
+  const add = items.filter(i => i.id.startsWith("new")).map(i => { const p = prod(i.product_id); return { order_id: id, product_id: i.product_id, name: p?.name || "Item", qty: i.qty, details: i.details || null, price: p?.price ?? null }; });
+  if (add.length) await DB.ins("bk_order_items", add);
+  await loadOrders();
+  const fresh = order(id);
+  if (["confirmed", "ready"].includes(fresh.status)) {
+    await DB.del("bk_plan", (await DB.sel("bk_plan", { eq: { order_id: id } })).map(x => x.id));
+    await DB.ins("bk_plan", await orderPlanRows(fresh));
+    await pickupTask(fresh);
+    if (oldDate && oldDate !== fresh.pickup_date) await syncTasks(addDays(oldDate, -14), oldDate);
+    await syncTasks(addDays(fresh.pickup_date, -14), fresh.pickup_date);
+  }
+  closeSheet(); toast(o.id ? "Order saved." : `Order ${fresh.code} added.`); await refresh();
+}
+
+/* --- product sheet --- */
+function productSheet(id, kind) {
+  const p = id ? prod(id) : { id: null, name: "", kind: kind || "regular", category: "", price: null, unit_label: "pcs", default_qty: 12, choice_label: "", choice_count: 1, decide_days: 2, orderable: kind === "special", lead_days: 2, deposit_pct: 50, order_note: "", active: true, notes: "" };
+  const parts = id ? partsOf(id) : [];
+  const recOpts = sel => S.recipes.map(r => `<option value="${r.id}" ${r.id === sel ? "selected" : ""}>${esc(r.name)} (${daysOf(r.id)} d)</option>`).join("");
+  const offOpts = sel => [0, -1, -2, -3].map(v => `<option value="${v}" ${+sel === v ? "selected" : ""}>${v === 0 ? "ready on sale day" : `ready ${-v} day${v < -1 ? "s" : ""} before`}</option>`).join("");
+  const partRow = x => `<div class="partrow" data-part="${x.id || "new"}"><select data-f="recipe_id" aria-label="Recipe">${recOpts(x.recipe_id)}</select><select data-f="ready_offset" aria-label="When ready">${offOpts(x.ready_offset || 0)}</select><input type="number" step="any" data-f="qty_per_unit" value="${x.qty_per_unit ?? ""}" placeholder="per pc" aria-label="Amount per piece"><select data-f="unit" aria-label="Unit">${["g", "pcs", "ml"].map(u => `<option ${u === (x.unit || "g") ? "selected" : ""}>${u}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove">✕</button></div>`;
+  openSheet(`${head(id ? esc(p.name) : "New product", esc(KIND[p.kind][0]))}
+    <form id="pForm" class="list">
+      <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(p.name)}"></label>
+      <label class="f">Type<select name="kind">${Object.entries(KIND).map(([k, v]) => `<option value="${k}" ${k === p.kind ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label></div>
+      <div class="grid3"><label class="f">Category<input type="text" name="category" value="${esc(p.category || "")}" placeholder="Focaccia, Buns…"></label>
+      <label class="f">Price €<input type="number" step="0.01" name="price" value="${p.price ?? ""}"></label>
+      <label class="f">Default qty<input type="number" name="default_qty" value="${p.default_qty}"></label></div>
+      <div class="sec"><h4>Made from</h4><p class="small muted">Recipes this product needs, when each must be ready, and how much per piece (for batch totals).</p><div id="pParts">${parts.map(partRow).join("")}</div>
+        <button type="button" class="btn sm" data-act="addpart">+ Recipe</button>
+        <template id="partTpl">${partRow({ recipe_id: S.recipes[0]?.id, ready_offset: 0, unit: "g" })}</template></div>
+      <div class="sec"><h4>Open choice</h4><div class="grid3">
+        <label class="f">What to decide<input type="text" name="choice_label" value="${esc(p.choice_label || "")}" placeholder="Toppings, Flavours…"></label>
+        <label class="f">How many<input type="number" name="choice_count" min="1" value="${p.choice_count}"></label>
+        <label class="f">Decide days before<input type="number" name="decide_days" min="0" value="${p.decide_days}"></label></div></div>
+      <div class="sec"><h4>Orders</h4><label class="f inline"><input type="checkbox" name="orderable" ${p.orderable ? "checked" : ""}> Show on the order forms</label>
+        <div class="grid3" style="margin-top:8px"><label class="f">Min. notice (days)<input type="number" name="lead_days" min="0" value="${p.lead_days}"></label>
+        <label class="f">Deposit %<input type="number" name="deposit_pct" min="0" max="100" value="${p.deposit_pct}"></label>
+        <label class="f">Unit<input type="text" name="unit_label" value="${esc(p.unit_label || "pcs")}"></label></div>
+        <label class="f" style="margin-top:8px">Note on the form<input type="text" name="order_note" value="${esc(p.order_note || "")}"></label></div>
+      <label class="f inline sec"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Active</label>
+      <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="pdel" data-id="${id}">Delete</button>` : ""}</div>
+    </form>`, sh => { sh.querySelector("#pForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveProduct(p, e.target)); }); });
+}
+async function saveProduct(p, form) {
+  const fd = new FormData(form), g = k => fd.get(k);
+  const row = { name: g("name").trim(), kind: g("kind"), category: g("category") || null, price: g("price") === "" ? null : +g("price"), default_qty: +g("default_qty") || 0,
+    choice_label: g("choice_label").trim() || null, choice_count: Math.max(1, +g("choice_count") || 1), decide_days: Math.max(0, +g("decide_days") || 0),
+    orderable: !!g("orderable"), lead_days: Math.max(0, +g("lead_days") || 0), deposit_pct: Math.min(100, Math.max(0, +g("deposit_pct") || 0)), unit_label: g("unit_label") || "pcs",
+    order_note: g("order_note") || null, active: !!g("active") };
+  if (!row.name) throw new Error("Give the product a name.");
+  let id = p.id;
+  if (id) await DB.upd("bk_products", id, row); else { row.position = S.products.length + 1; id = (await DB.ins("bk_products", row))[0].id; }
+  const rows = $$("#pParts [data-part]", form).map((el, i) => ({ product_id: id, recipe_id: $("[data-f=recipe_id]", el).value, ready_offset: +$("[data-f=ready_offset]", el).value, qty_per_unit: $("[data-f=qty_per_unit]", el).value === "" ? null : +$("[data-f=qty_per_unit]", el).value, unit: $("[data-f=unit]", el).value, position: i })).filter(r => r.recipe_id);
+  await DB.del("bk_product_parts", partsOf(id).map(x => x.id));
+  if (rows.length) await DB.ins("bk_product_parts", rows);
+  await afterStructureChange(); closeSheet(); toast("Product saved."); await refresh();
+}
+async function afterStructureChange() { await loadStatic(); const t = todayISO(); await syncTasks(addDays(t, -14), addDays(t, 56)); }
+
+/* --- recipe sheet --- */
+function recipeSheet(id) {
+  const r = id ? rec(id) : { id: null, name: "", kind: "dough", yield_g: null, yield_note: "", notes: "", method: "", source: "" };
+  const steps = id ? stepsOf(id) : [{ day: 1, title: "", time_hint: "", minutes: null }];
+  const ings = id ? S.ings.filter(i => i.recipe_id === id) : [];
+  const stepRow = s => `<div class="steprow" data-step="${s.id || "new"}"><input type="text" data-f="title" value="${esc(s.title || "")}" placeholder="Step" aria-label="Step"><select data-f="time_hint" aria-label="Time of day"><option value="">any time</option>${TOD.map(x => `<option ${x === (s.time_hint || "").toLowerCase() ? "selected" : ""}>${x}</option>`).join("")}</select><input type="number" data-f="minutes" value="${s.minutes ?? ""}" placeholder="min" aria-label="Minutes"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove step">✕</button><input type="hidden" data-f="day" value="${s.day}"></div>`;
+  const maxDay = Math.max(1, ...steps.map(s => s.day));
+  const dayBox = d => `<div class="stepday" data-day="${d}"><h5>Day ${d}${d === maxDay ? " · ready" : ""}</h5><div class="dsteps">${steps.filter(s => s.day === d).map(stepRow).join("")}</div><button type="button" class="btn sm" data-act="addstep" data-day="${d}">+ Step</button></div>`;
+  const ingRow = i => `<div class="ingrow" data-ing="${i.id || "new"}"><input type="text" data-f="name" list="kIngr" value="${esc(i.name || "")}" placeholder="Ingredient" aria-label="Ingredient"><input type="number" step="any" data-f="qty" value="${i.qty ?? ""}" aria-label="Amount"><select data-f="unit" aria-label="Unit">${["g", "ml", "pcs", "kg"].map(u => `<option ${u === (i.unit || "g") ? "selected" : ""}>${u}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove">✕</button></div>`;
+  openSheet(`${head(id ? esc(r.name) : "New recipe", "Steps are spread over days; the last day is when it's ready.")}
+    <form id="rForm" class="list">
+      <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(r.name)}"></label>
+      <label class="f">Kind<select name="kind">${["dough", "filling", "topping", "glaze", "bake", "other"].map(k => `<option ${k === r.kind ? "selected" : ""}>${k}</option>`).join("")}</select></label></div>
+      <div class="sec"><h4>Days & steps</h4><div id="rDays">${Array.from({ length: maxDay }, (_, i) => dayBox(i + 1)).join("")}</div>
+        <button type="button" class="btn sm" data-act="addday">+ Day</button>
+        <template id="stepTpl">${stepRow({ day: 1 })}</template></div>
+      <div class="sec"><h4>Ingredients</h4><div id="rIngs">${ings.map(ingRow).join("")}</div><button type="button" class="btn sm" data-act="adding">+ Ingredient</button>
+        <template id="ingTpl">${ingRow({})}</template>
+        <datalist id="kIngr">${S.kIngr.map(k => `<option value="${esc(k.name)}"></option>`).join("")}</datalist>
+        <div class="grid2" style="margin-top:8px"><label class="f">Yield (g, for scaling)<input type="number" name="yield_g" value="${r.yield_g ?? ""}"></label>
+        <label class="f">Yield note<input type="text" name="yield_note" value="${esc(r.yield_note || "")}" placeholder="e.g. 2 trays"></label></div></div>
+      <label class="f">Method<textarea name="method" style="min-height:140px">${esc(r.method || "")}</textarea></label>
+      <label class="f">Notes<textarea name="notes">${esc(r.notes || "")}</textarea></label>
+      <label class="f">Source<input type="text" name="source" value="${esc(r.source || "")}" placeholder="Book, page, link"></label>
+      <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="rdel" data-id="${id}">Delete</button>` : ""}</div>
+    </form>`, sh => { sh.querySelector("#rForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); });
+}
+function relabelDays(form) { const boxes = $$("#rDays .stepday", form); boxes.forEach((b, i) => { b.dataset.day = i + 1; $("h5", b).textContent = `Day ${i + 1}${i === boxes.length - 1 ? " · ready" : ""}`; $$("[data-f=day]", b).forEach(h => h.value = i + 1); $("[data-act=addstep]", b).dataset.day = i + 1; }); }
+async function saveRecipe(r, form) {
+  const fd = new FormData(form), g = k => fd.get(k);
+  const row = { name: g("name").trim(), kind: g("kind"), yield_g: g("yield_g") === "" ? null : +g("yield_g"), yield_note: g("yield_note") || null, method: g("method") || null, notes: g("notes") || null, source: g("source") || null, updated_at: new Date().toISOString() };
+  if (!row.name) throw new Error("Give the recipe a name.");
+  let id = r.id;
+  if (id) await DB.upd("bk_recipes", id, row); else { row.position = S.recipes.length + 1; id = (await DB.ins("bk_recipes", row))[0].id; }
+  const steps = $$("#rDays [data-step]", form).map((el, i) => ({ id: el.dataset.step, recipe_id: id, day: +$("[data-f=day]", el).value, title: $("[data-f=title]", el).value.trim(), time_hint: $("[data-f=time_hint]", el).value || null, minutes: $("[data-f=minutes]", el).value === "" ? null : +$("[data-f=minutes]", el).value, position: i })).filter(s => s.title);
+  const old = r.id ? stepsOf(r.id) : [];
+  await DB.del("bk_recipe_steps", old.filter(o => !steps.some(s => s.id === o.id)).map(o => o.id));
+  for (const s of steps.filter(s => s.id !== "new")) { const { id: sid, ...rest } = s; await DB.upd("bk_recipe_steps", sid, rest); }
+  const ns = steps.filter(s => s.id === "new").map(({ id: _, ...rest }) => rest); if (ns.length) await DB.ins("bk_recipe_steps", ns);
+  const ings = $$("#rIngs [data-ing]", form).map((el, i) => { const name = $("[data-f=name]", el).value.trim(); const k = S.kIngr.find(x => x.name.toLowerCase() === name.toLowerCase()); return { recipe_id: id, name, ingredient_id: k ? k.id : null, qty: $("[data-f=qty]", el).value === "" ? null : +$("[data-f=qty]", el).value, unit: $("[data-f=unit]", el).value, position: i }; }).filter(i => i.name);
+  await DB.del("bk_recipe_ingredients", S.ings.filter(i => i.recipe_id === id).map(i => i.id));
+  if (ings.length) await DB.ins("bk_recipe_ingredients", ings);
+  await afterStructureChange(); closeSheet(); toast("Recipe saved."); await refresh();
+}
+
+/* --- stock sheet --- */
+function stockSheet(id) {
+  const s = id ? S.stock.find(x => x.id === id) : { name: "", unit: "pcs", in_stock: 0, min_stock: 0, recipe_id: null, notes: "" };
+  openSheet(`${head(id ? esc(s.name) : "Freezer item")}
+    <form id="sForm" class="list"><label class="f">Name<input type="text" name="name" required value="${esc(s.name)}"></label>
+      <div class="grid3"><label class="f">In stock<input type="number" name="in_stock" value="${+s.in_stock}"></label><label class="f">Minimum<input type="number" name="min_stock" value="${+s.min_stock}"></label><label class="f">Unit<input type="text" name="unit" value="${esc(s.unit)}"></label></div>
+      <label class="f">Recipe<select name="recipe_id"><option value="">–</option>${S.recipes.map(r => `<option value="${r.id}" ${r.id === s.recipe_id ? "selected" : ""}>${esc(r.name)}</option>`).join("")}</select></label>
+      <label class="f">Notes<textarea name="notes">${esc(s.notes || "")}</textarea></label>
+      <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="sdel" data-id="${id}">Delete</button>` : ""}</div></form>`,
+    sh => sh.querySelector("#sForm").addEventListener("submit", e => { e.preventDefault(); guard(async () => {
+      const fd = new FormData(e.target); const row = { name: fd.get("name").trim(), in_stock: +fd.get("in_stock") || 0, min_stock: +fd.get("min_stock") || 0, unit: fd.get("unit") || "pcs", recipe_id: fd.get("recipe_id") || null, notes: fd.get("notes") || null, updated_at: new Date().toISOString() };
+      if (id) await DB.upd("bk_stock", id, row); else await DB.ins("bk_stock", row);
+      await loadStatic(); closeSheet(); toast("Saved."); await refresh(); }); }));
+}
+
+/* ================= EVENTS ================= */
+function rerender() { ({ week: renderWeek, today: renderToday, orders: renderOrders, setup: renderSetup })[S.view]?.(); renderNav(); }
+const ACT = {
+  close: () => closeSheet(),
+  wk: el => { const d = +el.dataset.d; S.week = d === 0 ? mondayOf(todayISO()) : addDays(S.week, d); return refresh(); },
+  mo: el => { const d = +el.dataset.d; const m = parse(S.month); if (d === 0) S.month = todayISO().slice(0, 8) + "01"; else { m.setDate(1); m.setMonth(m.getMonth() + d); S.month = iso(m).slice(0, 8) + "01"; } return refresh(); },
+  fill: async el => { const n = await fillFromTemplate(S.week, 7 * (+el.dataset.weeks || 1)); toast(n ? `Added ${n} products to the plan.` : "Everything from the template is already planned."); await refresh(); },
+  toggle: async el => {
+    const t = S.tasks.find(x => x.id === el.dataset.id); if (!t) return;
+    const status = t.status === "done" ? "todo" : "done";
+    await DB.upd("bk_tasks", t.id, { status }); t.status = status; rerender();
+  },
+  task: el => taskSheet(el.dataset.id),
+  day: el => dayPlanSheet(el.dataset.date),
+  newtask: el => newTaskSheet(el.dataset.date),
+  decide: el => decisionSheet(el.dataset.id),
+  order: el => orderSheet(el.dataset.id),
+  neworder: () => orderSheet(null),
+  restock: el => { const s = S.stock.find(x => x.id === el.dataset.id); if (!s) return; newTaskSheet(todayISO(), { title: `Make ${s.name} (${Math.max(0, s.min_stock - s.in_stock)} ${s.unit})`, kind: "restock" }); },
+  gotoweek: el => { S.week = mondayOf(el.dataset.date); return go("week"); },
+  otab: el => { S.otab = el.dataset.t; renderOrders(); },
+  stab: el => { S.stab = el.dataset.t; store.set("bk.stab", S.stab); renderSetup(); },
+  copy: async el => { try { await navigator.clipboard.writeText(el.dataset.v); toast("Copied."); } catch { toast("Couldn't copy; select the text instead.", true); } },
+  oapprove: async el => { await approveOrder(el.dataset.id); await loadOrders(); rerender(); },
+  odecline: async el => { const o = order(el.dataset.id); if (!o || !confirm(`Decline ${o.code} from ${o.customer_name}? Remember to let them know.`)) return; await DB.upd("bk_orders", o.id, { status: "declined" }); await loadOrders(); rerender(); toast(`${o.code} declined.`); },
+  ostatus: async el => { await DB.upd("bk_orders", el.dataset.id, { status: el.dataset.s }); await loadOrders(); rerender(); },
+  ocancel: async el => { const o = order(el.dataset.id); if (!o || !confirm(`Cancel ${o.code}? Its steps are removed from the calendar.`)) return; await DB.upd("bk_orders", o.id, { status: "cancelled" }); await unplanOrder(o); await loadOrders(); closeSheet(); toast(`${o.code} cancelled.`); await refresh(); },
+  odelete: async el => { const o = order(el.dataset.id); if (!o || !confirm(`Delete ${o.code} for good?`)) return; await unplanOrder(o); await DB.del("bk_orders", o.id); await loadOrders(); closeSheet(); await refresh(); },
+  oiadd: () => { const tpl = $("#oiTpl"); $("#oItems").insertAdjacentHTML("beforeend", tpl.innerHTML.replace('data-item="new"', `data-item="new-${uid()}"`)); },
+  oirm: el => el.closest("[data-item]").remove(),
+  product: el => productSheet(el.dataset.id, el.dataset.kind),
+  recipe: el => recipeSheet(el.dataset.id),
+  addpart: () => $("#pParts").insertAdjacentHTML("beforeend", $("#partTpl").innerHTML),
+  rmrow: el => el.closest("[data-part],[data-step],[data-ing]").remove(),
+  addstep: el => { const box = el.closest(".stepday"); $(".dsteps", box).insertAdjacentHTML("beforeend", $("#stepTpl").innerHTML.replace('value="1"', `value="${box.dataset.day}"`)); },
+  addday: () => { const days = $("#rDays"); const n = $$(".stepday", days).length + 1; days.insertAdjacentHTML("beforeend", `<div class="stepday" data-day="${n}"><h5></h5><div class="dsteps">${$("#stepTpl").innerHTML.replace('value="1"', `value="${n}"`)}</div><button type="button" class="btn sm" data-act="addstep" data-day="${n}">+ Step</button></div>`); relabelDays($("#rForm")); },
+  adding: () => $("#rIngs").insertAdjacentHTML("beforeend", $("#ingTpl").innerHTML),
+  pdel: async el => { const p = prod(el.dataset.id); if (!p || !confirm(`Delete ${p.name}? Its planned days and steps go too. To pause it, untick Active instead.`)) return; await DB.del("bk_products", p.id); await afterStructureChange(); closeSheet(); await refresh(); },
+  rdel: async el => { const r = rec(el.dataset.id); if (!r || !confirm(`Delete ${r.name}? Products using it lose this part.`)) return; await DB.del("bk_recipes", r.id); await afterStructureChange(); closeSheet(); await refresh(); },
+  sdel: async el => { if (!confirm("Delete this freezer item?")) return; await DB.del("bk_stock", el.dataset.id); await loadStatic(); closeSheet(); await refresh(); },
+  stockedit: el => stockSheet(el.dataset.id),
+  stk: async el => { const s = S.stock.find(x => x.id === el.dataset.id); if (!s) return; const v = Math.max(0, +s.in_stock + +el.dataset.d); await DB.upd("bk_stock", s.id, { in_stock: v, updated_at: new Date().toISOString() }); s.in_stock = v; renderSetup(); },
+  savetmpl: async () => {
+    const ins = [], ups = [], dels = [];
+    for (const inp of $$("[data-tmpl]")) {
+      const [pid, wd] = inp.dataset.tmpl.split("|"); const q = inp.value === "" ? 0 : Math.max(0, +inp.value);
+      const ex = S.tmpl.find(x => x.product_id === pid && x.weekday === +wd);
+      if (ex && !q) dels.push(ex.id); else if (ex && ex.qty !== q) ups.push([ex.id, { qty: q }]); else if (!ex && q) ins.push({ product_id: pid, weekday: +wd, qty: q });
+    }
+    if (dels.length) await DB.del("bk_template_items", dels);
+    for (const [id, p] of ups) await DB.upd("bk_template_items", id, p);
+    if (ins.length) await DB.ins("bk_template_items", ins);
+    await loadStatic(); toast("Template saved. Already-planned days keep their quantities."); renderSetup();
+  },
+  newtoken: async () => { if (!confirm("Make a new staff link? The old one stops working.")) return; await DB.ups("bk_settings", { key: "staff", value: { token: uid().replace(/-/g, "") } }, "key"); await loadStatic(); renderSetup(); toast("New staff link ready. Share it with your colleagues."); },
+  theme: () => { const r = document.documentElement; const cur = r.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); r.dataset.theme = cur === "dark" ? "light" : "dark"; store.set("bk.theme", r.dataset.theme); },
+  signout: async () => { await AUTH.signOut(); location.reload(); },
+  /* task sheet */
+  tstatus: async el => { await DB.upd("bk_tasks", el.dataset.id, { status: el.dataset.s }); const t = S.tasks.find(x => x.id === el.dataset.id); if (t) t.status = el.dataset.s; closeSheet(); rerender(); },
+  tsave: async el => {
+    const patch = { date: $("#tDate").value, time_hint: $("#tTod").value || null, notes: $("#tNotes").value.trim() || null };
+    if ($("#tTitle")) patch.title = $("#tTitle").value.trim() || "Task";
+    await DB.upd("bk_tasks", el.dataset.id, patch); closeSheet(); toast("Saved."); await refresh();
+  },
+  tdel: async el => { if (!confirm("Delete this task?")) return; await DB.del("bk_tasks", el.dataset.id); closeSheet(); await refresh(); },
+  tcreate: async el => {
+    const title = $("#nTitle").value.trim(); if (!title) { toast("Write what needs doing.", true); return; }
+    await DB.ins("bk_tasks", { date: $("#nDate").value, title, kind: el.dataset.kind || "custom", time_hint: $("#nTod").value || null, notes: $("#nNotes").value.trim() || null });
+    closeSheet(); toast("Task added."); await refresh();
+  },
+  /* day plan sheet */
+  dprm: el => { const row = el.closest("[data-plan]"); row.dataset.removed = "1"; row.style.display = "none"; },
+  dpsave: async el => {
+    const date = el.dataset.date, ins = [], dels = [];
+    for (const row of $$("#dpRows [data-plan]")) {
+      const id = row.dataset.plan, qty = Math.max(0, +$("[data-f=qty]", row).value || 0), choice = $("[data-f=choice]", row)?.value.trim() || null;
+      if (id.startsWith("new-")) { if (!row.dataset.removed && qty > 0) ins.push({ date, product_id: row.dataset.product, qty, choice }); continue; }
+      if (row.dataset.removed) { dels.push(id); continue; }
+      const old = S.plan.find(x => x.id === id); if (old && (old.qty !== qty || (old.choice || null) !== choice)) await DB.upd("bk_plan", id, { qty, choice });
+    }
+    if (dels.length) await DB.del("bk_plan", dels);
+    if (ins.length) await DB.ins("bk_plan", ins);
+    await syncTasks(addDays(date, -14), date); closeSheet(); toast("Day saved. Steps updated."); await refresh();
+  },
+  dpfill: async el => { const n = await fillFromTemplate(el.dataset.date, 1); closeSheet(); toast(n ? `Added ${n} products.` : "Nothing missing."); await refresh(); },
+  /* decision sheet */
+  dcpick: el => { const ta = $("#dcVal"); const v = el.dataset.v; ta.value = ta.value.trim() ? (ta.value.trim().includes(v) ? ta.value : ta.value.trim() + ", " + v) : v; ta.focus(); },
+  dcsave: async el => {
+    const v = $("#dcVal").value.trim(); if (!v) { toast("Write the choice first.", true); return; }
+    const ids = [el.dataset.id, ...(($("#dcSame")?.checked && el.dataset.same) ? el.dataset.same.split(",") : [])].filter(Boolean);
+    for (const id of ids) await DB.upd("bk_plan", id, { choice: v });
+    const pl = S.plan.find(x => x.id === el.dataset.id) || (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0];
+    if ($("#dcIdea")?.checked) { const p = prod(pl.product_id), cat = p.category || p.name, ideas = { ...setting("ideas") }; ideas[cat] = [...new Set([...(ideas[cat] || []), v])]; await DB.ups("bk_settings", { key: "ideas", value: ideas }, "key"); await loadStatic(); }
+    const dates = S.plan.filter(x => ids.includes(x.id)).map(x => x.date).concat(pl.date).sort();
+    await syncTasks(addDays(dates[0], -14), dates[dates.length - 1]); closeSheet(); toast("Decided."); await refresh();
+  },
+  savelog: async () => {
+    for (const row of $$("[data-log]")) {
+      const patch = {}; for (const inp of $$("[data-f]", row)) { const f = inp.dataset.f; patch[f] = inp.value === "" ? null : (f === "sold_out_at" ? inp.value : Math.max(0, +inp.value)); }
+      await DB.upd("bk_plan", row.dataset.log, patch);
+    }
+    toast("Day saved.");
+  }
+};
+document.addEventListener("click", e => {
+  const v = e.target.closest("[data-view]"); if (v) { go(v.dataset.view); return; }
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  const fn = ACT[a.dataset.act]; if (!fn) return;
+  e.preventDefault(); guard(() => fn(a));
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $("#scrim")) { closeSheet(); return; }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches(".cbody[role=button]")) { e.preventDefault(); e.target.click(); }
+});
+document.addEventListener("change", e => {
+  if (e.target.matches("[data-stock]")) guard(async () => { const s = S.stock.find(x => x.id === e.target.dataset.stock); const v = Math.max(0, +e.target.value || 0); await DB.upd("bk_stock", s.id, { in_stock: v, updated_at: new Date().toISOString() }); s.in_stock = v; renderSetup(); });
+});
+document.addEventListener("submit", e => {
+  if (e.target.id !== "setForm") return; e.preventDefault();
+  guard(async () => {
+    const fd = new FormData(e.target), form = { ...setting("form") };
+    for (const k of ["title", "intro", "pickup_place", "bank_recipient", "bank_iban", "payment_note", "contact"]) form[k] = (fd.get(k) || "").trim();
+    const ideas = { ...setting("ideas") }; $$("[data-idea]", e.target).forEach(t => { ideas[t.dataset.idea] = t.value.split("\n").map(s => s.trim()).filter(Boolean); });
+    await DB.ups("bk_settings", [{ key: "form", value: form }, { key: "ideas", value: ideas }, { key: "links", value: { ...setting("links"), filling_lab: (fd.get("filling_lab") || "").trim() } }], "key");
+    await loadStatic(); toast("Settings saved.");
+  });
+});
+/* drag & drop between days */
+document.addEventListener("dragstart", e => { const c = e.target.closest?.(".card[data-task]"); if (!c) return; e.dataTransfer.setData("text/plain", c.dataset.task); e.dataTransfer.effectAllowed = "move"; });
+document.addEventListener("dragover", e => { const col = e.target.closest?.(".col[data-col]"); if (!col) return; e.preventDefault(); $$(".col.drop").forEach(c => c !== col && c.classList.remove("drop")); col.classList.add("drop"); });
+document.addEventListener("dragleave", e => { const col = e.target.closest?.(".col[data-col]"); if (col && !col.contains(e.relatedTarget)) col.classList.remove("drop"); });
+document.addEventListener("drop", e => {
+  const col = e.target.closest?.(".col[data-col]"); if (!col) return; e.preventDefault(); col.classList.remove("drop");
+  const id = e.dataTransfer.getData("text/plain"); const t = S.tasks.find(x => x.id === id); if (!t || t.date === col.dataset.col) return;
+  guard(async () => { await DB.upd("bk_tasks", id, { date: col.dataset.col }); t.date = col.dataset.col; renderWeek(); toast(`Moved to ${fmtD(t.date)}.`); });
+});
+
+/* ================= AUTH & BOOT ================= */
+function showLogin(msg, signedIn) {
+  $("#app").classList.add("hidden"); const L = $("#login"); L.classList.remove("hidden");
+  L.innerHTML = `<form class="login" id="loginForm"><h1>Bakery <span style="color:var(--accent)">Planner</span></h1>
+    <p class="muted" style="margin:0">Sign in to plan the week, decide flavours and handle orders.</p>
+    ${msg ? `<div class="err" role="alert">${esc(msg)}</div>` : ""}
+    ${signedIn ? `<button type="button" class="btn" id="lOut">Sign out</button>` : `
+    <label class="f">Email<input type="email" name="email" autocomplete="username" required></label>
+    <label class="f">Password<input type="password" name="password" autocomplete="current-password" required minlength="8"></label>
+    <button type="submit" class="btn primary">Sign in</button>
+    <div class="row"><button type="button" class="btn ghost sm" id="lUp">First time? Create login</button><span class="spacer"></span><button type="button" class="btn ghost sm" id="lReset">Forgot password</button></div>`}
+  </form>`;
+  const f = $("#loginForm");
+  if (signedIn) { $("#lOut").onclick = async () => { await AUTH.signOut(); showLogin(); }; return; }
+  const creds = () => { const fd = new FormData(f); return [String(fd.get("email")).trim(), String(fd.get("password"))]; };
+  f.onsubmit = e => { e.preventDefault(); guard(async () => { const [em, pw] = creds(); await AUTH.signIn(em, pw); await boot(); }); };
+  $("#lUp").onclick = () => guard(async () => { if (!f.reportValidity()) return; const [em, pw] = creds(); await AUTH.signUp(em, pw); showLogin("Check your inbox and confirm the email, then sign in here."); });
+  $("#lReset").onclick = () => guard(async () => { const em = String(new FormData(f).get("email")).trim(); if (!em) { toast("Enter your email first.", true); return; } await AUTH.reset(em); toast("Password reset email sent."); });
+}
+function showSetPassword() {
+  $("#app").classList.add("hidden"); const L = $("#login"); L.classList.remove("hidden");
+  L.innerHTML = `<form class="login" id="pwForm"><h1>New password</h1><label class="f">Password<input type="password" name="pw" minlength="8" required autocomplete="new-password"></label><button class="btn primary" type="submit">Save password</button></form>`;
+  $("#pwForm").onsubmit = e => { e.preventDefault(); guard(async () => { await AUTH.setPassword(new FormData(e.target).get("pw")); toast("Password saved."); await boot(); }); };
+}
+let booted = false;
+async function boot() {
+  const sess = await AUTH.session();
+  if (!sess) { showLogin(); return; }
+  let ok = false; try { ok = await DB.rpc("bk_is_admin"); } catch (e) { showLogin(e.message); return; }
+  if (!ok) { showLogin("This login isn't allowed here yet, or its email isn't confirmed.", true); return; }
+  S.user = sess.user;
+  $("#login").classList.add("hidden"); $("#app").classList.remove("hidden");
+  await guard(async () => { await loadStatic(); await loadOrders(); });
+  await refresh();
+  if (!booted) { booted = true; setInterval(() => { if (document.visibilityState === "visible" && !$("#scrim")) guard(async () => { const before = S.requests; await loadOrders(); if (S.requests !== before) { renderNav(); if (S.requests > before) toast("New order request."); } }); }, 120000); }
+}
+(() => {
+  const th = store.get("bk.theme", null); if (th) document.documentElement.dataset.theme = th;
+  if (AUTH.onChange) AUTH.onChange(ev => { if (ev === "PASSWORD_RECOVERY") showSetPassword(); });
+  boot();
+})();
+
+</script>
+</body>
+</html>

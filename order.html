@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f2ea;--surface:#fffdf9;--sunk:#eee8dc;--line:#e2dacb;--ink:#1e1913;--muted:#6f6556;--accent:#16846f;--accent-ink:#fff;--accent-soft:#d9f1ea;--warn:#b4321f;--warn-soft:#fbe1dc;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16130f;--surface:#1f1b16;--sunk:#2a251e;--line:#3a3329;--ink:#f3ede3;--muted:#b5aa98;--accent:#4fd1b5;--accent-ink:#0d1f1a;--accent-soft:#163a32;--warn:#ff8a75;--warn-soft:#45201a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#16130f;--surface:#1f1b16;--sunk:#2a251e;--line:#3a3329;--ink:#f3ede3;--muted:#b5aa98;--accent:#4fd1b5;--accent-ink:#0d1f1a;--accent-soft:#163a32;--warn:#ff8a75;--warn-soft:#45201a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3",system-ui,sans-serif;font-size:16px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.lang{margin-left:auto;display:flex;gap:2px;background:var(--sunk);padding:3px;border-radius:9px}
+.lang button{border:0;background:transparent;padding:4px 10px;border-radius:7px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+h1{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:32px;letter-spacing:-.02em;margin:8px 0 6px;line-height:1.1}
+h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:19px;margin:0 0 10px}
+.intro{color:var(--muted);margin:0 0 18px}
+.staffbar{background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:14px;border-radius:10px;padding:8px 12px;margin-bottom:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
+input,select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:10px 12px;font-size:16px;color:var(--ink);width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.g2{grid-template-columns:1fr}}
+.stack{display:flex;flex-direction:column;gap:10px}
+.prod{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
+.prod.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.ph{display:flex;align-items:center;gap:10px}
+.ph .nm{flex:1;min-width:0}
+.ph b{display:block}
+.ph .s{font-size:13px;color:var(--muted)}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer}
+.step output{min-width:28px;text-align:center;font-weight:700}
+.det{margin-top:8px}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:12px;padding:14px 18px;font-size:17px;width:100%;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.err{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-weight:600;margin-bottom:12px}
+.small{font-size:13px;color:var(--muted)}
+.tot{display:flex;justify-content:space-between;font-weight:700;margin-top:6px}
+.done{text-align:center}
+.code{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:44px;font-weight:800;letter-spacing:.02em;color:var(--accent);margin:6px 0}
+.pay{text-align:left;background:var(--sunk);border-radius:12px;padding:12px;margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:15px}
+.pay span{color:var(--muted)}
+.hp{position:absolute;left:-5000px;width:1px;height:1px;overflow:hidden}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{flex-direction:row;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--ink);font-weight:600;background:var(--bg)}
+.seg input{width:auto}
+.loading{color:var(--muted);text-align:center;padding:40px 0}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"><p class="loading">…</p></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const CFG = Object.assign({ url: "https://qoawsxutvxwzdgerzunw.supabase.co", key: "sb_publishable_6CxO-uSs9sAsFUQL5rrj-w_RWlsJc3t" }, window.BAKERY_CONFIG || {});
+const RPC = window.__BAKERY_MOCK ? (fn, args) => window.__BAKERY_MOCK.DB.rpc(fn, args) : (() => { const sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: false } }); return async (fn, args) => { const { data, error } = await sb.rpc(fn, args); if (error) throw new Error(error.message); return data; }; })();
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); const x = new Date(y, m - 1, d, 12); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`; };
+const money = n => `€${(+n).toFixed(2).replace(/\.00$/, "")}`;
+const TOKEN = new URLSearchParams(location.search).get("staff");
+
+const TXT = {
+  lt: { details: "Jūsų duomenys", name: "Vardas", phone: "Telefonas", email: "El. paštas", contactNote: "Užtenka telefono arba el. pašto.", what: "Ką norėtumėte užsisakyti?", pickup: "Atsiėmimas", date: "Data", time: "Laikas", timePh: "pvz. 14:00", earliest: "Anksčiausia data", allergies: "Alergijos", allergiesPh: "pvz. riešutai, glitimas", notes: "Pastabos", send: "Siųsti užsakymą", sending: "Siunčiama…", confirmNote: "Užsakymą patvirtinsime telefonu arba el. paštu.", privacy: "Jūsų kontaktus naudosime tik šiam užsakymui.", thanks: "Ačiū!", yourCode: "Jūsų užsakymo numeris", backSoon: "Netrukus susisieksime ir patvirtinsime užsakymą.", deposit: "Avansas", recipient: "Gavėjas", iban: "Sąskaita", reference: "Mokėjimo paskirtis", payAfter: "Prašome mokėti tik gavus mūsų patvirtinimą.", place: "Atsiėmimo vieta", total: "Suma (preliminari)", pcs: "vnt.", pickOne: "Pasirinkite bent vieną prekę.", needName: "Įrašykite vardą.", needContact: "Įrašykite telefoną arba el. paštą.", needDate: "Pasirinkite atsiėmimo datą.", notice: (n, d) => `${n}: reikia užsakyti bent ${d} d. iš anksto.`, minDays: d => `užsakyti bent ${d} d. iš anksto`, staff: "Darbuotojo užsakymas · patvirtins virėjas", paid: "Sumokėta dabar €", method: "Būdas", cash: "Grynais", card: "Kortele", transfer: "Pavedimu", none: "Nesumokėta", takenBy: "Priėmė", savedStaff: "Užsakymas išsaugotas. Virėjas jį peržiūrės ir patvirtins.", another: "Naujas užsakymas", none_avail: "Šiuo metu užsakymų nepriimame.", detailsPh: "Detalės" },
+  en: { details: "Your details", name: "Name", phone: "Phone", email: "Email", contactNote: "A phone number or an email is enough.", what: "What would you like?", pickup: "Pickup", date: "Date", time: "Time", timePh: "e.g. 14:00", earliest: "Earliest date", allergies: "Allergies", allergiesPh: "e.g. nuts, gluten", notes: "Notes", send: "Send order request", sending: "Sending…", confirmNote: "We'll confirm your order by phone or email.", privacy: "We use your contact details only for this order.", thanks: "Thank you!", yourCode: "Your order number", backSoon: "We'll get back to you soon to confirm.", deposit: "Deposit", recipient: "Recipient", iban: "Account", reference: "Reference", payAfter: "Please pay only after we've confirmed.", place: "Pickup place", total: "Total (estimate)", pcs: "pcs", pickOne: "Choose at least one item.", needName: "Please enter your name.", needContact: "Add a phone number or an email.", needDate: "Choose a pickup date.", notice: (n, d) => `${n} needs at least ${d} day(s) notice.`, minDays: d => `order ${d} day(s) ahead`, staff: "Staff order · the chef confirms it", paid: "Paid now €", method: "Method", cash: "Cash", card: "Card", transfer: "Transfer", none: "Not paid", takenBy: "Taken by", savedStaff: "Order saved. The chef will review and confirm it.", another: "New order", none_avail: "We're not taking orders right now.", detailsPh: "Details" }
+};
+let LANG = store.get("bk.lang", (navigator.language || "lt").startsWith("lt") ? "lt" : "en");
+let F = null, Q = {}, D = {}, ERR = "", DONE = null, BUSY = false;
+const t = k => TXT[LANG][k];
+
+function minDate() {
+  if (!F) return "";
+  if (F.staff) return F.today;
+  const chosen = F.products.filter(p => Q[p.id] > 0);
+  const leads = (chosen.length ? chosen : F.products).map(p => p.lead_days || 0);
+  return addDays(F.today, chosen.length ? Math.max(...leads) : Math.min(...leads));
+}
+function render() {
+  document.documentElement.lang = LANG;
+  const root = document.getElementById("root"), s = F.settings || {};
+  document.title = s.title || "Order";
+  const head = `<div class="top"><span class="small">${esc(s.pickup_place || "")}</span><div class="lang" role="group" aria-label="Language"><button type="button" data-lang="lt" aria-pressed="${LANG === "lt"}">LT</button><button type="button" data-lang="en" aria-pressed="${LANG === "en"}">EN</button></div></div>`;
+  if (DONE) {
+    const showPay = !F.staff && DONE.deposit && (s.bank_iban || s.bank_recipient);
+    root.innerHTML = head + `<div class="box done"><h1>${t("thanks")}</h1><div class="small">${t("yourCode")}</div><div class="code">${esc(DONE.code)}</div>
+      <p>${F.staff ? t("savedStaff") : t("backSoon")}</p>
+      ${showPay ? `<div class="pay"><span>${t("deposit")}</span><b>${money(DONE.deposit)}</b>${s.bank_recipient ? `<span>${t("recipient")}</span><b>${esc(s.bank_recipient)}</b>` : ""}${s.bank_iban ? `<span>${t("iban")}</span><b>${esc(s.bank_iban)}</b>` : ""}<span>${t("reference")}</span><b>${esc(DONE.code)}</b></div><p class="small">${t("payAfter")}</p>` : ""}
+      ${!F.staff && s.payment_note && !showPay ? `<p class="small">${esc(s.payment_note)}</p>` : ""}
+      ${F.staff ? `<button type="button" class="btn" data-act="again" style="margin-top:12px">${t("another")}</button>` : ""}</div>`;
+    return;
+  }
+  if (!F.products.length) { root.innerHTML = head + `<h1>${esc(s.title || "")}</h1><div class="box">${t("none_avail")}</div>`; return; }
+  const chosen = F.products.filter(p => Q[p.id] > 0);
+  const priced = chosen.length && chosen.every(p => p.price != null);
+  const total = priced ? chosen.reduce((a, p) => a + p.price * Q[p.id], 0) : null;
+  const md = minDate(), who = store.get("bk.takenBy", "");
+  root.innerHTML = head + `
+    <h1>${esc(s.title || "")}</h1>${s.intro ? `<p class="intro">${esc(s.intro)}</p>` : ""}
+    ${F.staff ? `<div class="staffbar">${t("staff")}</div>` : ""}
+    ${ERR ? `<div class="err" role="alert">${esc(ERR)}</div>` : ""}
+    <form id="f" novalidate>
+      <div class="box"><h2>${t("what")}</h2><div class="stack">
+        ${F.products.map(p => `<div class="prod ${Q[p.id] > 0 ? "on" : ""}"><div class="ph"><div class="nm"><b>${esc(p.name)}</b><span class="s">${p.price != null ? money(p.price) + " · " : ""}${t("minDays")(p.lead_days)}${p.note ? " · " + esc(p.note) : ""}</span></div>
+          <div class="step"><button type="button" data-q="${p.id}" data-d="-1" aria-label="−">−</button><output aria-live="polite">${Q[p.id] || 0}</output><button type="button" data-q="${p.id}" data-d="1" aria-label="+">+</button></div></div>
+          ${Q[p.id] > 0 ? `<div class="det"><textarea data-det="${p.id}" placeholder="${esc(p.choice_label || t("detailsPh"))}" aria-label="${esc(p.choice_label || t("detailsPh"))}">${esc(D[p.id] || "")}</textarea></div>` : ""}</div>`).join("")}
+        ${total != null ? `<div class="tot"><span>${t("total")}</span><span>${money(total)}</span></div>` : ""}
+      </div></div>
+      <div class="box"><h2>${t("pickup")}</h2><div class="g2">
+        <label>${t("date")}<input type="date" name="pickup_date" min="${md}" required></label>
+        <label>${t("time")}<input type="text" name="pickup_time" placeholder="${t("timePh")}" maxlength="20"></label></div>
+        <p class="small" style="margin:8px 0 0">${t("earliest")}: <b>${md}</b></p></div>
+      <div class="box"><h2>${t("details")}</h2><div class="stack">
+        <label>${t("name")}<input type="text" name="customer_name" autocomplete="name" maxlength="120" required></label>
+        <div class="g2"><label>${t("phone")}<input type="tel" name="phone" autocomplete="tel" maxlength="40"></label><label>${t("email")}<input type="email" name="email" autocomplete="email" maxlength="160"></label></div>
+        <p class="small" style="margin:0">${t("contactNote")}</p>
+        <label>${t("allergies")}<input type="text" name="allergies" placeholder="${t("allergiesPh")}" maxlength="500"></label>
+        <label>${t("notes")}<textarea name="notes" maxlength="2000"></textarea></label>
+        <div class="hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+      </div></div>
+      ${F.staff ? `<div class="box"><div class="stack">
+        <div class="g2"><label>${t("paid")}<input type="number" name="paid" min="0" step="0.01" inputmode="decimal"></label><label>${t("takenBy")}<input type="text" name="entered_by" value="${esc(who)}" maxlength="60"></label></div>
+        <div class="seg" role="radiogroup" aria-label="${t("method")}">${[["", t("none")], ["cash", t("cash")], ["card", t("card")], ["transfer", t("transfer")]].map(([v, l], i) => `<label><input type="radio" name="payment_method" value="${v}" ${i === 0 ? "checked" : ""}> ${l}</label>`).join("")}</div></div></div>` : ""}
+      <button type="submit" class="btn" ${BUSY ? "disabled" : ""}>${BUSY ? t("sending") : t("send")}</button>
+      <p class="small" style="text-align:center">${t("confirmNote")} ${t("privacy")}${s.contact ? ` · ${esc(s.contact)}` : ""}</p>
+    </form>`;
+}
+function keepForm() { const f = document.getElementById("f"); if (!f) return {}; const o = Object.fromEntries(new FormData(f)); document.querySelectorAll("[data-det]").forEach(el => { D[el.dataset.det] = el.value; }); return o; }
+function restore(o) { const f = document.getElementById("f"); if (!f) return; for (const [k, v] of Object.entries(o)) { const el = f.elements[k]; if (!el || k === "payment_method") continue; if (el.type !== "radio") el.value = v; } if (o.payment_method !== undefined) { const r = f.querySelector(`[name=payment_method][value="${o.payment_method}"]`); if (r) r.checked = true; } }
+function rerender() { const o = keepForm(); render(); restore(o); }
+
+document.addEventListener("click", e => {
+  const l = e.target.closest("[data-lang]"); if (l) { LANG = l.dataset.lang; store.set("bk.lang", LANG); rerender(); return; }
+  const q = e.target.closest("[data-q]"); if (q) { const id = q.dataset.q; Q[id] = Math.max(0, Math.min(200, (Q[id] || 0) + +q.dataset.d)); rerender(); return; }
+  if (e.target.closest("[data-act=again]")) { DONE = null; Q = {}; D = {}; ERR = ""; render(); window.scrollTo({ top: 0 }); }
+});
+document.addEventListener("submit", async e => {
+  e.preventDefault(); if (BUSY) return;
+  const fd = keepForm(); ERR = "";
+  if (fd.website) return;
+  const items = F.products.filter(p => Q[p.id] > 0).map(p => ({ product_id: p.id, qty: Q[p.id], details: (D[p.id] || "").trim() }));
+  if (!items.length) ERR = t("pickOne");
+  else if (!fd.pickup_date) ERR = t("needDate");
+  else if (!F.staff) { const late = F.products.find(p => Q[p.id] > 0 && fd.pickup_date < addDays(F.today, p.lead_days)); if (late) ERR = t("notice")(late.name, late.lead_days); }
+  if (!ERR && (fd.customer_name || "").trim().length < 2) ERR = t("needName");
+  if (!ERR && !(fd.phone || "").trim() && !(fd.email || "").trim()) ERR = t("needContact");
+  if (ERR) { rerender(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  BUSY = true; rerender();
+  try {
+    const p = { customer_name: fd.customer_name, phone: fd.phone, email: fd.email, pickup_date: fd.pickup_date, pickup_time: fd.pickup_time, allergies: fd.allergies, notes: fd.notes, items };
+    if (F.staff) { Object.assign(p, { token: TOKEN, paid: fd.paid || 0, payment_method: fd.payment_method || null, entered_by: fd.entered_by }); store.set("bk.takenBy", fd.entered_by || ""); }
+    DONE = await RPC("bk_submit_order", { p });
+    BUSY = false; render(); window.scrollTo({ top: 0 });
+  } catch (err) { BUSY = false; ERR = err.message || String(err); rerender(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+});
+(async () => {
+  try { F = await RPC("bk_public_form", { p_token: TOKEN || null }); render(); }
+  catch (e) { document.getElementById("root").innerHTML = `<div class="err">${esc(e.message || e)}</div>`; }
+})();
+</script>
+</body>
+</html>
