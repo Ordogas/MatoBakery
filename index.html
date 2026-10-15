@@ -297,17 +297,50 @@ main[aria-busy="true"] .board{transition:opacity .2s}
 .warnt{color:var(--warn)}
 @media (max-width:560px){.strip{grid-template-columns:repeat(7,minmax(0,1fr))}}
 
+/* header: sections + grouped nav */
+.top-in{gap:10px 18px}
+.sect{display:flex;gap:4px;align-items:center;flex:0 0 auto}
+.sbtn{border:0;background:transparent;font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:-.02em;color:var(--muted);padding:6px 12px;border-radius:11px;white-space:nowrap}
+.sbtn b{font-weight:800}
+.sbtn.on{color:var(--ink);background:var(--surface);box-shadow:var(--shadow)}
+.sbtn.on b{color:var(--accent)}
+.sbtn.lab.on{background:var(--lab);color:#fff}
+.sbtn.lab.on b{color:#fff}
+.sbtn:not(.on):hover{color:var(--ink)}
+.subnav{flex:1 1 420px;display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.nav.tools{background:transparent;gap:6px;padding:0}
+.nav.tools button{border:1px solid var(--line);background:var(--surface)}
+.nav.tools button[aria-current="page"]{background:var(--ink);color:var(--bg);border-color:var(--ink);box-shadow:none}
+:root{--lab:#5e2f8c;--lab-soft:#efe6f7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lab:#9a63d1;--lab-soft:#2c1f3a}}
+:root[data-theme="dark"]{--lab:#9a63d1;--lab-soft:#2c1f3a}
+body[data-section="lab"] .top{background:color-mix(in srgb,var(--lab-soft) 85%,var(--bg));border-bottom-color:color-mix(in srgb,var(--lab) 30%,var(--line))}
+body[data-section="lab"] .busy i{background:var(--lab)}
+body.in-lab{overflow:hidden}
+.labbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%;font-size:14px;color:var(--ink);padding:0;background:transparent;border:0}
+.labbar.pick{background:var(--accent-soft);border-radius:10px;padding:6px 10px}
+.labwrap{height:auto}
+@media (max-width:700px){.sbtn{font-size:17px;padding:5px 9px}.labtip{display:none}.subnav{flex-basis:100%}}
+@media (max-width:560px){
+  .top-in{padding:8px 12px;gap:6px}
+  .subnav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
+  .subnav::-webkit-scrollbar{display:none}
+  .subnav .spacer{flex:0 0 2px}
+  .nav button{padding:6px 9px;font-size:14px}
+  .nav.tools{gap:4px}
+}
+
 </style>
 </head>
 <body>
 <div id="login" class="hidden"></div>
 <div id="app" class="hidden">
   <header class="top"><div class="top-in">
-    <div class="brand">Bakery <span>Planner</span></div>
-    <nav class="nav" id="nav" aria-label="Views"></nav>
+    <div class="sect" id="sect"></div>
+    <div class="subnav" id="subnav"></div>
   </div><div id="busy" class="busy" hidden><i></i></div></header>
   <main id="main" aria-live="polite"></main>
-  <section id="labWrap" class="labwrap hidden" aria-label="Filling Lab"><div id="labBar" class="labbar hidden"></div></section>
+  <section id="labWrap" class="labwrap hidden" aria-label="Filling Lab"></section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -530,10 +563,25 @@ const lowStock = () => S.stock.filter(s => +s.in_stock < +s.min_stock);
 
 /* ================= RENDER: SHELL ================= */
 const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["stock", "Stock"], ["lab", "Lab"], ["setup", "Setup"]];
+const TIMEV = [["today", "Today"], ["week", "Week"], ["month", "Month"]], TOOLV = [["orders", "Orders"], ["stock", "Stock"], ["setup", "Setup"]];
 function renderNav() {
-  $("#nav").innerHTML = VIEWS.map(([k, l]) => `<button type="button" data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "orders" && S.requests ? `<span class="dot" aria-label="${S.requests} new requests">${S.requests}</span>` : ""}</button>`).join("");
+  const lab = S.view === "lab";
+  document.body.dataset.section = lab ? "lab" : "planner";
+  $("#sect").innerHTML = `<button type="button" class="sbtn ${lab ? "" : "on"}" data-view="__planner" ${lab ? "" : 'aria-current="page"'}><b>Bakery</b> Planner</button><button type="button" class="sbtn lab ${lab ? "on" : ""}" data-view="lab" ${lab ? 'aria-current="page"' : ""}><b>Filling</b> Lab</button>`;
+  if (lab) { if (typeof renderLabBar === "function") renderLabBar(); return; }
+  const btn = ([k, l]) => `<button type="button" data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "orders" && S.requests ? `<span class="dot" aria-label="${S.requests} new requests">${S.requests}</span>` : ""}</button>`;
+  $("#subnav").innerHTML = `<nav class="nav" id="nav" aria-label="Calendar">${TIMEV.map(btn).join("")}</nav><span class="spacer"></span><nav class="nav tools" id="nav2" aria-label="Manage">${TOOLV.map(btn).join("")}</nav>`;
 }
-async function go(view) { S.view = view; store.set("bk.view", view); window.scrollTo({ top: 0 }); await refresh({ nav: true }); }
+const VIEWKEYS = ["today", "week", "month", "orders", "stock", "setup", "lab"];
+async function go(view, fromHistory) {
+  if (view === "__planner") view = store.get("bk.lastPlanner", "week");
+  if (!VIEWKEYS.includes(view)) view = "week";
+  if (view !== "lab") store.set("bk.lastPlanner", view);
+  S.view = view; store.set("bk.view", view);
+  if (!fromHistory && location.hash.slice(1) !== view) { try { history.pushState(null, "", "#" + view); } catch {} }
+  window.scrollTo({ top: 0 }); await refresh({ nav: true });
+}
+window.addEventListener("popstate", () => { const v = location.hash.slice(1); if (VIEWKEYS.includes(v) && v !== S.view) go(v, true); });
 /* Views render instantly from cache (or a skeleton), then refresh in the background. */
 const CACHE = new Map(); let REQ = 0;
 function busy(on) { const b = $("#busy"); if (b) b.hidden = !on; $("#main")?.setAttribute("aria-busy", on ? "true" : "false"); }
@@ -1160,18 +1208,22 @@ function stockSheet(id) {
 let PICK = null;
 let IDEAS_OPEN = false, IDEA_NEW = null;
 const ideaCount = () => Object.values(setting("ideas")).reduce((a, l) => a + (l || []).length, 0);
-function showLab(on) {
-  const w = $("#labWrap"); $("#main").classList.toggle("hidden", on); w.classList.toggle("hidden", !on);
-  if (!on) return;
-  if (!$("#labFrame")) w.insertAdjacentHTML("beforeend", `<div class="labbody"><iframe id="labFrame" src="lab.html" title="Filling Lab"></iframe><aside id="ideasDrawer" class="drawer hidden" aria-label="Saved ideas"></aside></div>`);
-  const bar = $("#labBar");
+function labHeight() { const w = $("#labWrap"); if (w && !w.classList.contains("hidden")) w.style.height = Math.max(320, window.innerHeight - $(".top").getBoundingClientRect().height) + "px"; }
+window.addEventListener("resize", labHeight);
+function renderLabBar() {
+  const sub = $("#subnav"); if (!sub) return;
   const ideasBtn = `<button type="button" class="btn sm ${IDEAS_OPEN ? "primary" : ""}" data-act="idtoggle" aria-expanded="${IDEAS_OPEN}">Saved ideas <span class="b">${ideaCount()}</span></button>`;
   if (PICK) {
     const p = prod(PICK.product_id);
-    bar.innerHTML = `<span><b>Picking ${esc(p?.choice_label || "an idea")}</b> for ${esc(p?.name || "")} · ${fmtD(PICK.date)}. Tap “Use in planner” on any recipe, trio, pairing or generator idea.</span><span class="spacer"></span>${ideasBtn}<button type="button" class="btn sm" data-act="labcancel">Back without picking</button>`;
-  } else bar.innerHTML = `<span class="small">Tap <b>“Use in planner”</b> on any recipe, combo, trio, pairing or generator idea to save it here or use it straight away.</span><span class="spacer"></span>${ideasBtn}`;
-  bar.classList.remove("hidden");
-  renderIdeas();
+    sub.innerHTML = `<div class="labbar pick"><span><b>Picking ${esc(p?.choice_label || "an idea")}</b> for ${esc(p?.name || "")} · ${fmtD(PICK.date)}. Tap “Use in planner” on anything.</span><span class="spacer"></span>${ideasBtn}<button type="button" class="btn sm" data-act="labcancel">Back without picking</button></div>`;
+  } else sub.innerHTML = `<div class="labbar"><span class="small muted labtip">Techniques, recipes, pairings and the generator. Tap <b>“Use in planner”</b> to save an idea or use it for a decision.</span><span class="spacer"></span>${ideasBtn}</div>`;
+}
+function showLab(on) {
+  const w = $("#labWrap"); $("#main").classList.toggle("hidden", on); w.classList.toggle("hidden", !on);
+  document.body.classList.toggle("in-lab", on);
+  if (!on) return;
+  if (!$("#labFrame")) w.insertAdjacentHTML("beforeend", `<div class="labbody"><iframe id="labFrame" src="lab.html" title="Filling Lab"></iframe><aside id="ideasDrawer" class="drawer hidden" aria-label="Saved ideas"></aside></div>`);
+  renderLabBar(); renderIdeas(); labHeight();
   const fr = $("#labFrame"); const tell = () => { try { fr.contentWindow.postMessage({ type: "bk:pick", on: !!PICK }, location.origin); } catch {} };
   tell(); fr.onload = tell;
 }
@@ -1200,7 +1252,7 @@ window.addEventListener("message", e => {
     const text = String(e.data.text || "").slice(0, 300);
     if (PICK) {
       const pk = PICK; PICK = null;
-      S.view = pk.view; store.set("bk.view", S.view); await refresh({ nav: true });
+      await go(pk.view);
       const cur = (pk.draft || "").trim();
       await decisionSheet(pk.id, cur ? (cur.includes(text) ? cur : cur + ", " + text) : text);
     } else await ideaSheet(text, e.data.src);
@@ -1436,9 +1488,9 @@ const ACT = {
   labpick: async el => {
     const pl = S.plan.find(x => x.id === el.dataset.id) || (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0];
     PICK = { id: el.dataset.id, product_id: pl.product_id, date: pl.date, draft: $("#dcVal")?.value || "", view: S.view === "lab" ? "week" : S.view };
-    closeSheet(true); S.view = "lab"; renderNav(); showLab(true); window.scrollTo({ top: 0 });
+    closeSheet(true); await go("lab");
   },
-  labcancel: async () => { const pk = PICK; PICK = null; S.view = pk ? pk.view : "week"; await refresh({ nav: true }); if (pk) await decisionSheet(pk.id, pk.draft); },
+  labcancel: async () => { const pk = PICK; PICK = null; await go(pk ? pk.view : "week"); if (pk) await decisionSheet(pk.id, pk.draft); },
   idsave: async () => {
     const v = $("#idText").value.trim(), cat = $("#idCat").value; if (!v) return;
     const ideas = { ...setting("ideas") }; ideas[cat] = [...new Set([...(ideas[cat] || []), v])];
@@ -1446,7 +1498,7 @@ const ACT = {
     IDEAS_OPEN = true; IDEA_NEW = { c: cat, v }; if (S.view === "lab") showLab(true); toast(`Saved to ${cat} ideas.`);
   },
   iddecide: async el => { const v = $("#idText").value.trim(); closeSheet(true); const pl = (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0]; const cur = (pl?.choice || "").trim(); await decisionSheet(el.dataset.id, cur ? cur + ", " + v : v); },
-  idtoggle: () => { IDEAS_OPEN = !IDEAS_OPEN; IDEA_NEW = null; showLab(true); },
+  idtoggle: () => { IDEAS_OPEN = !IDEAS_OPEN; IDEA_NEW = null; renderLabBar(); renderIdeas(); },
   iddel: async el => { const ideas = { ...setting("ideas") }; const l = [...(ideas[el.dataset.c] || [])]; l.splice(+el.dataset.i, 1); ideas[el.dataset.c] = l; await DB.ups("bk_settings", { key: "ideas", value: ideas }, "key"); await loadStatic(); showLab(true); },
   iduse: async el => { const v = (setting("ideas")[el.dataset.c] || [])[+el.dataset.i]; if (v) await ideaSheet(v, "Saved idea", el.dataset.c); },
   /* decision sheet */
@@ -1546,6 +1598,7 @@ async function boot() {
 }
 (() => {
   const th = store.get("bk.theme", null); if (th) document.documentElement.dataset.theme = th;
+  const hv = location.hash.slice(1); if (VIEWKEYS.includes(hv)) { S.view = hv; if (hv !== "lab") store.set("bk.lastPlanner", hv); }
   if (AUTH.onChange) AUTH.onChange(ev => { if (ev === "PASSWORD_RECOVERY") showSetPassword(); });
   boot();
 })();
