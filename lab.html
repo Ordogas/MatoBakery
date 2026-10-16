@@ -4027,35 +4027,68 @@ S.f = defaultF(S.tab); setTabs(); chips(); render();
 
 <script>
 /* Planner bridge: only active when the Taste Lab runs inside the Bakery Planner. Adds "Use in planner" buttons
-   that send an idea (recipe, combo, trio, generator result or pairing) to the planner window. */
+   that send an idea (recipe, combo, trio, generator result or pairing) to the planner window,
+   and "Add to Recipes" buttons that send a structured draft to the Recipes section. */
 (() => {
   if (window.parent === window) return;
   const st = document.createElement("style");
   st.textContent = `html button.bkuse{display:inline-flex;align-items:center;gap:4px;margin:8px 6px 0 0;border:1px solid #16846f;background:#16846f;color:#fff;font:600 13px/1.2 "Source Sans 3",system-ui,sans-serif;border-radius:999px;padding:6px 12px;cursor:pointer}
   html button.bkuse.sent{background:transparent;color:#16846f}
+  html button.bkuse.bkrec{background:#9a5b13;border-color:#9a5b13}
+  html button.bkuse.bkrec.sent{background:transparent;color:#9a5b13}
   html[data-bkpick="1"] button.bkuse{box-shadow:0 0 0 3px rgba(22,132,111,.25);animation:bkp 1.6s ease-in-out infinite}
   @keyframes bkp{50%{box-shadow:0 0 0 6px rgba(22,132,111,.12)}}
   @media (prefers-reduced-motion:reduce){html[data-bkpick="1"] button.bkuse{animation:none}}`;
   document.head.appendChild(st);
   const btn = (text, src, label) => `<button type="button" class="bkuse" data-bk="${encodeURIComponent(text)}" data-bksrc="${src}">${label || "Use in planner →"}</button>`;
+  const rbtn = (draft, label) => draft ? `<button type="button" class="bkuse bkrec" data-rbd="${encodeURIComponent(JSON.stringify(draft))}">${label || "Add to Recipes →"}</button>` : "";
+  const KINDOF = { cust: "filling", gan: "filling", air: "filling", fruit: "filling", sug: "filling", tex: "topping", fin: "glaze", lab: "other", sv_base: "filling", sv_dairy: "filling", sv_dip: "filling", sv_cond: "filling", sv_sauce: "other", sv_acid: "other", sv_tex: "topping" };
+  const parseAmt = v => { const m = /^\s*([\d.,]+)(\s*[–-]\s*[\d.,]+)?\s*(g|kg|ml|l|pcs)?\b/.exec(String(v)); return m ? { qty: +m[1].replace(",", "."), unit: m[3] || "g", note: m[2] ? String(v) : null } : { qty: null, unit: "g", note: String(v) }; };
+  const cap = t => t ? t[0].toUpperCase() + t.slice(1) : t;
+  /* turn whatever is open in the Lab into a recipe draft */
+  function sheetDraft(title) {
+    const r = R.find(x => x.n === title);
+    if (r) return { name: r.n, kind: KINDOF[(TB[r.t] || {}).f] || "other", status: "idea", origin: "Taste Lab · " + ((TB[r.t] || {}).n || "recipe"),
+      ings: (r.I || []).map(([n, q, u, note]) => ({ name: n, qty: typeof q === "number" ? q : null, unit: u || "g", note: note || null })),
+      method: r.M || [], notes: (r.N || []).join("\n") || null, yield_qty: typeof baseYield === "function" ? Math.round(baseYield(r)) || null : null, yield_unit: "g" };
+    const t = T.find(x => x.n === title);
+    if (t) return { name: t.n, kind: KINDOF[t.f] || "other", status: "idea", origin: "Taste Lab · technique",
+      ings: (t.ratio || []).filter(([n, v]) => /\d/.test(v)).map(([n, v]) => ({ name: n, ...parseAmt(v) })),
+      method: t.steps || [], notes: [t.what, t.oven].filter(Boolean).join("\n\n") || null };
+    const c = (typeof C !== "undefined" ? C : []).find(x => x.n === title);
+    if (c) return { name: c.n, kind: "bake", status: "idea", origin: "Taste Lab · combo",
+      ings: (c.L || []).map(l => l.r ? { name: (R.find(x => x.id === l.r) || {}).n || l.r, qty: typeof l.g === "number" ? l.g : null, unit: "g", grp: "Per piece", note: l.w === "after" ? "after baking" : "baked in" } : { name: l.x, qty: null, unit: "pcs", grp: "Per piece", note: String(l.g ?? "") }),
+      method: c.st || [], notes: [c.pastry, c.note].filter(Boolean).join("\n") || null };
+    return null;
+  }
+  function genDraft() {
+    if (typeof CON === "undefined" || CON.fi == null) return null;
+    const F = FORMATS[CON.fi], lbl = s => (s === "f" && F.fl) || (s === "d" && F.dl) || SLOTLBL[s];
+    const parts = SLOTORD.filter(s => CON.sl[s] && !(s === "d" && CON.sl[s].label === "plain"));
+    return { name: conTitle(), kind: "bake", status: "idea", origin: "Taste Lab generator",
+      ings: parts.map(s => ({ name: cap(CON.sl[s].label), qty: null, unit: "g", grp: lbl(s), note: CON.sl[s].tech && TB[CON.sl[s].tech] ? TB[CON.sl[s].tech].n : null })),
+      method: [`Base: ${F.base} (${F.n.toLowerCase()}).`, ...parts.map(s => `${lbl(s)}: ${CON.sl[s].label}${CON.sl[s].tech && TB[CON.sl[s].tech] ? ` (${TB[CON.sl[s].tech].n})` : ""}, ${whenLbl(s).toLowerCase()}.`)],
+      notes: conWhy() };
+  }
   let busy = false;
   function decorate() {
     if (busy) return; busy = true;
     try {
       const sh = document.getElementById("sheet");
       const title = sh && !sh.hidden && sh.querySelector("#sheetTitle");
-      if (title && !sh.querySelector(".bkuse")) title.insertAdjacentHTML("afterend", btn(title.textContent.trim(), "recipe"));
+      if (title && !sh.querySelector(".bkuse")) title.insertAdjacentHTML("afterend", btn(title.textContent.trim(), "recipe") + rbtn(sheetDraft(title.textContent.trim())));
       const g = document.querySelector("#p-gen .gfoot");
       if (g && !g.querySelector(".bkuse") && typeof genSummary === "function")
-        g.insertAdjacentHTML("beforeend", btn(genSummary(), "generator"));
+        g.insertAdjacentHTML("beforeend", btn(genSummary(), "generator") + rbtn(genDraft()));
       document.querySelectorAll("#p-trios .lcard").forEach(card => {
         if (card.querySelector(".bkuse")) return;
         const idea = card.querySelector(".idea"); if (!idea) return;
-        (card.querySelector(".tl") || card).insertAdjacentHTML("beforeend", btn(idea.textContent.replace(/^\s*Try:\s*/, "").trim(), "trio", "Use →"));
+        const txt = idea.textContent.replace(/^\s*Try:\s*/, "").trim(), names = [...card.querySelectorAll(".pchips .pb")].map(x => x.textContent.trim()).join(" · ");
+        (card.querySelector(".tl") || card).insertAdjacentHTML("beforeend", btn(txt, "trio", "Use →") + rbtn({ name: txt.length > 60 ? txt.slice(0, 57) + "…" : txt, kind: "bake", status: "idea", origin: "Taste Lab trio" + (names ? " · " + names : ""), notes: txt }, "Recipe →"));
       });
       const fs = document.querySelector("#p-find .fsel");
       if (fs && typeof FIND !== "undefined" && FIND.length && !fs.querySelector(".bkuse"))
-        fs.insertAdjacentHTML("beforeend", btn(FIND.map(i => PAIR[i].n).join(" + "), "pairing", "Use these →"));
+        fs.insertAdjacentHTML("beforeend", btn(FIND.map(i => PAIR[i].n).join(" + "), "pairing", "Use these →") + rbtn({ name: FIND.map(i => PAIR[i].n).join(" + "), kind: "bake", status: "idea", origin: "Taste Lab pairing finder", notes: "Pairing: " + FIND.map(i => PAIR[i].n).join(", ") }, "Start a recipe →"));
     } finally { busy = false; }
   }
   new MutationObserver(decorate).observe(document.body, { childList: true, subtree: true });
@@ -4063,6 +4096,7 @@ S.f = defaultF(S.tab); setTabs(); chips(); render();
   document.addEventListener("click", e => {
     const b = e.target.closest(".bkuse"); if (!b) return;
     e.preventDefault(); e.stopPropagation();
+    if (b.classList.contains("bkrec")) { try { window.parent.postMessage({ type: "bk:recipe", draft: JSON.parse(decodeURIComponent(b.dataset.rbd)) }, location.origin); } catch {} b.classList.add("sent"); b.textContent = "Added ✓"; return; }
     window.parent.postMessage({ type: "bk:idea", text: decodeURIComponent(b.dataset.bk), src: b.dataset.bksrc }, location.origin);
     b.classList.add("sent"); b.textContent = "Sent ✓";
   }, true);

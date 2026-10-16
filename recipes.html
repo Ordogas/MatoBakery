@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recipes</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2316846f'/><path d='M14 40c0-11 8-20 18-20s18 9 18 20H14z' fill='%23fffdf9'/><path d='M22 40c1-6 4-11 10-13M32 40c0-6 2-10 6-12' stroke='%2316846f' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f2ea; --surface:#fffdf9; --sunk:#eee8dc; --line:#e2dacb; --ink:#1e1913; --muted:#6f6556; --faint:#a39a8a;
+  --accent:#16846f; --accent-ink:#ffffff; --accent-soft:#d9f1ea;
+  --reg:#5b5347; --reg-soft:#ece6da;
+  --sea:#a86410; --sea-soft:#fbead0;
+  --spe:#7b3fa0; --spe-soft:#efe2f7;
+  --warn:#b4321f; --warn-soft:#fbe1dc;
+  --ok:#2c7a3f; --ok-soft:#dcf0e0;
+  --shadow:0 1px 2px rgba(40,30,10,.06),0 2px 8px rgba(40,30,10,.05);
+  --f-display:"Bricolage Grotesque",system-ui,sans-serif; --f-body:"Source Sans 3",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16130f; --surface:#1f1b16; --sunk:#2a251e; --line:#3a3329; --ink:#f3ede3; --muted:#b5aa98; --faint:#7d7466;
+  --accent:#4fd1b5; --accent-ink:#0d1f1a; --accent-soft:#163a32;
+  --reg:#cfc5b4; --reg-soft:#2d281f; --sea:#f0b45c; --sea-soft:#3a2a12; --spe:#d3a6ee; --spe-soft:#33213f;
+  --warn:#ff8a75; --warn-soft:#45201a; --ok:#7fd396; --ok-soft:#1c3523; --shadow:none; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#16130f; --surface:#1f1b16; --sunk:#2a251e; --line:#3a3329; --ink:#f3ede3; --muted:#b5aa98; --faint:#7d7466;
+  --accent:#4fd1b5; --accent-ink:#0d1f1a; --accent-soft:#163a32;
+  --reg:#cfc5b4; --reg-soft:#2d281f; --sea:#f0b45c; --sea-soft:#3a2a12; --spe:#d3a6ee; --spe-soft:#33213f;
+  --warn:#ff8a75; --warn-soft:#45201a; --ok:#7fd396; --ok-soft:#1c3523; --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+h1,h2,h3,h4{font-family:var(--f-display);margin:0;line-height:1.15}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--f-mono);font-size:12px}
+
+/* app shell */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1500px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.02em;white-space:nowrap}
+.brand span{color:var(--accent)}
+.nav{display:flex;gap:2px;background:var(--sunk);padding:3px;border-radius:10px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{border:0;background:transparent;padding:7px 12px;border-radius:8px;font-weight:600;color:var(--muted);white-space:nowrap;position:relative}
+.nav button[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.nav .dot{position:absolute;top:-5px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--warn);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.top-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-weight:600;font-size:14px}
+main{max-width:1500px;margin:0 auto;padding:16px 16px 80px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;min-height:38px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.sm{padding:4px 10px;min-height:30px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.bar h2{font-size:24px;letter-spacing:-.02em}
+.weeknav{display:flex;align-items:center;gap:4px}
+.weeknav button{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:36px;height:36px;font-size:18px}
+.weeknav .btn{width:auto;white-space:nowrap;height:36px}
+
+/* badges */
+.b{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.b.reg{background:var(--reg-soft);color:var(--reg)}
+.b.sea{background:var(--sea-soft);color:var(--sea)}
+.b.spe{background:var(--spe-soft);color:var(--spe)}
+.b.warn{background:var(--warn-soft);color:var(--warn)}
+.b.ok{background:var(--ok-soft);color:var(--ok)}
+.b.acc{background:var(--accent-soft);color:var(--accent)}
+
+/* decision lane */
+.lane{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:14px}
+.lane h3{font-size:15px;display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.lane-items{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.dcard{flex:0 0 auto;min-width:200px;max-width:260px;text-align:left;border:1px dashed var(--line);background:var(--bg);border-radius:10px;padding:8px 10px}
+.dcard.late{border-color:var(--warn);background:var(--warn-soft)}
+.dcard b{display:block;font-size:14px}
+.dcard .small{display:block}
+.lane-empty{font-size:14px;color:var(--muted)}
+
+/* week board */
+.board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:10px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory}
+.col{background:var(--sunk);border-radius:14px;padding:8px;min-height:300px;display:flex;flex-direction:column;gap:8px;scroll-snap-align:start}
+.col.today{outline:2px solid var(--accent);outline-offset:-2px}
+.col.drop{background:var(--accent-soft)}
+.colh{display:flex;align-items:baseline;gap:6px;padding:2px 4px}
+.colh b{font-family:var(--f-display);font-size:17px}
+.colh .small{color:var(--muted)}
+.colh .add{margin-left:auto;border:0;background:transparent;font-size:20px;line-height:1;color:var(--muted);padding:0 4px}
+.sale{background:var(--surface);border-radius:10px;padding:8px;border:1px solid var(--line);text-align:left;width:100%}
+.sale-h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.sale ul{list-style:none;margin:0;padding:0;font-size:13px}
+.sale li{display:flex;gap:6px;align-items:baseline;padding:1px 0}
+.sale li .q{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:24px;text-align:right}
+.sale li .ch{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sale li .miss{color:var(--warn);font-weight:700;font-size:12px}
+.sale .empty{font-size:13px;color:var(--muted)}
+.tod{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:4px 4px 0}
+
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--reg);border-radius:10px;padding:8px 10px;text-align:left;width:100%;display:flex;gap:8px;align-items:flex-start;box-shadow:var(--shadow)}
+.card.k-order{border-left-color:var(--spe)}
+.card.k-restock{border-left-color:var(--accent)}
+.card.k-custom{border-left-color:var(--faint)}
+.card.sea{border-left-color:var(--sea)}
+.card.done{opacity:.55}
+.card.done .ct{text-decoration:line-through}
+.card[draggable="true"]{cursor:grab}
+.chk{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:2px solid var(--line);background:var(--bg);display:grid;place-items:center;margin-top:1px;padding:0}
+.chk.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chk svg{width:14px;height:14px}
+.cbody{flex:1;min-width:0;cursor:pointer}
+.ct{font-weight:600;font-size:14px;line-height:1.3}
+.cm{font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dots{display:inline-flex;gap:2px;vertical-align:middle}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.dots i.cur{background:var(--ink)}
+.csrc{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* sheets & dialogs */
+.scrim{position:fixed;inset:0;background:rgba(20,15,8,.45);z-index:50;display:flex;justify-content:flex-end}
+.sheet{background:var(--surface);width:min(560px,100%);height:100%;overflow:auto;padding:18px 18px 40px;box-shadow:-10px 0 40px rgba(0,0,0,.2)}
+.sheet-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.sheet-h h3{font-size:22px;letter-spacing:-.01em}
+.x{margin-left:auto;border:0;background:var(--sunk);border-radius:8px;width:34px;height:34px;font-size:20px;flex:0 0 auto}
+.sec{margin-top:18px}
+.sec h4{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:var(--f-body);font-weight:700}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+label.f.inline{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-weight:500;font-size:14px}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],input[type=password],input[type=time],select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;font-size:16px;color:var(--ink);width:100%;min-width:0}
+textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.li .grow{flex:1;min-width:0}
+.chain{display:flex;flex-direction:column;gap:4px}
+.chain .st{display:flex;gap:8px;align-items:center;font-size:14px;padding:6px 8px;border-radius:8px;background:var(--bg)}
+.chain .st.cur{outline:2px solid var(--accent)}
+.chain .st .d{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:84px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px;font-size:13px}
+.pill:hover{border-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:80;box-shadow:0 6px 24px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.toast.err{background:var(--warn);color:#fff}
+
+/* today */
+.today-wrap{max-width:760px}
+.tl{display:flex;flex-direction:column;gap:8px}
+.big .card{padding:12px}
+.big .ct{font-size:16px}
+.big .chk{width:28px;height:28px}
+.logrow{display:grid;grid-template-columns:1fr repeat(4,72px);gap:6px;align-items:center;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.logrow input{padding:6px;font-size:15px;text-align:center}
+.logrow.h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+@media (max-width:560px){.logrow{grid-template-columns:1fr repeat(4,56px)}}
+
+/* month */
+.month{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mh{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 4px}
+.md{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:96px;padding:6px;text-align:left;display:flex;flex-direction:column;gap:3px;font-size:12px}
+.md.out{opacity:.4}
+.md.today{outline:2px solid var(--accent)}
+.md .n{font-family:var(--f-display);font-weight:700;font-size:15px}
+.md .ln{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+@media (max-width:700px){.md{min-height:70px;padding:4px}.md .ln .t{display:none}}
+
+/* orders */
+.otabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.otabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
+.otabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.ocard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ocard.req{border-color:var(--sea);box-shadow:0 0 0 3px var(--sea-soft)}
+.oh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.oh b{font-family:var(--f-display);font-size:18px}
+.oitems{margin:0;padding-left:18px;font-size:14px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:14px}
+.kv span{color:var(--muted)}
+.links{display:flex;flex-direction:column;gap:8px}
+.linkbox{display:flex;gap:6px}
+.linkbox input{font-family:var(--f-mono);font-size:12px}
+
+/* setup */
+.stabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.stabs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
+.stabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border-radius:12px;overflow:hidden}
+.tbl th,.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.tbl th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tbl td input{width:64px;text-align:center;padding:5px}
+.tbl tr.grp td{background:var(--sunk);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:6px}
+.pcard h4{font-size:16px}
+.stepday{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px}
+.stepday h5{margin:0 0 6px;font-size:13px;font-family:var(--f-body);font-weight:700;color:var(--muted)}
+.steprow{display:grid;grid-template-columns:1fr 120px 70px auto;gap:6px;margin-bottom:6px;align-items:center}
+.ingrow{display:grid;grid-template-columns:1fr 80px 70px auto;gap:6px;margin-bottom:6px}
+.partrow{display:grid;grid-template-columns:1fr 130px 80px 64px auto;gap:6px;margin-bottom:6px;align-items:center}
+@media (max-width:560px){.steprow,.partrow{grid-template-columns:1fr 1fr}.ingrow{grid-template-columns:1fr 70px 60px auto}}
+.stock{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:18px}
+.stepper input{width:70px;text-align:center}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter.low i{background:var(--warn)}
+
+/* login */
+.login{max-width:380px;margin:12vh auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.login h1{font-size:28px;letter-spacing:-.02em}
+.err{color:var(--warn);font-size:14px}
+.note{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted)}
+.empty-state{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--muted)}
+@media (max-width:900px){.board{grid-template-columns:repeat(7,82vw)}}
+@media (prefers-reduced-motion:no-preference){.card,.btn,.dcard{transition:background .15s,border-color .15s,opacity .15s}}
+
+/* loading */
+.top{position:sticky}
+.busy{position:absolute;left:0;right:0;bottom:-1px;height:3px;overflow:hidden;background:transparent}
+.busy i{position:absolute;top:0;bottom:0;width:30%;background:var(--accent);border-radius:2px;animation:busy 1s ease-in-out infinite}
+@keyframes busy{0%{left:-30%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){.busy i{animation:none;left:0;width:100%;opacity:.6}}
+.sk{background:linear-gradient(90deg,var(--sunk) 0%,var(--surface) 50%,var(--sunk) 100%);background-size:200% 100%;border-radius:10px;height:64px;animation:sk 1.2s ease-in-out infinite}
+.col .sk{background:linear-gradient(90deg,var(--line) 0%,var(--surface) 50%,var(--line) 100%);background-size:200% 100%}
+@keyframes sk{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}}
+main[aria-busy="true"] .board{transition:opacity .2s}
+
+/* recipe colours */
+.card.rc{border-left-color:var(--rc);background:color-mix(in srgb,var(--rc) 7%,var(--surface))}
+.card.rc .dots i.on{background:color-mix(in srgb,var(--rc) 45%,var(--surface))}
+.card.rc .dots i.cur{background:var(--rc)}
+.card.rc .dots i{background:color-mix(in srgb,var(--rc) 18%,var(--surface))}
+.card.rc .rname{color:color-mix(in srgb,var(--rc) 70%,var(--ink));font-weight:600}
+.dots i{width:7px;height:7px}
+.pdot{display:none;width:8px;height:8px;border-radius:50%;background:var(--rc);margin-right:5px;vertical-align:middle;flex:0 0 auto}
+[style*="--rc"] > span > .pdot,.sheet-h .pdot{display:inline-block}
+.pcard.rc{border-left:5px solid var(--rc)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{position:relative;width:32px;height:32px;cursor:pointer}
+.sw input[type=radio]{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.sw span{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--c);border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.sw input:checked + span{box-shadow:0 0 0 2px var(--ink)}
+.sw input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.sw.none span{background:var(--bg);color:var(--muted);font-weight:700}
+.sw.custom{width:auto;display:flex;align-items:center}
+.sw.custom input[type=radio]{width:0;height:0}
+.sw.custom input[type=color]{width:34px;height:34px;border:1px solid var(--line);border-radius:50%;padding:2px;background:var(--surface);cursor:pointer}
+.sw.custom input[type=radio]:checked ~ input[type=color]{box-shadow:0 0 0 2px var(--ink)}
+
+/* lab */
+.labwrap{display:flex;flex-direction:column;height:calc(100dvh - 58px)}
+.labwrap.hidden{display:none}
+.labbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:var(--accent-soft);color:var(--ink);font-size:14px;border-bottom:1px solid var(--line)}
+.labbar.hidden{display:none}
+#labFrame,#rbFrame{flex:1;width:100%;border:0;background:var(--bg)}
+
+.labbody{position:relative;flex:1;display:flex;min-height:0}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.12);overflow:auto;padding:16px;z-index:5}
+.drawer.hidden{display:none}
+.li.fresh{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* stock */
+.scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:12px}
+.scard{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--rc,var(--line));border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.scard h3{font-size:19px;display:flex;align-items:center}
+.onhand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.onhand > div:first-child{flex:1;min-width:140px}
+.onhand .big{font-family:var(--f-display);font-size:34px;font-weight:800;line-height:1}
+.strip{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:3px}
+.strip .cell{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--ok-soft);border-radius:7px;padding:4px 0;font-size:11px;min-width:0}
+.strip .cell b{font-size:13px;font-family:var(--f-mono)}
+.strip .cell .dw{color:var(--muted);font-weight:700;text-transform:uppercase}
+.strip .cell .dn{color:var(--muted)}
+.strip .cell .nd{color:var(--muted);font-family:var(--f-mono)}
+.strip .cell.low{background:var(--sea-soft)}
+.strip .cell.short{background:var(--warn-soft);color:var(--warn)}
+.strip .cell.inc{box-shadow:inset 0 0 0 2px var(--accent)}
+.warnt{color:var(--warn)}
+@media (max-width:560px){.strip{grid-template-columns:repeat(7,minmax(0,1fr))}}
+
+/* header: sections + grouped nav */
+.top-in{gap:10px 18px}
+.sect{display:flex;gap:4px;align-items:center;flex:0 0 auto}
+.sbtn{border:0;background:transparent;font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:-.02em;color:var(--muted);padding:6px 12px;border-radius:11px;white-space:nowrap}
+.sbtn b{font-weight:800}
+.sbtn.on{color:var(--ink);background:var(--surface);box-shadow:var(--shadow)}
+.sbtn.on b{color:var(--accent)}
+.sbtn.lab.on{background:var(--lab);color:#fff}
+.sbtn.lab.on b{color:#fff}
+.sbtn:not(.on):hover{color:var(--ink)}
+.subnav{flex:1 1 420px;display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.nav.tools{background:transparent;gap:6px;padding:0}
+.nav.tools button{border:1px solid var(--line);background:var(--surface)}
+.nav.tools button[aria-current="page"]{background:var(--ink);color:var(--bg);border-color:var(--ink);box-shadow:none}
+:root{--lab:#5e2f8c;--lab-soft:#efe6f7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lab:#9a63d1;--lab-soft:#2c1f3a}}
+:root[data-theme="dark"]{--lab:#9a63d1;--lab-soft:#2c1f3a}
+body[data-section="lab"] .top{background:color-mix(in srgb,var(--lab-soft) 85%,var(--bg));border-bottom-color:color-mix(in srgb,var(--lab) 30%,var(--line))}
+body[data-section="lab"] .busy i{background:var(--lab)}
+body.in-lab{overflow:hidden}
+.labbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%;font-size:14px;color:var(--ink);padding:0;background:transparent;border:0}
+.labbar.pick{background:var(--accent-soft);border-radius:10px;padding:6px 10px}
+.labwrap{height:auto}
+@media (max-width:700px){.sbtn{font-size:17px;padding:5px 9px}.labtip{display:none}.subnav{flex-basis:100%}}
+@media (max-width:560px){
+  .top-in{padding:8px 12px;gap:6px}
+  .subnav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
+  .subnav::-webkit-scrollbar{display:none}
+  .subnav .spacer{flex:0 0 2px}
+  .nav button{padding:6px 9px;font-size:14px}
+  .nav.tools{gap:4px}
+}
+
+/* sales */
+.srows{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:minmax(150px,1fr) 68px 148px 68px 112px 172px 48px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.srow.h{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border:0;padding:0}
+.srow input[type=number]{text-align:center;padding:6px}
+.srow .stepper input{width:64px}
+.sname{display:flex;flex-direction:column;min-width:0}
+.sname > span:first-child{font-weight:600}
+[style*="--rc"] > .sname > span > .pdot{display:inline-block}
+.soldout{display:flex;gap:4px;align-items:center}
+.soldout input{width:108px;padding:6px}
+.srow[data-state="pending"] .sstate::after{content:"…"}
+@media (max-width:700px){.srow{grid-template-columns:1fr 1fr;row-gap:6px}.srow.h{display:none}.srow .sname{grid-column:1/-1}.srow .sstate{display:none}}
+.stbl td.num{text-align:right;white-space:nowrap;font-family:var(--f-mono);font-size:13px}
+.wbars{display:flex;gap:4px;align-items:flex-end;height:56px}
+.wb{display:flex;flex-direction:column;align-items:center;gap:2px;width:18px}
+.wb span{font-size:10px;color:var(--muted)}
+.wcol{position:relative;width:14px;height:40px;background:var(--sunk);border-radius:4px 4px 0 0}
+.wcol .av{position:absolute;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--accent) 55%,var(--surface));border-radius:4px 4px 0 0}
+.wcol .av.out{background:var(--accent)}
+.wcol .tq{position:absolute;left:-3px;right:-3px;height:2px;background:var(--ink);border-radius:1px}
+.sugg{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.srow.h span:first-child{text-align:left}
+
+.leftbtn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px;font-weight:600;font-size:14px;min-height:36px;white-space:nowrap}
+.leftbtn.todo{border-color:var(--sea);background:var(--sea-soft);color:var(--sea)}
+.leftbtn .small{font-weight:500}
+.lsplit{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+.lsplit.hidden{display:none}
+.lsplit label.f{width:110px}
+.lsplit input{text-align:center;padding:6px}
+.lsplit .unassigned{margin-left:auto;align-self:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.tile span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tile b{font-family:var(--f-display);font-size:26px;line-height:1.1}
+.tile small{color:var(--muted);font-size:12px}
+.lbreak{white-space:normal}
+@media (max-width:700px){.srow{grid-template-columns:1fr 1fr}.lsplit label.f{width:calc(50% - 6px)}}
+.leftbtn span{pointer-events:none}
+
+/* ===== Recipes section ===== */
+:root{--rb:#9a5b13;--rb-soft:#f8ebd8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--rb:#e3a356;--rb-soft:#33261a}}
+:root[data-theme="dark"]{--rb:#e3a356;--rb-soft:#33261a}
+.sbtn.rb.on{background:var(--rb);color:#fff}
+.sbtn.rb.on b{color:#fff}
+body[data-section="recipes"] .top{background:color-mix(in srgb,var(--rb-soft) 85%,var(--bg));border-bottom-color:color-mix(in srgb,var(--rb) 30%,var(--line))}
+body[data-section="recipes"] .busy i{background:var(--rb)}
+body[data-section="recipes"] .nav button[aria-current="page"]{color:var(--rb)}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.rsearch{flex:1 1 220px;max-width:360px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:15px}
+.addcard{align-items:center;justify-content:center;color:var(--muted);min-height:84px;border-style:dashed}
+.rpage{max-width:1040px}
+.rhead{padding:4px 0 14px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.rhead.rc{border-left:5px solid var(--rc);padding-left:14px}
+.rhead .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rhead h2{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.02em;margin:4px 0 8px}
+.rfacts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.rfacts b{color:var(--ink);margin-right:4px}
+.rgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px}
+@media (max-width:760px){.rgrid{grid-template-columns:minmax(0,1fr);gap:18px}}
+.rcol h3{font-size:20px;margin:6px 0 10px}
+.rcol h4{font-size:15px;margin:16px 0 6px}
+.rscale{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.rscale .chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 11px;font-size:14px;min-height:32px}
+.rscale .chip[aria-pressed="true"]{background:var(--rb);border-color:var(--rb);color:#fff}
+.rtarget{display:flex;align-items:center;gap:6px;font-size:14px;margin-left:auto}
+.rtarget input{width:84px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:15px}
+.igrp{font-family:var(--f-mono);font-size:11px!important;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px!important}
+.ilist{list-style:none;margin:0;padding:0}
+.ilist li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}
+.ilist .iname{flex:1;min-width:0}
+.ilist .iname .muted{font-size:13px}
+.ilist b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.method{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:9px;font-size:15px;line-height:1.5}
+.method li::marker{font-family:var(--f-mono);font-size:13px;color:var(--rb);font-weight:600}
+.oven{margin-top:14px;padding:12px;border-radius:12px;background:var(--rb-soft)}
+.oven h4{margin:0 0 6px!important}
+.ost{display:flex;gap:12px;align-items:baseline;padding:3px 0;font-size:15px}
+.ost b{min-width:64px;font-variant-numeric:tabular-nums}
+.rnotes{white-space:pre-line;font-size:15px;margin:0}
+.bing{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(64px,.8fr) minmax(70px,.8fr) minmax(0,1.2fr) minmax(0,1.4fr) auto;gap:6px;margin-bottom:6px;align-items:center}
+.bing input,.bing select,.boven input{min-width:0;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 8px}
+@media (max-width:640px){.bing{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px 78px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.bing [data-f=name]{grid-column:1 / 3}.bing [data-f=grp]{grid-column:1}.bing [data-f=note]{grid-column:2 / 4}.bing .btn{justify-self:end}}
+.bnewbtn{white-space:nowrap;flex:none}
+@media (max-width:700px){.bnewbtn .lg{display:none}}
+.cards .pcard h4{text-transform:none;letter-spacing:normal;color:var(--ink);font-size:16px}
+.boven{display:grid;grid-template-columns:80px 80px minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+@media print{
+  .top,.noprint,#busy,.toast{display:none!important}
+  body,html{background:#fff;color:#000}
+  .rgrid{grid-template-columns:1fr 1.3fr;gap:20px}
+  .oven{background:#f3f3f3}
+  #main{padding:0!important}
+}
+/* ===== Recipes page (recipes.html) ===== */
+body.rbpage{background:var(--bg)}
+.rbpage main{max-width:1180px}
+.rbtools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 14px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background:var(--sunk);border-radius:10px}
+.seg button,.segopt span{border:0;background:transparent;font-size:14px;font-weight:600;color:var(--muted);padding:6px 11px;border-radius:7px;min-height:32px;display:inline-flex;align-items:center;gap:4px}
+.seg button[aria-pressed="true"],.segopt input:checked+span{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.segopt{position:relative;display:inline-flex}
+.segopt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.segopt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:1px}
+.stseg{margin:2px 0 10px}
+.stseg button[aria-pressed="true"][data-k="keeper"]{color:var(--rb)}
+.b.st-idea{background:var(--sunk);color:var(--muted)}
+.b.st-test{background:var(--sea-soft);color:var(--sea)}
+.b.st-keep{background:var(--rb-soft);color:var(--rb)}
+.ractions{margin-top:12px;gap:6px;flex-wrap:wrap}
+.rsec{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);max-width:1040px}
+.rsec h3{font-size:20px;margin-bottom:10px}
+.tlog{display:flex;flex-direction:column;gap:6px}
+.trow{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:15px}
+.trow.planned{border-style:dashed}
+.trow .grow{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.tdate{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:92px;padding-top:3px}
+.pchips{display:flex;flex-wrap:wrap;gap:6px}
+.pc{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.chk2{display:flex;gap:8px;align-items:center;font-size:15px}
+.toastbtn{margin-left:10px;border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+@media (max-width:640px){.trow{flex-wrap:wrap}.tdate{min-width:0;width:100%}}
+
+</style>
+</head>
+<body class="rbpage">
+<main id="main" aria-live="polite"><p class="muted">Loading recipes…</p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ================= CONFIG & DATA LAYER ================= */
+const CFG = Object.assign({
+  url: "https://qoawsxutvxwzdgerzunw.supabase.co",
+  key: "sb_publishable_6CxO-uSs9sAsFUQL5rrj-w_RWlsJc3t",
+  fillingLab: "https://claude.ai/artifact/8UoCucTi42c7fzcozt5N4H"
+}, window.BAKERY_CONFIG || {});
+
+function makeSupabaseDB(sb){
+  const apply = (q, o = {}) => {
+    for (const [k, v] of Object.entries(o.eq || {})) q = q.eq(k, v);
+    for (const [k, v] of Object.entries(o.gte || {})) q = q.gte(k, v);
+    for (const [k, v] of Object.entries(o.lte || {})) q = q.lte(k, v);
+    for (const [k, v] of Object.entries(o.in || {})) q = q.in(k, v);
+    if (o.notnull) q = q.not(o.notnull, "is", null);
+    for (const [c, asc] of (o.order || [])) q = q.order(c, { ascending: asc !== false });
+    return q;
+  };
+  const chk = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+  return {
+    sel: async (t, o = {}) => chk(await apply(sb.from(t).select(o.cols || "*"), o).limit(o.limit || 5000)),
+    ins: async (t, rows) => { rows = [].concat(rows); if (!rows.length) return []; return chk(await sb.from(t).insert(rows).select()); },
+    ups: async (t, rows, onConflict) => chk(await sb.from(t).upsert([].concat(rows), { onConflict }).select()),
+    upd: async (t, id, patch) => (chk(await sb.from(t).update(patch).eq("id", id).select()) || [])[0],
+    del: async (t, ids) => { ids = [].concat(ids).filter(Boolean); if (!ids.length) return; chk(await sb.from(t).delete().in("id", ids)); },
+    rpc: async (fn, args) => chk(await sb.rpc(fn, args || {}))
+  };
+}
+function makeSupabaseAuth(sb){
+  const here = () => location.href.split("#")[0].split("?")[0];
+  return {
+    session: async () => (await sb.auth.getSession()).data.session,
+    signIn: async (email, password) => { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw error; },
+    signUp: async (email, password) => { const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: here() } }); if (error) throw error; return data; },
+    reset: async (email) => { const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: here() }); if (error) throw error; },
+    setPassword: async (password) => { const { error } = await sb.auth.updateUser({ password }); if (error) throw error; },
+    signOut: async () => sb.auth.signOut(),
+    onChange: (cb) => sb.auth.onAuthStateChange((ev, session) => cb(ev, session))
+  };
+}
+let DB, AUTH;
+/* tests: an embedded page (Recipes) shares the planner's in-memory database */
+const MOCK = window.__BAKERY_MOCK || (() => { try { return window.parent !== window ? window.parent.__BAKERY_MOCK : null; } catch { return null; } })();
+if (MOCK) { DB = MOCK.DB; AUTH = MOCK.AUTH; }
+else { const sb = supabase.createClient(CFG.url, CFG.key); DB = makeSupabaseDB(sb); AUTH = makeSupabaseAuth(sb); }
+
+/* ================= UTILS ================= */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = String(s).slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d, 12); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const todayISO = () => iso(new Date());
+const weekday = s => { const g = parse(s).getDay(); return g === 0 ? 7 : g; };
+const mondayOf = s => addDays(s, 1 - weekday(s));
+const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DOWL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const fmtD = s => { const d = parse(s); return `${DOW[weekday(s) - 1]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+const fmtShort = s => { const d = parse(s); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+const weekNo = s => { const d = parse(s); const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dn = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - dn); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); };
+const money = n => n == null || n === "" ? "–" : `€${(+n).toFixed(2).replace(/\.00$/, "")}`;
+const fmtAmt = (a, u) => { if (a == null) return ""; if (u === "g" && a >= 1000) return `${(a / 1000).toFixed(2).replace(/0$/, "")} kg`; return `${Math.round(a * 10) / 10} ${u}`; };
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "x" + Math.random().toString(36).slice(2));
+const TOD = ["early morning", "morning", "midday", "afternoon", "evening"];
+const todRank = t => { const i = TOD.indexOf((t || "").toLowerCase()); return i < 0 ? 9 : i; };
+const KIND = { regular: ["Regular", "reg"], seasonal: ["Seasonal", "sea"], special: ["Special order", "spe"] };
+const CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+let toastT;
+function toast(msg, err) {
+  let t = $("#toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.className = "toast" + (err ? " err" : ""); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, err ? 5000 : 2200);
+}
+async function guard(fn) { try { return await fn(); } catch (e) { console.error(e); toast(e.message || String(e), true); } }
+
+const PALETTE = ["#d19a10", "#c4a516", "#6f9a2e", "#1f9486", "#3f7fd0", "#55637d", "#8a55c2", "#d6437c", "#c0405e", "#e07800", "#c96a2b", "#9c5a2c", "#b08a4e", "#6d4535"];
+
+/* ================= SHEETS ================= */
+let lastFocus = null;
+function openSheet(html, onMount) {
+  closeSheet(true);
+  lastFocus = document.activeElement;
+  const sc = document.createElement("div"); sc.className = "scrim"; sc.id = "scrim";
+  sc.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT">${html}</div>`;
+  document.body.appendChild(sc); document.body.style.overflow = "hidden";
+  sc.addEventListener("mousedown", e => { if (e.target === sc) closeSheet(); });
+  const f = sc.querySelector("input,select,textarea,button:not(.x)"); (f || sc.querySelector(".x"))?.focus();
+  onMount && onMount(sc.querySelector(".sheet"));
+}
+function closeSheet(silent) { const sc = $("#scrim"); if (!sc) return; sc.remove(); document.body.style.overflow = ""; if (!silent && lastFocus) lastFocus.focus?.(); }
+const head = (title, sub) => `<div class="sheet-h"><div><h3 id="shT">${title}</h3>${sub ? `<div class="small muted" style="margin-top:4px">${sub}</div>` : ""}</div><button type="button" class="x" data-act="close" aria-label="Close">×</button></div>`;
+
+
+/* ================= RECIPE HELPERS (shared by planner and Recipes) ================= */
+const UNITS = ["g", "kg", "ml", "l", "pcs", "tbsp", "tsp", "pinch"];
+const FRAC = { 0.25: "¼", 0.5: "½", 0.75: "¾", 0.33: "⅓", 0.67: "⅔" };
+const recYield = r => r && r.yield_qty && r.yield_unit ? { q: +r.yield_qty, u: r.yield_unit } : null;
+function fmtQty(q, u) {
+  if (q == null || q === "") return "";
+  let v = +q, unit = u || "g";
+  if (unit === "g" && v >= 1000) { v /= 1000; unit = "kg"; }
+  if (unit === "ml" && v >= 1000) { v /= 1000; unit = "l"; }
+  let num;
+  if (["pcs", "tbsp", "tsp", "pinch"].includes(unit)) {
+    const whole = Math.floor(v + 1e-9), rest = Math.round((v - whole) * 100) / 100, fr = FRAC[rest];
+    num = fr ? (whole ? whole + " " : "") + fr : String(Math.round(v * 100) / 100);
+    if (unit === "pinch" && v > 1) unit = "pinches";
+  } else num = String(unit === "g" || unit === "ml" ? (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10) : Math.round(v * 100) / 100);
+  return `${num} ${unit}`;
+}
+const ovenLine = o => (o || []).map(s => `${s.t} °C · ${s.m} min`).join(" → ");
+const ovenMin = o => (o || []).reduce((a, s) => a + (+s.m || 0), 0);
+
+/* ================= RECIPES (recipes.html) ================= */
+/* The recipe book, shown inside the planner as its own section (like the Taste Lab).
+   Flow: idea (a draft, often from the Lab) → testing (test bakes on the planner, results logged) → keeper (what worked).
+   Tables: bk_book_recipes, bk_book_ingredients, bk_book_trials. Planner tables are only read, apart from adding
+   test-bake tasks to bk_tasks. ingredient_id points at Kitchen OS ingredients by id. */
+const EMBED = window.parent !== window;
+if (!EMBED) { const m = /^#r\/(.+)$/.exec(location.hash); location.replace("index.html#recipes" + (m ? "/" + m[1] : "")); }
+const S = { book: [], bookIngs: [], trials: [], recipes: [], steps: [], products: [], parts: [], kIngr: [] };
+const V = { id: null, x: 1, status: "all", q: "", from: null };
+const RKINDS = [["dough", "Doughs"], ["bake", "Bakes"], ["filling", "Fillings & creams"], ["topping", "Toppings"], ["glaze", "Glazes & finishes"], ["other", "Other"]];
+const RKIND1 = { dough: "Dough", bake: "Bake", filling: "Filling", topping: "Topping", glaze: "Glaze", other: "Other" };
+const STATUS = { idea: ["Idea", "st-idea", "A draft to try"], testing: ["Testing", "st-test", "Being tried out"], keeper: ["Keeper", "st-keep", "Worked really well"] };
+const RESULT = { great: ["Worked great", "ok"], ok: ["OK, needs work", "sea"], miss: ["Didn't work", "warn"] };
+const book = id => S.book.find(r => r.id === id);
+const bookIngs = id => S.bookIngs.filter(i => i.recipe_id === id).sort((a, b) => a.position - b.position);
+const trialsOf = id => S.trials.filter(t => t.recipe_id === id).sort((a, b) => b.date.localeCompare(a.date) || String(b.created_at).localeCompare(String(a.created_at)));
+const stepsOf = cid => S.steps.filter(s => s.recipe_id === cid).sort((a, b) => a.day - b.day || a.position - b.position);
+const daysOf = cid => Math.max(1, ...stepsOf(cid).map(s => s.day));
+const prod = id => S.products.find(p => p.id === id);
+const usedBy = r => r && r.chain_recipe_id ? [...new Set(S.parts.filter(p => p.recipe_id === r.chain_recipe_id).map(p => prod(p.product_id)?.name).filter(Boolean))] : [];
+const kidsOf = id => S.book.filter(r => r.parent_id === id);
+const post = (type, data = {}) => { if (EMBED) window.parent.postMessage({ type, ...data }, location.origin); };
+const short = s => s.length > 60 ? s.slice(0, 57).trim() + "…" : s;
+
+async function load() {
+  const safe = p => p.catch(() => []);
+  const [b, bi, tr, recipes, steps, products, parts] = await Promise.all([
+    DB.sel("bk_book_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_book_ingredients", { order: [["position"]] }), safe(DB.sel("bk_book_trials", { order: [["date"]] })),
+    DB.sel("bk_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_recipe_steps"), DB.sel("bk_products", { order: [["position"], ["name"]] }), DB.sel("bk_product_parts")]);
+  Object.assign(S, { book: b, bookIngs: bi, trials: tr, recipes, steps, products, parts });
+}
+async function kitchen() { if (S.kIngr.length) return; try { S.kIngr = await DB.sel("ingredients", { cols: "id,name,unit,category", order: [["name"]] }); } catch { S.kIngr = []; } }
+
+/* ---------- list ---------- */
+function render() { if (V.id && book(V.id)) renderRecipe(book(V.id)); else { V.id = null; renderList(); } post("rb:route", { id: V.id }); }
+function renderList() {
+  const cnt = k => k === "all" ? S.book.length : S.book.filter(r => (r.status || "idea") === k).length;
+  $("#main").innerHTML = `<div class="rbtools">
+      <div class="seg" role="group" aria-label="Filter by status">${[["all", "All"], ["idea", "Ideas"], ["testing", "Testing"], ["keeper", "Keepers"]].map(([k, l]) => `<button type="button" data-act="vstatus" data-k="${k}" aria-pressed="${V.status === k}">${l} <span class="muted">${cnt(k)}</span></button>`).join("")}</div>
+      <input type="search" id="rSearch" class="rsearch" placeholder="Search recipes or ingredients" value="${esc(V.q)}" aria-label="Search recipes">
+      <span class="spacer"></span><button type="button" class="btn primary" data-act="bnew">+ New recipe</button></div>
+    <div id="rList"></div>`;
+  renderCards();
+}
+function renderCards() {
+  const q = V.q.trim().toLowerCase();
+  const hit = r => (V.status === "all" || (r.status || "idea") === V.status) && (!q || r.name.toLowerCase().includes(q) || bookIngs(r.id).some(i => i.name.toLowerCase().includes(q)) || (r.notes || "").toLowerCase().includes(q));
+  const html = RKINDS.map(([k, l]) => {
+    const list = S.book.filter(r => r.kind === k && hit(r)).sort((a, b) => ({ keeper: 0, testing: 1, idea: 2 })[a.status || "idea"] - ({ keeper: 0, testing: 1, idea: 2 })[b.status || "idea"] || a.name.localeCompare(b.name));
+    if (!list.length && (q || V.status !== "all" || k !== "dough")) return "";
+    return `<section class="sec"><h4>${l} <span class="muted">${list.length}</span></h4><div class="cards">${list.map(card).join("")}
+      ${q ? "" : `<button type="button" class="pcard addcard" data-act="bnew" data-k="${k}">+ Add ${RKIND1[k].toLowerCase()}</button>`}</div></section>`;
+  }).join("");
+  $("#rList").innerHTML = html || `<p class="muted">Nothing here yet.${V.status === "idea" ? " Send ideas from the Taste Lab with “Add to Recipes”." : ""}</p>`;
+}
+function card(r) {
+  const ings = bookIngs(r.id), y = recYield(r), tr = trialsOf(r.id), done = tr.filter(t => t.status === "done"), planned = tr.find(t => t.status === "planned"), st = STATUS[r.status || "idea"], par = r.parent_id && book(r.parent_id);
+  return `<button type="button" class="pcard ${r.color ? "rc" : ""}" data-act="bopen" data-id="${r.id}"${cvar(r.color)}>
+    <div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b ${st[1]}">${r.status === "keeper" ? "★ " : ""}${st[0]}</span></div>
+    <div class="small muted">${[r.yield_note || (y ? fmtQty(y.q, y.u) : ""), ings.length ? `${ings.length} ingredients` : "no ingredients yet", (r.oven || []).length ? `${ovenMin(r.oven)} min bake` : ""].filter(Boolean).join(" · ")}</div>
+    ${done.length || planned ? `<div class="small">${done.length ? `${done.length} test${done.length > 1 ? "s" : ""}${done[0].result ? ` · last: <span class="b ${RESULT[done[0].result][1]}">${RESULT[done[0].result][0]}</span>` : ""}` : ""}${planned ? `${done.length ? " · " : ""}test planned ${fmtD(planned.date)}` : ""}</div>` : ""}
+    ${par ? `<div class="small muted">Variation of ${esc(par.name)}</div>` : r.origin ? `<div class="small muted">From ${esc(r.origin)}</div>` : ""}</button>`;
+}
+
+/* ---------- recipe page ---------- */
+const cvar = c => c ? ` style="--rc:${esc(c)}"` : "";
+function renderRecipe(r) {
+  const ings = bookIngs(r.id), y = recYield(r), x = V.x || 1, st = r.status || "idea";
+  const groups = []; ings.forEach(i => { const g = i.grp || ""; let G = groups.find(z => z.g === g); if (!G) groups.push(G = { g, items: [] }); G.items.push(i); });
+  const chain = r.chain_recipe_id ? stepsOf(r.chain_recipe_id) : [], cdays = r.chain_recipe_id ? daysOf(r.chain_recipe_id) : 0, used = usedBy(r);
+  const method = (r.method || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const target = y ? Math.round(y.q * x * 100) / 100 : null;
+  const tr = trialsOf(r.id), par = r.parent_id && book(r.parent_id), kids = kidsOf(r.id);
+  $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← All recipes</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="bedit" data-id="${r.id}">Edit</button></div>
+    <article class="rpage">
+      <header class="rhead ${r.color ? "rc" : ""}"${cvar(r.color)}>
+        <div class="eyebrow">${RKIND1[r.kind] || r.kind}${r.yield_note ? " · " + esc(r.yield_note) : ""}</div>
+        <h2>${esc(r.name)}</h2>
+        <div class="seg stseg noprint" role="group" aria-label="Recipe status">${Object.entries(STATUS).map(([k, v]) => `<button type="button" data-act="bstatus" data-k="${k}" aria-pressed="${st === k}" title="${v[2]}">${k === "keeper" ? "★ " : ""}${v[0]}</button>`).join("")}</div>
+        <div class="rfacts">${par ? `<span><b>Variation of</b> <button type="button" class="linkbtn" data-act="bopen" data-id="${par.id}">${esc(par.name)}</button></span>` : r.origin ? `<span><b>From</b> ${esc(r.origin)}</span>` : ""}${(r.oven || []).length ? `<span><b>Oven</b> ${esc(ovenLine(r.oven))}</span>` : ""}${cdays ? `<span><b>Schedule</b> ${cdays} day${cdays > 1 ? "s" : ""}</span>` : ""}${used.length ? `<span><b>Used in</b> ${esc(used.join(", "))}</span>` : ""}</div>
+        <div class="row ractions noprint"><button type="button" class="btn" data-act="tplan">Plan a test bake</button><button type="button" class="btn" data-act="tlog">Log a test</button><button type="button" class="btn" data-act="bvar">Make a variation</button><button type="button" class="btn ghost" data-act="bidea">Send to planner as an idea</button></div>
+      </header>
+      ${V.from ? `<p class="note noprint">${esc(V.from)}</p>` : ""}
+      <div class="rgrid">
+        <section class="rcol">
+          <div class="rscale noprint" role="group" aria-label="Batch size"><span class="ulbl">Batch</span>${[0.5, 1, 2, 3].map(f => `<button type="button" class="chip" data-act="bx" data-x="${f}" aria-pressed="${x === f}">×${FRAC[f] || f}</button>`).join("")}
+            ${y ? `<label class="rtarget">Make <input type="number" id="rTarget" min="0" step="any" value="${target}" inputmode="decimal"> ${esc(y.u)}</label>` : ""}</div>
+          ${x !== 1 ? `<p class="small muted">Scaled ×${Math.round(x * 100) / 100}${y ? ` · ${fmtQty(target, y.u)}` : ""}</p>` : ""}
+          <h3>Ingredients</h3>
+          ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => `<li><span class="iname">${esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b></li>`).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
+        </section>
+        <section class="rcol">
+          <h3>Method</h3>
+          ${method.length ? `<ol class="method">${method.map(m => `<li>${esc(m)}</li>`).join("")}</ol>` : `<p class="muted">No method yet.</p>`}
+          ${(r.oven || []).length ? `<div class="oven"><h4>Oven</h4>${r.oven.map(s => `<div class="ost"><b>${s.t} °C</b><span>${s.m} min</span>${s.n ? `<span class="muted">${esc(s.n)}</span>` : ""}</div>`).join("")}<div class="small muted">${ovenMin(r.oven)} min in total</div></div>` : ""}
+          ${r.notes ? `<h4>Notes</h4><p class="rnotes">${esc(r.notes)}</p>` : ""}
+          ${r.source ? `<p class="small muted">Source: ${esc(r.source)}</p>` : ""}
+        </section>
+      </div>
+      <section class="rsec">
+        <h3>Test log <span class="muted small">${tr.length}</span></h3>
+        ${tr.length ? `<div class="tlog">${tr.map(t => `<div class="trow ${t.status}">
+            <div class="tdate">${fmtD(t.date)}</div>
+            <div class="grow">${t.status === "planned" ? `<span class="b acc">Planned</span>` : t.result ? `<span class="b ${RESULT[t.result][1]}">${RESULT[t.result][0]}</span>` : `<span class="b">Logged</span>`}
+              ${t.changes ? `<div><b>Changed:</b> ${esc(t.changes)}</div>` : ""}${t.notes ? `<div class="muted">${esc(t.notes)}</div>` : ""}</div>
+            <button type="button" class="btn sm ${t.status === "planned" ? "primary" : "ghost"} noprint" data-act="tedit" data-id="${t.id}">${t.status === "planned" ? "Log how it went" : "Edit"}</button></div>`).join("")}</div>`
+          : `<p class="muted small">No tests yet. Plan a test bake to put it on the calendar, or log one you've already made.</p>`}
+      </section>
+      ${par || kids.length ? `<section class="rsec"><h3>Variations</h3><div class="pchips">${par ? `<button type="button" class="pc" data-act="bopen" data-id="${par.id}">↑ ${esc(par.name)}</button>` : ""}${kids.map(k => `<button type="button" class="pc" data-act="bopen" data-id="${k.id}">${esc(k.name)} <span class="b ${STATUS[k.status || "idea"][1]}">${STATUS[k.status || "idea"][0]}</span></button>`).join("")}</div></section>` : ""}
+      ${chain.length ? `<section class="rsec"><h3>Production schedule</h3><div class="chain">${chain.map(s => `<div class="st"><span class="d">Day ${s.day}${s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(s.title)}</span>${s.time_hint ? `<span class="small muted">${esc(s.time_hint)}</span>` : ""}</div>`).join("")}</div><p class="small muted noprint">Days and steps are edited in the planner: Setup → Schedules.</p></section>` : ""}
+    </article>`;
+}
+function open(id, x, from) { V.id = id; V.x = x || 1; V.from = from || null; render(); window.scrollTo({ top: 0 }); }
+
+/* ---------- edit sheet ---------- */
+function editSheet(id, preset) {
+  const r = id ? book(id) : Object.assign({ id: null, name: "", kind: "bake", status: "idea", yield_qty: null, yield_unit: "pcs", yield_note: "", method: "", oven: [], notes: "", source: "", color: null, chain_recipe_id: null }, preset || {});
+  const ings = id ? bookIngs(id) : (preset && preset.ings) || [];
+  const groups = [...new Set(S.bookIngs.map(i => i.grp).filter(Boolean))];
+  const unitSel = (u, attr) => `<select ${attr}>${UNITS.map(x => `<option value="${x}" ${x === (u || "g") ? "selected" : ""}>${x}</option>`).join("")}</select>`;
+  const ingRow = i => `<div class="bing" data-ing>
+      <input type="text" data-f="name" list="kIngr" value="${esc(i.name || "")}" placeholder="Ingredient" aria-label="Ingredient">
+      <input type="number" step="any" data-f="qty" value="${i.qty ?? ""}" placeholder="Amount" aria-label="Amount">
+      ${unitSel(i.unit, 'data-f="unit" aria-label="Unit"')}
+      <input type="text" data-f="grp" list="bGroups" value="${esc(i.grp || "")}" placeholder="Group" aria-label="Group">
+      <input type="text" data-f="note" value="${esc(i.note || "")}" placeholder="Note" aria-label="Note">
+      <button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove ingredient">✕</button></div>`;
+  const ovRow = o => `<div class="boven" data-oven><input type="number" data-f="t" value="${o.t ?? ""}" placeholder="°C" aria-label="Temperature"><input type="number" data-f="m" value="${o.m ?? ""}" placeholder="min" aria-label="Minutes"><input type="text" data-f="n" value="${esc(o.n || "")}" placeholder="Note (e.g. turn the tin)" aria-label="Note"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove stage">✕</button></div>`;
+  openSheet(`${head(id ? esc(r.name) : "New recipe", "Ingredients, method and oven. Names that match Kitchen OS ingredients get linked for costing.")}
+    <form id="bForm" class="list">
+      <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(r.name)}"></label>
+      <label class="f">Kind<select name="kind">${RKINDS.map(([k, l]) => `<option value="${k}" ${k === r.kind ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      <div class="grid3"><label class="f">Status<select name="status">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === (r.status || "idea") ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label>
+        <label class="f">Makes<input type="number" step="any" name="yield_qty" value="${r.yield_qty ?? ""}"></label>
+        <label class="f">Unit${unitSel(r.yield_unit || "pcs", 'name="yield_unit"')}</label></div>
+      <label class="f">Batch description<input type="text" name="yield_note" value="${esc(r.yield_note || "")}" placeholder="e.g. 1 loaf (~8 slices)"></label>
+      <div class="sec"><h4>Ingredients</h4><div id="bIngs">${ings.map(ingRow).join("")}</div><button type="button" class="btn sm" data-act="bading">+ Ingredient</button>
+        <template id="bIngTpl">${ingRow({})}</template>
+        <datalist id="kIngr">${S.kIngr.map(k => `<option value="${esc(k.name)}"></option>`).join("")}</datalist>
+        <datalist id="bGroups">${groups.map(g => `<option value="${esc(g)}"></option>`).join("")}</datalist>
+        <p class="small muted">Use the same group name to keep rows together (e.g. Dry, Wet, Topping).</p></div>
+      <label class="f">Method <span class="small muted">one step per line</span><textarea name="method" style="min-height:160px">${esc(r.method || "")}</textarea></label>
+      <div class="sec"><h4>Oven</h4><div id="bOven">${(r.oven || []).map(ovRow).join("")}</div><button type="button" class="btn sm" data-act="badov">+ Oven stage</button><template id="bOvTpl">${ovRow({})}</template></div>
+      <label class="f">Production schedule<select name="chain_recipe_id"><option value="">Not linked</option>${S.recipes.map(c => `<option value="${c.id}" ${c.id === r.chain_recipe_id ? "selected" : ""}>${esc(c.name)} (${daysOf(c.id)} d)</option>`).join("")}</select><span class="small muted">For regular items: links this recipe to its days on the calendar, so task cards open it at the right batch size.</span></label>
+      <label class="f">Notes<textarea name="notes">${esc(r.notes || "")}</textarea></label>
+      <div class="grid2"><label class="f">Source<input type="text" name="source" value="${esc(r.source || "")}" placeholder="Book, page, link"></label><label class="f">Came from<input type="text" name="origin" value="${esc(r.origin || "")}" placeholder="e.g. Taste Lab · Crème pâtissière"></label></div>
+      <div class="sec"><h4>Colour</h4><div class="swatches" role="radiogroup" aria-label="Colour">${PALETTE.map(c => `<label class="sw" style="--c:${c}" title="${c}"><input type="radio" name="color" value="${c}" ${r.color === c ? "checked" : ""}><span></span></label>`).join("")}<label class="sw none" title="No colour"><input type="radio" name="color" value="" ${!r.color ? "checked" : ""}><span>×</span></label></div></div>
+      <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="bdelete" data-id="${id}">Delete</button>` : ""}</div>
+    </form>`, sh => { sh.querySelector("#bForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); });
+}
+async function saveRecipe(r, form) {
+  const fd = new FormData(form), g = k => (fd.get(k) ?? "").toString();
+  const oven = $$("#bOven [data-oven]", form).map(el => ({ t: +$("[data-f=t]", el).value || null, m: +$("[data-f=m]", el).value || null, n: $("[data-f=n]", el).value.trim() })).filter(o => o.t || o.m);
+  const row = { name: g("name").trim(), kind: g("kind"), status: g("status") || "idea", yield_qty: g("yield_qty") === "" ? null : +g("yield_qty"), yield_unit: g("yield_unit") || null, yield_note: g("yield_note").trim() || null,
+    method: g("method").trim() || null, oven, notes: g("notes").trim() || null, source: g("source").trim() || null, origin: g("origin").trim() || null, color: g("color") || null, chain_recipe_id: g("chain_recipe_id") || null, updated_at: new Date().toISOString() };
+  if (!row.name) throw new Error("Give the recipe a name.");
+  let id = r.id;
+  if (id) await DB.upd("bk_book_recipes", id, row); else { row.position = S.book.length + 1; if (r.parent_id) row.parent_id = r.parent_id; id = (await DB.ins("bk_book_recipes", row))[0].id; }
+  await saveIngs(id, $$("#bIngs [data-ing]", form).map(el => { const v = f => $(`[data-f=${f}]`, el).value.trim(); return { name: v("name"), qty: v("qty") === "" ? null : +v("qty"), unit: v("unit") || "g", grp: v("grp") || null, note: v("note") || null }; }));
+  await load(); closeSheet(); toast("Recipe saved."); post("rb:changed"); open(id, 1, null);
+}
+async function saveIngs(id, list) {
+  await kitchen();
+  const rows = list.filter(i => i.name).map((i, n) => { const k = S.kIngr.find(x => x.name.toLowerCase() === i.name.toLowerCase()); return { recipe_id: id, name: i.name, ingredient_id: k ? k.id : (i.ingredient_id || null), qty: i.qty ?? null, unit: i.unit || "g", grp: i.grp || null, note: i.note || null, position: n + 1 }; });
+  await DB.del("bk_book_ingredients", S.bookIngs.filter(i => i.recipe_id === id).map(i => i.id));
+  if (rows.length) await DB.ins("bk_book_ingredients", rows);
+}
+
+/* ---------- tests ---------- */
+function planSheet(r) {
+  const tm = addDays(todayISO(), 1);
+  openSheet(`${head("Plan a test bake", esc(r.name))}
+    <div class="list"><div class="grid2"><label class="f">Day<input type="date" id="tpDate" value="${tm}"></label>
+      <label class="f">Time<select id="tpTod"><option value="">Any time</option>${TOD.map(x => `<option>${x}</option>`).join("")}</select></label></div>
+      <label class="f">What are you trying this time? <span class="small muted">optional</span><input type="text" id="tpChanges" placeholder="e.g. less sugar, rye instead of spelt"></label>
+      <p class="small muted">Adds a “Test bake” card to the planner on that day. Tap it there to open the recipe and log how it went.</p>
+      <div class="row"><button type="button" class="btn primary" data-act="tpsave">Add to planner</button></div></div>`);
+}
+async function savePlan() {
+  const r = book(V.id), date = $("#tpDate").value; if (!r || !date) return;
+  const changes = $("#tpChanges").value.trim() || null;
+  const task = (await DB.ins("bk_tasks", { date, title: `Test bake: ${r.name}`, kind: "custom", time_hint: $("#tpTod").value || null, notes: changes ? `Trying: ${changes}` : "Test bake from Recipes" }))[0];
+  await DB.ins("bk_book_trials", { recipe_id: r.id, date, task_id: task.id, status: "planned", changes });
+  if ((r.status || "idea") === "idea") await DB.upd("bk_book_recipes", r.id, { status: "testing", updated_at: new Date().toISOString() });
+  await load(); closeSheet(); post("rb:changed"); render();
+  toastLink(`Test bake added to ${fmtD(date)}.`, "See it in the planner", () => post("rb:goto", { view: "week", date }));
+}
+function trialSheet(r, t) {
+  t = t || { date: todayISO(), result: null, changes: "", notes: "", status: "done" };
+  const st = r.status || "idea";
+  openSheet(`${head(t.id ? (t.status === "planned" ? "How did it go?" : "Edit test") : "Log a test", esc(r.name))}
+    <div class="list"><label class="f">Day<input type="date" id="trDate" value="${t.date}"></label>
+      <div class="f"><span>Result</span><div class="seg" role="radiogroup" aria-label="Result">${Object.entries(RESULT).map(([k, v]) => `<label class="segopt"><input type="radio" name="trRes" value="${k}" ${t.result === k ? "checked" : ""}><span>${v[0]}</span></label>`).join("")}</div></div>
+      <label class="f">What did you change?<input type="text" id="trChanges" value="${esc(t.changes || "")}" placeholder="e.g. 20% less sugar, baked 5 min longer"></label>
+      <label class="f">Notes<textarea id="trNotes" placeholder="Texture, taste, what to try next">${esc(t.notes || "")}</textarea></label>
+      ${st !== "keeper" ? `<label class="chk2"><input type="checkbox" id="trKeep"> Mark the recipe as a keeper (it worked really well)</label>` : ""}
+      <div class="row"><button type="button" class="btn primary" data-act="trsave" data-id="${t.id || ""}">Save</button><span class="spacer"></span>${t.id ? `<button type="button" class="btn warn" data-act="trdel" data-id="${t.id}">Delete</button>` : ""}</div></div>`,
+    sh => { sh.querySelectorAll("[name=trRes]").forEach(el => el.addEventListener("change", () => { const k = sh.querySelector("#trKeep"); if (k) k.checked = el.value === "great" && el.checked; })); });
+}
+async function saveTrial(id) {
+  const r = book(V.id); if (!r) return;
+  const res = $("[name=trRes]:checked")?.value || null;
+  const row = { recipe_id: r.id, date: $("#trDate").value || todayISO(), result: res, changes: $("#trChanges").value.trim() || null, notes: $("#trNotes").value.trim() || null, status: "done" };
+  const old = id ? S.trials.find(t => t.id === id) : null;
+  if (old) await DB.upd("bk_book_trials", id, row); else await DB.ins("bk_book_trials", row);
+  if (old && old.task_id) { try { await DB.upd("bk_tasks", old.task_id, { status: "done" }); } catch {} }
+  const keep = $("#trKeep")?.checked;
+  const next = keep ? "keeper" : (r.status || "idea") === "idea" ? "testing" : null;
+  if (next) await DB.upd("bk_book_recipes", r.id, { status: next, updated_at: new Date().toISOString() });
+  await load(); closeSheet(); post("rb:changed"); render(); toast(keep ? "Saved as a keeper ★" : "Test logged.");
+}
+async function makeVariation(r) {
+  const row = { name: `${r.name} (variation)`, kind: r.kind, status: "testing", yield_qty: r.yield_qty, yield_unit: r.yield_unit, yield_note: r.yield_note, method: r.method, oven: r.oven || [], notes: r.notes, source: r.source, origin: r.origin, color: r.color, chain_recipe_id: null, parent_id: r.id, position: S.book.length + 1 };
+  const id = (await DB.ins("bk_book_recipes", row))[0].id;
+  await saveIngs(id, bookIngs(r.id).map(i => ({ ...i })));
+  await load(); post("rb:changed"); open(id, 1, `A copy of ${r.name}. Change what you want to try, then plan a test bake.`); await kitchen(); editSheet(id);
+}
+/* drafts arriving from the Taste Lab or a planner idea */
+let lastDraft = { key: "", at: 0 };
+async function addDraft(d) {
+  const key = (d.origin || "") + "|" + (d.name || ""); if (key === lastDraft.key && Date.now() - lastDraft.at < 4000) return; lastDraft = { key, at: Date.now() };
+  const row = { name: (d.name || "Untitled idea").slice(0, 120), kind: RKIND1[d.kind] ? d.kind : "bake", status: d.status || "idea", yield_qty: d.yield_qty ?? null, yield_unit: d.yield_unit || null, yield_note: d.yield_note || null,
+    method: (Array.isArray(d.method) ? d.method.join("\n") : d.method) || null, oven: d.oven || [], notes: d.notes || null, source: d.source || null, origin: d.origin || null, position: S.book.length + 1 };
+  const id = (await DB.ins("bk_book_recipes", row))[0].id;
+  if ((d.ings || []).length) await saveIngs(id, d.ings);
+  await load(); post("rb:changed");
+  open(id, 1, `Added from ${d.origin || "an idea"}. Make it yours with Edit, then plan a test bake.`);
+}
+function toastLink(msg, label, fn) {
+  toast(msg); const t = $("#toast"); if (!t) return;
+  const b = document.createElement("button"); b.type = "button"; b.className = "toastbtn"; b.textContent = label; b.onclick = () => { t.hidden = true; fn(); }; t.appendChild(b);
+  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 6000);
+}
+
+/* ---------- actions ---------- */
+const ACT = {
+  close: () => closeSheet(),
+  vstatus: el => { V.status = el.dataset.k; renderList(); },
+  bopen: el => open(el.dataset.id),
+  bback: () => { V.id = null; V.from = null; render(); window.scrollTo({ top: 0 }); },
+  bnew: el => guard(async () => { await kitchen(); editSheet(null, { kind: el.dataset.k || "bake" }); }),
+  bedit: el => guard(async () => { await kitchen(); editSheet(el.dataset.id); }),
+  bading: () => { $("#bIngs").insertAdjacentHTML("beforeend", $("#bIngTpl").innerHTML); const rows = $$("#bIngs [data-ing]"); const last = rows[rows.length - 1], prev = rows[rows.length - 2]; if (prev) $("[data-f=grp]", last).value = $("[data-f=grp]", prev).value; $("[data-f=name]", last).focus(); },
+  badov: () => $("#bOven").insertAdjacentHTML("beforeend", $("#bOvTpl").innerHTML),
+  rmrow: el => el.closest("[data-ing],[data-oven]").remove(),
+  bdelete: el => guard(async () => { const r = book(el.dataset.id); if (!r || !confirm(`Delete ${r.name}?`)) return; await DB.del("bk_book_recipes", [r.id]); await load(); closeSheet(); post("rb:changed"); V.id = null; render(); toast("Recipe deleted."); }),
+  bx: el => { V.x = +el.dataset.x; renderRecipe(book(V.id)); },
+  bprint: () => window.print(),
+  bstatus: el => guard(async () => { const r = book(V.id); if (!r) return; await DB.upd("bk_book_recipes", r.id, { status: el.dataset.k, updated_at: new Date().toISOString() }); await load(); post("rb:changed"); render(); }),
+  bvar: () => guard(async () => { const r = book(V.id); if (r) await makeVariation(r); }),
+  bidea: () => { const r = book(V.id); if (!r) return; const ings = bookIngs(r.id).slice(0, 6).map(i => i.name.toLowerCase()); post("rb:idea", { text: `${r.name}${ings.length ? ": " + ings.join(", ") : ""}` }); },
+  tplan: () => { const r = book(V.id); if (r) planSheet(r); },
+  tpsave: () => guard(savePlan),
+  tlog: () => { const r = book(V.id); if (r) trialSheet(r); },
+  tedit: el => { const r = book(V.id), t = S.trials.find(x => x.id === el.dataset.id); if (r && t) trialSheet(r, t); },
+  trsave: el => guard(() => saveTrial(el.dataset.id || null)),
+  trdel: el => guard(async () => { if (!confirm("Delete this test?")) return; await DB.del("bk_book_trials", [el.dataset.id]); await load(); closeSheet(); post("rb:changed"); render(); })
+};
+document.addEventListener("click", e => { const a = e.target.closest("[data-act]"); if (!a) return; const fn = ACT[a.dataset.act]; if (fn) { e.preventDefault(); fn(a); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#scrim")) closeSheet(); });
+document.addEventListener("input", e => { if (e.target.id === "rSearch") { V.q = e.target.value; renderCards(); } });
+document.addEventListener("change", e => { if (e.target.id === "rTarget") { const r = book(V.id), y = recYield(r); const v = +e.target.value; if (y && v > 0) { V.x = v / y.q; renderRecipe(r); } } });
+window.addEventListener("message", e => {
+  if (e.origin !== location.origin || !e.data) return;
+  const d = e.data;
+  if (d.type === "rb:open") { if (!book(d.id)) guard(load).then(() => open(d.id, d.x, d.from)); else open(d.id, d.x, d.from); }
+  if (d.type === "rb:list") { V.id = null; V.from = null; render(); }
+  if (d.type === "rb:draft") guard(() => addDraft(d.draft || {}));
+  if (d.type === "rb:log") { const t = S.trials.find(x => x.id === d.trial); if (t) { V.id = t.recipe_id; render(); trialSheet(book(t.recipe_id), t); } }
+});
+(async () => {
+  if (!EMBED) return;
+  const th = store.get("bk.theme", null); if (th) document.documentElement.dataset.theme = th;
+  await guard(async () => {
+    if (!(await AUTH.session())) { $("#main").innerHTML = `<p class="muted">Sign in on the planner first.</p>`; return; }
+    await load(); render();
+  });
+  post("rb:ready");
+})();
+
+</script>
+</body>
+</html>
