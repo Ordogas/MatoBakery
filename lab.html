@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 </head>
 <body>
-<title>Filling Lab</title>
+<title>Taste Lab</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -361,9 +361,9 @@ footer{padding-block:24px 40px;color:var(--muted);font-size:13px;border-top:1px 
 </style>
 
 <header class="top wrap">
-  <div class="eyebrow">Pastry fillings · technique reference</div>
-  <h1>Filling <span>Lab</span></h1>
-  <p class="lede">A pastry reference built around techniques: make it, invent something new, or learn why it works.</p>
+  <div class="eyebrow">Flavour · pairing · technique</div>
+  <h1>Taste <span>Lab</span></h1>
+  <p class="lede">Flavour pairings, techniques and new ideas for the bakery: make it, invent something new, or learn why it works.</p>
 </header>
 
 <div class="bar">
@@ -3796,7 +3796,7 @@ function helpHTML(tid){
 }
 
 const NAV = [
- {id:"make", subs:[["tech","Techniques"],["rec","Recipes"],["combo","Combos"],["dough","Doughs"],["bake","Bakery uses"]]},
+ {id:"make", subs:[["tech","Techniques"],["rec","Recipes"],["combo","Combos"],["bake","Bakery uses"]]},
  {id:"create", subs:[["gen","Generator"],["find","Pairing finder"],["pairs","Pairing map"],["trios","Trios"]]},
  {id:"learn", subs:[["sci","Science"],["ext","Flavour extraction"],["fruit","Fruit"],["ingr","Ingredients"],["agents","Additives"],["season","Seasons"],["classic","Classics"]]}
 ];
@@ -3805,6 +3805,7 @@ const navOf = v => NAV.find(n=>n.subs.some(x=>x[0]===v)) || NAV[0];
 const PH = {tech:"Search techniques…", rec:"Search recipes…", combo:"Search combos…", dough:"Search doughs…", bake:"Search products…", gen:"", find:"", trios:"Search trios…", pairs:"Search ingredients or flavor families…", agents:"Search additives…"};
 let LAST = {make:"tech", create:"gen", learn:"sci"};
 try { const l = JSON.parse(localStorage.getItem("filling-lab-nav")||"null"); if(l) { LAST = Object.assign(LAST, l.last||{}); if(l.tab && NAV.some(n=>n.subs.some(x=>x[0]===l.tab))) S.tab = l.tab; } } catch(e){}
+Object.keys(LAST).forEach(k=>{ const n=NAV.find(x=>x.id===k); if(n && !n.subs.some(x=>x[0]===LAST[k])) LAST[k]=n.subs[0][0]; });
 function defaultF(v){ return v==="gen" ? "g:any" : "all"; }
 function setTabs(){
   const n = navOf(S.tab); LAST[n.id] = S.tab;
@@ -4025,7 +4026,7 @@ S.f = defaultF(S.tab); setTabs(); chips(); render();
 </script>
 
 <script>
-/* Planner bridge: only active when the Filling Lab runs inside the Bakery Planner. Adds "Use in planner" buttons
+/* Planner bridge: only active when the Taste Lab runs inside the Bakery Planner. Adds "Use in planner" buttons
    that send an idea (recipe, combo, trio, generator result or pairing) to the planner window. */
 (() => {
   if (window.parent === window) return;

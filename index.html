@@ -371,6 +371,62 @@ body.in-lab{overflow:hidden}
 @media (max-width:700px){.srow{grid-template-columns:1fr 1fr}.lsplit label.f{width:calc(50% - 6px)}}
 .leftbtn span{pointer-events:none}
 
+/* ===== Recipes section ===== */
+:root{--rb:#9a5b13;--rb-soft:#f8ebd8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--rb:#e3a356;--rb-soft:#33261a}}
+:root[data-theme="dark"]{--rb:#e3a356;--rb-soft:#33261a}
+.sbtn.rb.on{background:var(--rb);color:#fff}
+.sbtn.rb.on b{color:#fff}
+body[data-section="recipes"] .top{background:color-mix(in srgb,var(--rb-soft) 85%,var(--bg));border-bottom-color:color-mix(in srgb,var(--rb) 30%,var(--line))}
+body[data-section="recipes"] .busy i{background:var(--rb)}
+body[data-section="recipes"] .nav button[aria-current="page"]{color:var(--rb)}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.rsearch{flex:1 1 220px;max-width:360px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:15px}
+.addcard{align-items:center;justify-content:center;color:var(--muted);min-height:84px;border-style:dashed}
+.rpage{max-width:1040px}
+.rhead{padding:4px 0 14px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.rhead.rc{border-left:5px solid var(--rc);padding-left:14px}
+.rhead .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rhead h2{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.02em;margin:4px 0 8px}
+.rfacts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.rfacts b{color:var(--ink);margin-right:4px}
+.rgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px}
+@media (max-width:760px){.rgrid{grid-template-columns:minmax(0,1fr);gap:18px}}
+.rcol h3{font-size:20px;margin:6px 0 10px}
+.rcol h4{font-size:15px;margin:16px 0 6px}
+.rscale{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.rscale .chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 11px;font-size:14px;min-height:32px}
+.rscale .chip[aria-pressed="true"]{background:var(--rb);border-color:var(--rb);color:#fff}
+.rtarget{display:flex;align-items:center;gap:6px;font-size:14px;margin-left:auto}
+.rtarget input{width:84px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:15px}
+.igrp{font-family:var(--f-mono);font-size:11px!important;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px!important}
+.ilist{list-style:none;margin:0;padding:0}
+.ilist li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}
+.ilist .iname{flex:1;min-width:0}
+.ilist .iname .muted{font-size:13px}
+.ilist b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.method{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:9px;font-size:15px;line-height:1.5}
+.method li::marker{font-family:var(--f-mono);font-size:13px;color:var(--rb);font-weight:600}
+.oven{margin-top:14px;padding:12px;border-radius:12px;background:var(--rb-soft)}
+.oven h4{margin:0 0 6px!important}
+.ost{display:flex;gap:12px;align-items:baseline;padding:3px 0;font-size:15px}
+.ost b{min-width:64px;font-variant-numeric:tabular-nums}
+.rnotes{white-space:pre-line;font-size:15px;margin:0}
+.bing{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(64px,.8fr) minmax(70px,.8fr) minmax(0,1.2fr) minmax(0,1.4fr) auto;gap:6px;margin-bottom:6px;align-items:center}
+.bing input,.bing select,.boven input{min-width:0;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 8px}
+@media (max-width:640px){.bing{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px 78px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.bing [data-f=name]{grid-column:1 / 3}.bing [data-f=grp]{grid-column:1}.bing [data-f=note]{grid-column:2 / 4}.bing .btn{justify-self:end}}
+.bnewbtn{white-space:nowrap;flex:none}
+@media (max-width:700px){.bnewbtn .lg{display:none}}
+.cards .pcard h4{text-transform:none;letter-spacing:normal;color:var(--ink);font-size:16px}
+.boven{display:grid;grid-template-columns:80px 80px minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+@media print{
+  .top,.noprint,#busy,.toast{display:none!important}
+  body,html{background:#fff;color:#000}
+  .rgrid{grid-template-columns:1fr 1.3fr;gap:20px}
+  .oven{background:#f3f3f3}
+  #main{padding:0!important}
+}
+
 </style>
 </head>
 <body>
@@ -381,7 +437,7 @@ body.in-lab{overflow:hidden}
     <div class="subnav" id="subnav"></div>
   </div><div id="busy" class="busy" hidden><i></i></div></header>
   <main id="main" aria-live="polite"></main>
-  <section id="labWrap" class="labwrap hidden" aria-label="Filling Lab"></section>
+  <section id="labWrap" class="labwrap hidden" aria-label="Taste Lab"></section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -467,9 +523,10 @@ async function guard(fn) { try { return await fn(); } catch (e) { console.error(
 const S = {
   view: store.get("bk.view", "week"), week: mondayOf(todayISO()), month: todayISO().slice(0, 8) + "01",
   otab: "req", stab: store.get("bk.stab", "products"),
-  products: [], parts: [], recipes: [], steps: [], ings: [], tmpl: [], stock: [], settings: {}, kIngr: [],
+  products: [], parts: [], recipes: [], steps: [], ings: [], tmpl: [], stock: [], settings: {}, kIngr: [], book: [], bookIngs: [],
   plan: [], tasks: [], orders: [], oitems: [], requests: 0, user: null
 };
+const RB = { id: null, x: 1, kind: "all", q: "", from: null }; /* recipe book view state */
 const prod = id => S.products.find(p => p.id === id);
 const rec = id => S.recipes.find(r => r.id === id);
 const partsOf = pid => S.parts.filter(x => x.product_id === pid).sort((a, b) => a.position - b.position);
@@ -488,7 +545,7 @@ async function loadStatic() {
     DB.sel("bk_products", { order: [["position"], ["name"]] }),
     DB.sel("bk_product_parts"), DB.sel("bk_recipes", { order: [["position"], ["name"]] }),
     DB.sel("bk_recipe_steps"), DB.sel("bk_recipe_ingredients", { order: [["position"]] }),
-    DB.sel("bk_template_items"), DB.sel("bk_stock", { order: [["name"]] }), DB.sel("bk_settings")
+    DB.sel("bk_template_items"), DB.sel("bk_stock", { order: [["name"]] }), DB.sel("bk_settings"), loadBook()
   ]);
   Object.assign(S, { products, parts, recipes, steps, ings, tmpl, stock });
   S.settings = Object.fromEntries(settings.map(r => [r.key, r.value]));
@@ -606,23 +663,30 @@ const lowStock = () => S.stock.filter(s => +s.in_stock < +s.min_stock);
 const VIEWS = [["today", "Today"], ["week", "Week"], ["month", "Month"], ["orders", "Orders"], ["stock", "Stock"], ["lab", "Lab"], ["setup", "Setup"]];
 const TIMEV = [["today", "Today"], ["week", "Week"], ["month", "Month"]], TOOLV = [["orders", "Orders"], ["stock", "Stock"], ["sales", "Sales"], ["setup", "Setup"]];
 function renderNav() {
-  const lab = S.view === "lab";
-  document.body.dataset.section = lab ? "lab" : "planner";
-  $("#sect").innerHTML = `<button type="button" class="sbtn ${lab ? "" : "on"}" data-view="__planner" ${lab ? "" : 'aria-current="page"'}><b>Bakery</b> Planner</button><button type="button" class="sbtn lab ${lab ? "on" : ""}" data-view="lab" ${lab ? 'aria-current="page"' : ""}><b>Filling</b> Lab</button>`;
+  const lab = S.view === "lab", rb = S.view === "recipes", pl = !lab && !rb;
+  document.body.dataset.section = lab ? "lab" : rb ? "recipes" : "planner";
+  const sb = (cls, on, view, html) => `<button type="button" class="sbtn ${cls} ${on ? "on" : ""}" data-view="${view}" ${on ? 'aria-current="page"' : ""}>${html}</button>`;
+  $("#sect").innerHTML = sb("", pl, "__planner", "<b>Bakery</b> Planner") + sb("rb", rb, "__recipes", "<b>Recipes</b>") + sb("lab", lab, "lab", "<b>Taste</b> Lab");
   if (lab) { if (typeof renderLabBar === "function") renderLabBar(); return; }
+  if (rb) { renderRecipeNav(); return; }
   const btn = ([k, l]) => `<button type="button" data-view="${k}" ${S.view === k ? 'aria-current="page"' : ""}>${l}${k === "orders" && S.requests ? `<span class="dot" aria-label="${S.requests} new requests">${S.requests}</span>` : ""}</button>`;
   $("#subnav").innerHTML = `<nav class="nav" id="nav" aria-label="Calendar">${TIMEV.map(btn).join("")}</nav><span class="spacer"></span><nav class="nav tools" id="nav2" aria-label="Manage">${TOOLV.map(btn).join("")}</nav>`;
 }
-const VIEWKEYS = ["today", "week", "month", "orders", "stock", "sales", "setup", "lab"];
+const VIEWKEYS = ["today", "week", "month", "orders", "stock", "sales", "setup", "lab", "recipes"];
+const PLANNERV = ["today", "week", "month", "orders", "stock", "sales", "setup"];
+function parseView(v) { const m = /^recipes\/(.+)$/.exec(v || ""); if (m) { RB.id = m[1]; return "recipes"; } if (v === "recipes") RB.id = null; return v; }
 async function go(view, fromHistory) {
   if (view === "__planner") view = store.get("bk.lastPlanner", "week");
+  if (view === "__recipes") { RB.id = null; RB.from = null; view = "recipes"; }
+  const hash = view; view = parseView(view);
   if (!VIEWKEYS.includes(view)) view = "week";
-  if (view !== "lab") store.set("bk.lastPlanner", view);
+  if (PLANNERV.includes(view)) store.set("bk.lastPlanner", view);
   S.view = view; store.set("bk.view", view);
-  if (!fromHistory && location.hash.slice(1) !== view) { try { history.pushState(null, "", "#" + view); } catch {} }
+  const want = view === "recipes" && RB.id ? "recipes/" + RB.id : view;
+  if (!fromHistory && location.hash.slice(1) !== want) { try { history.pushState(null, "", "#" + want); } catch {} }
   window.scrollTo({ top: 0 }); await refresh({ nav: true });
 }
-window.addEventListener("popstate", () => { const v = location.hash.slice(1); if (VIEWKEYS.includes(v) && v !== S.view) go(v, true); });
+window.addEventListener("popstate", () => { const h = location.hash.slice(1), v = parseView(h); if (!VIEWKEYS.includes(v)) return; if (v === "recipes" && S.view === "recipes") { RB.from = null; renderRecipes(); return; } if (v !== S.view) go(h, true); });
 /* Views render instantly from cache (or a skeleton), then refresh in the background. */
 const CACHE = new Map(); let REQ = 0;
 function busy(on) { const b = $("#busy"); if (b) b.hidden = !on; $("#main")?.setAttribute("aria-busy", on ? "true" : "false"); }
@@ -655,6 +719,7 @@ async function refresh(o = {}) {
   renderNav();
   showLab(S.view === "lab");
   if (S.view === "lab") return;
+  if (S.view === "recipes") { renderRecipes(); return; }
   if (!o.nav) CACHE.clear();
   const spec = viewSpec();
   if (!spec) {
@@ -911,7 +976,7 @@ async function unplanOrder(o) {
 }
 
 /* ================= SETUP ================= */
-const STABS = [["products", "Products"], ["recipes", "Recipes & chains"], ["template", "Week template"], ["settings", "Settings"]];
+const STABS = [["products", "Products"], ["recipes", "Schedules"], ["template", "Week template"], ["settings", "Settings"]];
 function renderSetup() {
   const tab = S.stab === "freezer" ? "products" : S.stab;
   let body = "";
@@ -928,7 +993,7 @@ function renderSetup() {
     }).join("");
   } else if (tab === "recipes") {
     const kinds = ["dough", "filling", "topping", "glaze", "bake", "other"];
-    body = `<p class="muted small">Each recipe is a chain of days. The last day is when it's ready. Products use one or more recipes; recipes shared by several products (like bun dough) become one card with the total.</p>
+    body = `<p class="muted small">Production schedules: each one is a chain of days, and the last day is when it's ready. Products use one or more schedules; shared ones (like bun dough) become one card with the total. The recipes themselves (ingredients, method, oven) live in the <button type="button" class="linkbtn" data-view="__recipes">Recipes</button> section.</p>
       <div class="cards">${S.recipes.slice().sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || a.position - b.position).map(r => {
         const st = stepsOf(r.id), n = daysOf(r.id), used = S.parts.filter(x => x.recipe_id === r.id).map(x => prod(x.product_id)?.name).filter(Boolean);
         return `<button type="button" class="pcard ${r.color ? "rc" : ""}" data-act="recipe" data-id="${r.id}"${cvar(r.color)}><div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b">${esc(r.kind)}</span></div>
@@ -961,10 +1026,10 @@ function renderSetup() {
         <label class="f">Payment note<textarea name="payment_note">${esc(f.payment_note || "")}</textarea></label>
         <label class="f">Phone or email customers can contact<input type="text" name="contact" value="${esc(f.contact || "")}"></label>
       </div></section>
-      <section class="sec"><h4>Ideas per category</h4><p class="small muted">One per line. They show up as quick picks when you decide toppings or flavours. Paste favourites from the Filling Lab here.</p>
+      <section class="sec"><h4>Ideas per category</h4><p class="small muted">One per line. They show up as quick picks when you decide toppings or flavours. Paste favourites from the Taste Lab here.</p>
         <div class="list">${cats.map(c => `<label class="f">${esc(c)}<textarea data-idea="${esc(c)}">${esc((ideas[c] || []).join("\n"))}</textarea></label>`).join("")}</div></section>
       <section class="sec"><h4>Links</h4><div class="list">
-        <label class="f">Filling Lab address<input type="text" name="filling_lab" value="${esc(links.filling_lab || CFG.fillingLab)}"></label>
+        <label class="f">Taste Lab address<input type="text" name="filling_lab" value="${esc(links.filling_lab || CFG.fillingLab)}"></label>
         <label class="f">Staff order link<span class="linkbox"><input type="text" readonly value="${esc(L.staff)}"><button type="button" class="btn sm" data-act="copy" data-v="${esc(L.staff)}">Copy</button></span></label>
         <div><button type="button" class="btn sm warn" data-act="newtoken">Make a new staff link</button> <span class="small muted">The old link stops working.</span></div>
       </div></section>
@@ -995,16 +1060,20 @@ async function taskSheet(id) {
   const t = S.tasks.find(x => x.id === id) || (await DB.sel("bk_tasks", { eq: { id } }))[0]; if (!t) return;
   const r = t.recipe_id ? rec(t.recipe_id) : null;
   const chain = t.chain_key ? (await DB.sel("bk_tasks", { eq: { chain_key: t.chain_key }, order: [["date"], ["position"]] })) : [];
-  const total = (t.sources || []).length && (t.sources || []).every(s => s.a != null && s.u === "g") ? t.sources.reduce((a, s) => a + s.a, 0) : null;
-  const ings = r ? S.ings.filter(i => i.recipe_id === r.id) : [];
-  const factor = total && r && r.yield_g ? total / r.yield_g : null;
+  const srcs = t.sources || [], su = [...new Set(srcs.map(s => s.u))];
+  const total = srcs.length && su.length === 1 && srcs.every(s => s.a != null) ? srcs.reduce((a, s) => a + s.a, 0) : null;
+  const bk = r ? bookForChain(r.id) : null, by = bk ? recYield(bk) : null;
+  const ings = bk ? bookIngs(bk.id) : r ? S.ings.filter(i => i.recipe_id === r.id) : [];
+  const factor = total != null && by && by.u === su[0] ? total / by.q : total != null && su[0] === "g" && r && r.yield_g ? total / r.yield_g : null;
+  const fmtI = i => bk ? fmtQty(i.qty * (factor || 1), i.unit, bk.lang) : fmtAmt(i.qty * (factor || 1), i.unit);
   const step = t.step_id ? S.steps.find(s => s.id === t.step_id) : null;
   openSheet(`${head(esc(t.title), `${fmtD(t.date)}${r ? ` · ${r.color ? `<i class="pdot" style="--rc:${esc(r.color)}"></i>` : ""}` + esc(r.name) : ""}${t.day_count > 1 ? ` · day ${t.day_index} of ${t.day_count}` : ""}`)}
     <div class="row" role="group" aria-label="Status">${["todo", "doing", "done"].map(s => `<button type="button" class="btn sm ${t.status === s ? "primary" : ""}" data-act="tstatus" data-id="${t.id}" data-s="${s}">${{ todo: "To do", doing: "Doing", done: "Done" }[s]}</button>`).join("")}</div>
     ${step && step.notes ? `<p class="note">${esc(step.notes)}</p>` : ""}
     ${(t.sources || []).length ? `<div class="sec"><h4>For</h4><div class="list">${t.sources.map(s => `<div class="li"><span class="grow">${esc(s.p)}${s.o ? ` <span class="b spe">${esc(s.o)}</span>` : ""}${s.c ? `<br><span class="small muted">${esc(s.c)}</span>` : ""}</span><b>${s.q}</b>${s.a != null ? `<span class="small muted">${fmtAmt(s.a, s.u)}</span>` : ""}</div>`).join("")}
-      ${total != null ? `<div class="small"><b>Total ≈ ${fmtAmt(total, "g")}</b>${factor ? ` · ${(factor).toFixed(2)}× the recipe` : ""}</div>` : ""}</div></div>` : ""}
-    ${ings.length ? `<div class="sec"><h4>${factor ? "Scaled ingredients" : "Ingredients"}</h4><div class="list">${ings.map(i => `<div class="li"><span class="grow">${esc(i.name)}${i.note ? ` <span class="small muted">${esc(i.note)}</span>` : ""}</span><b>${i.qty != null ? fmtAmt(i.qty * (factor || 1), i.unit) : ""}</b></div>`).join("")}</div>${!factor && r && !r.yield_g ? `<p class="small muted">Add the recipe's yield in grams to scale this automatically.</p>` : ""}</div>` : ""}
+      ${total != null ? `<div class="small"><b>Total ≈ ${su[0] === "g" ? fmtAmt(total, "g") : `${Math.round(total * 10) / 10} ${esc(su[0])}`}</b>${factor ? ` · ${(factor).toFixed(2)}× the recipe` : ""}</div>` : ""}</div></div>` : ""}
+    ${ings.length ? `<div class="sec"><h4>${factor ? "Scaled ingredients" : "Ingredients"}</h4><div class="list">${ings.map(i => `<div class="li"><span class="grow">${esc(i.name)}${i.note ? ` <span class="small muted">${esc(i.note)}</span>` : ""}</span><b>${i.qty != null ? fmtI(i) : ""}</b></div>`).join("")}</div>${!factor && r && !r.yield_g && !by ? `<p class="small muted">Link a recipe from the Recipes section (with how much it makes) to scale this automatically.</p>` : ""}</div>` : ""}
+    ${bk ? `<div class="row"><button type="button" class="btn" data-act="openbook" data-id="${bk.id}" data-x="${factor || 1}" data-from="${esc(`Scaled for ${fmtD(t.date)}: ${t.title}`)}">Open full recipe${factor && Math.abs(factor - 1) > 0.01 ? ` ×${Math.round(factor * 100) / 100}` : ""} →</button></div>` : ""}
     ${chain.length > 1 ? `<div class="sec"><h4>Chain</h4><div class="chain">${chain.map(c => `<div class="st ${c.id === t.id ? "cur" : ""}"><span class="d">${fmtD(c.date)}</span><span class="grow">${esc(c.title)}</span>${c.status === "done" ? `<span class="b ok">Done</span>` : ""}</div>`).join("")}</div></div>` : ""}
     <div class="sec"><h4>Details</h4><div class="list">
       ${t.kind !== "step" ? `<label class="f">Title<input type="text" id="tTitle" value="${esc(t.title)}"></label>` : ""}
@@ -1257,7 +1326,7 @@ function showLab(on) {
   const w = $("#labWrap"); $("#main").classList.toggle("hidden", on); w.classList.toggle("hidden", !on);
   document.body.classList.toggle("in-lab", on);
   if (!on) return;
-  if (!$("#labFrame")) w.insertAdjacentHTML("beforeend", `<div class="labbody"><iframe id="labFrame" src="lab.html" title="Filling Lab"></iframe><aside id="ideasDrawer" class="drawer hidden" aria-label="Saved ideas"></aside></div>`);
+  if (!$("#labFrame")) w.insertAdjacentHTML("beforeend", `<div class="labbody"><iframe id="labFrame" src="lab.html" title="Taste Lab"></iframe><aside id="ideasDrawer" class="drawer hidden" aria-label="Saved ideas"></aside></div>`);
   renderLabBar(); renderIdeas(); labHeight();
   const fr = $("#labFrame"); const tell = () => { try { fr.contentWindow.postMessage({ type: "bk:pick", on: !!PICK }, location.origin); } catch {} };
   tell(); fr.onload = tell;
@@ -1624,7 +1693,7 @@ const ACT = {
   product: el => productSheet(el.dataset.id, el.dataset.kind),
   recipe: el => recipeSheet(el.dataset.id),
   addpart: () => $("#pParts").insertAdjacentHTML("beforeend", $("#partTpl").innerHTML),
-  rmrow: el => el.closest("[data-part],[data-step],[data-ing]").remove(),
+  rmrow: el => el.closest("[data-part],[data-step],[data-ing],[data-oven]").remove(),
   addstep: el => { const box = el.closest(".stepday"); $(".dsteps", box).insertAdjacentHTML("beforeend", $("#stepTpl").innerHTML.replace('value="1"', `value="${box.dataset.day}"`)); },
   addday: () => { const days = $("#rDays"); const n = $$(".stepday", days).length + 1; days.insertAdjacentHTML("beforeend", `<div class="stepday" data-day="${n}"><h5></h5><div class="dsteps">${$("#stepTpl").innerHTML.replace('value="1"', `value="${n}"`)}</div><button type="button" class="btn sm" data-act="addstep" data-day="${n}">+ Step</button></div>`); relabelDays($("#rForm")); },
   adding: () => $("#rIngs").insertAdjacentHTML("beforeend", $("#ingTpl").innerHTML),
@@ -1811,10 +1880,182 @@ async function boot() {
 }
 (() => {
   const th = store.get("bk.theme", null); if (th) document.documentElement.dataset.theme = th;
-  const hv = location.hash.slice(1); if (VIEWKEYS.includes(hv)) { S.view = hv; if (hv !== "lab") store.set("bk.lastPlanner", hv); }
+  const hv = parseView(location.hash.slice(1)); if (VIEWKEYS.includes(hv)) { S.view = hv; if (PLANNERV.includes(hv)) store.set("bk.lastPlanner", hv); } else if (!VIEWKEYS.includes(S.view)) S.view = "week";
   if (AUTH.onChange) AUTH.onChange(ev => { if (ev === "PASSWORD_RECOVERY") showSetPassword(); });
   boot();
 })();
+
+/* ================= RECIPE BOOK ================= */
+/* Own tables (bk_book_recipes, bk_book_ingredients). ingredient_id refers to Kitchen OS ingredients and
+   chain_recipe_id to a planner schedule (bk_recipes), by id only. */
+const RKINDS = [["dough", "Doughs"], ["bake", "Bakes"], ["filling", "Fillings & creams"], ["topping", "Toppings"], ["glaze", "Glazes & finishes"], ["other", "Other"]];
+const RKIND1 = { dough: "Dough", bake: "Bake", filling: "Filling", topping: "Topping", glaze: "Glaze", other: "Other" };
+const UNITS = ["g", "kg", "ml", "l", "pcs", "tbsp", "tsp", "pinch"];
+const ULBL = { en: { pcs: "pcs", tbsp: "tbsp", tsp: "tsp", pinch: "pinch" }, lt: { pcs: "vnt.", tbsp: "v. š.", tsp: "a. š.", pinch: "žiupsn." } };
+const book = id => S.book.find(r => r.id === id);
+const bookIngs = id => S.bookIngs.filter(i => i.recipe_id === id).sort((a, b) => a.position - b.position);
+const recYield = r => r && r.yield_qty && r.yield_unit ? { q: +r.yield_qty, u: r.yield_unit } : null;
+const FRAC = { 0.25: "¼", 0.5: "½", 0.75: "¾", 0.33: "⅓", 0.67: "⅔" };
+function fmtQty(q, u, lang) {
+  if (q == null || q === "") return "";
+  let v = +q, unit = u || "g";
+  if (unit === "g" && v >= 1000) { v /= 1000; unit = "kg"; }
+  if (unit === "ml" && v >= 1000) { v /= 1000; unit = "l"; }
+  let num;
+  if (["pcs", "tbsp", "tsp", "pinch"].includes(unit)) {
+    const whole = Math.floor(v + 1e-9), rest = Math.round((v - whole) * 100) / 100, fr = FRAC[rest];
+    num = fr ? (whole ? whole + " " : "") + fr : String(Math.round(v * 100) / 100);
+  } else num = String(unit === "g" || unit === "ml" ? (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10) : Math.round(v * 100) / 100);
+  if (lang === "lt") num = num.replace(".", ",");
+  return `${num} ${(ULBL[lang] || ULBL.en)[unit] || unit}`;
+}
+const ovenLine = o => (o || []).map(s => `${s.t} °C · ${s.m} min`).join(" → ");
+const ovenMin = o => (o || []).reduce((a, s) => a + (+s.m || 0), 0);
+/* where the scheduled planner recipe is used */
+const usedBy = r => r && r.chain_recipe_id ? [...new Set(S.parts.filter(p => p.recipe_id === r.chain_recipe_id).map(p => prod(p.product_id)?.name).filter(Boolean))] : [];
+
+function renderRecipeNav() {
+  const counts = Object.fromEntries(RKINDS.map(([k]) => [k, S.book.filter(r => r.kind === k).length]));
+  $("#subnav").innerHTML = `<nav class="nav" aria-label="Recipe kinds"><button type="button" data-act="rkind" data-k="all" ${RB.kind === "all" && !RB.id ? 'aria-current="page"' : ""}>All <span class="muted small">${S.book.length}</span></button>${RKINDS.map(([k, l]) => `<button type="button" data-act="rkind" data-k="${k}" ${RB.kind === k && !RB.id ? 'aria-current="page"' : ""}>${l}${counts[k] ? ` <span class="muted small">${counts[k]}</span>` : ""}</button>`).join("")}</nav><span class="spacer"></span><button type="button" class="btn sm primary bnewbtn" data-act="bnew">+ New<span class="lg"> recipe</span></button>`;
+}
+function renderRecipes() {
+  renderRecipeNav();
+  if (RB.id && book(RB.id)) return renderRecipe(book(RB.id));
+  RB.id = null;
+  $("#main").innerHTML = `<div class="bar"><h2>Recipes</h2><span class="spacer"></span><input type="search" id="rSearch" class="rsearch" placeholder="Search recipes or ingredients" value="${esc(RB.q)}" aria-label="Search recipes"></div><div id="rList"></div>`;
+  renderRecipeList();
+}
+function renderRecipeList() {
+  const q = RB.q.trim().toLowerCase();
+  const hit = r => !q || r.name.toLowerCase().includes(q) || bookIngs(r.id).some(i => i.name.toLowerCase().includes(q));
+  const kinds = RKINDS.filter(([k]) => RB.kind === "all" || RB.kind === k);
+  $("#rList").innerHTML = kinds.map(([k, l]) => {
+    const list = S.book.filter(r => r.kind === k && hit(r)).sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+    if (!list.length && (q || (RB.kind === "all" && k !== "dough"))) return "";
+    return `<section class="sec"><h4>${l} <span class="muted">${list.length}</span></h4><div class="cards">${list.map(recipeCard).join("")}
+      <button type="button" class="pcard addcard" data-act="bnew" data-k="${k}">+ Add ${RKIND1[k].toLowerCase()}</button></div></section>`;
+  }).join("") || `<p class="muted">Nothing matches “${esc(RB.q)}”.</p>`;
+}
+function recipeCard(r) {
+  const ings = bookIngs(r.id), y = recYield(r), used = usedBy(r);
+  return `<button type="button" class="pcard ${r.color ? "rc" : ""}" data-act="bopen" data-id="${r.id}"${cvar(r.color)}>
+    <div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span>${r.lang === "lt" ? `<span class="b">LT</span>` : ""}</div>
+    <div class="small muted">${[r.yield_note || (y ? fmtQty(y.q, y.u, r.lang) : ""), ings.length ? `${ings.length} ingredients` : "", (r.oven || []).length ? `${ovenMin(r.oven)} min in the oven` : ""].filter(Boolean).join(" · ") || "No details yet"}</div>
+    ${ings.length ? "" : `<div class="small"><span class="b warn">Draft</span> no ingredients yet</div>`}
+    ${used.length ? `<div class="small muted">Used in: ${esc(used.join(", "))}</div>` : ""}</button>`;
+}
+function renderRecipe(r) {
+  const ings = bookIngs(r.id), y = recYield(r), x = RB.x || 1, lang = r.lang || "en";
+  const groups = []; ings.forEach(i => { const g = i.grp || ""; let G = groups.find(z => z.g === g); if (!G) groups.push(G = { g, items: [] }); G.items.push(i); });
+  const chain = r.chain_recipe_id ? stepsOf(r.chain_recipe_id) : [], cdays = r.chain_recipe_id ? daysOf(r.chain_recipe_id) : 0, used = usedBy(r);
+  const method = (r.method || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const target = y ? Math.round(y.q * x * 100) / 100 : null;
+  $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← All recipes</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="bedit" data-id="${r.id}">Edit</button></div>
+    <article class="rpage">
+      <header class="rhead ${r.color ? "rc" : ""}"${cvar(r.color)}>
+        <div class="eyebrow">${RKIND1[r.kind] || r.kind}${r.yield_note ? " · " + esc(r.yield_note) : ""}</div>
+        <h2>${esc(r.name)}</h2>
+        <div class="rfacts">${(r.oven || []).length ? `<span><b>Oven</b> ${esc(ovenLine(r.oven))}</span>` : ""}${cdays ? `<span><b>Schedule</b> ${cdays} day${cdays > 1 ? "s" : ""}</span>` : ""}${used.length ? `<span><b>Used in</b> ${esc(used.join(", "))}</span>` : ""}</div>
+      </header>
+      ${RB.from ? `<p class="note noprint">${esc(RB.from)}</p>` : ""}
+      <div class="rgrid">
+        <section class="rcol">
+          <div class="rscale noprint" role="group" aria-label="Batch size"><span class="ulbl">Batch</span>${[0.5, 1, 2, 3].map(f => `<button type="button" class="chip" data-act="bx" data-x="${f}" aria-pressed="${x === f}">×${FRAC[f] || f}</button>`).join("")}
+            ${y ? `<label class="rtarget">Make <input type="number" id="rTarget" min="0" step="any" value="${target}" inputmode="decimal"> ${esc((ULBL[lang] || ULBL.en)[y.u] || y.u)}</label>` : ""}</div>
+          ${x !== 1 ? `<p class="small muted">Scaled ×${Math.round(x * 100) / 100}${y ? ` · ${fmtQty(target, y.u, lang)}` : ""}</p>` : ""}
+          <h3>Ingredients</h3>
+          ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => `<li><span class="iname">${esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit, lang)}</b></li>`).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
+        </section>
+        <section class="rcol">
+          <h3>Method</h3>
+          ${method.length ? `<ol class="method">${method.map(m => `<li>${esc(m)}</li>`).join("")}</ol>` : `<p class="muted">No method yet.</p>`}
+          ${(r.oven || []).length ? `<div class="oven"><h4>Oven</h4>${r.oven.map((s, k) => `<div class="ost"><b>${s.t} °C</b><span>${s.m} min</span>${s.n ? `<span class="muted">${esc(s.n)}</span>` : ""}</div>`).join("")}<div class="small muted">${ovenMin(r.oven)} min in total</div></div>` : ""}
+          ${r.notes ? `<h4>Notes</h4><p class="rnotes">${esc(r.notes)}</p>` : ""}
+          ${chain.length ? `<h4>Production schedule</h4><div class="chain">${chain.map(s => `<div class="st"><span class="d">Day ${s.day}${s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(s.title)}</span>${s.time_hint ? `<span class="small muted">${esc(s.time_hint)}</span>` : ""}</div>`).join("")}</div><p class="small muted noprint">Days and steps are edited in Setup → Schedules.</p>` : ""}
+          ${r.source ? `<p class="small muted">Source: ${esc(r.source)}</p>` : ""}
+        </section>
+      </div>
+    </article>`;
+}
+function openBook(id, x, from) { RB.id = id; RB.x = x || 1; RB.from = from || null; if (S.view !== "recipes") go("recipes/" + id); else { try { history.pushState(null, "", "#recipes/" + id); } catch {} renderRecipes(); window.scrollTo({ top: 0 }); } }
+
+/* --- edit sheet --- */
+function bookSheet(id, kind) {
+  const r = id ? book(id) : { id: null, name: "", kind: kind || "bake", lang: "en", yield_qty: null, yield_unit: "pcs", yield_note: "", method: "", oven: [], notes: "", source: "", color: null, chain_recipe_id: null };
+  const ings = id ? bookIngs(id) : [];
+  const groups = [...new Set(S.bookIngs.map(i => i.grp).filter(Boolean))];
+  const unitSel = (u, attr) => `<select ${attr}>${UNITS.map(x => `<option value="${x}" ${x === (u || "g") ? "selected" : ""}>${x}</option>`).join("")}</select>`;
+  const ingRow = i => `<div class="bing" data-ing>
+      <input type="text" data-f="name" list="kIngr" value="${esc(i.name || "")}" placeholder="Ingredient" aria-label="Ingredient">
+      <input type="number" step="any" data-f="qty" value="${i.qty ?? ""}" placeholder="Amount" aria-label="Amount">
+      ${unitSel(i.unit, 'data-f="unit" aria-label="Unit"')}
+      <input type="text" data-f="grp" list="bGroups" value="${esc(i.grp || "")}" placeholder="Group" aria-label="Group">
+      <input type="text" data-f="note" value="${esc(i.note || "")}" placeholder="Note" aria-label="Note">
+      <button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove ingredient">✕</button></div>`;
+  const ovRow = o => `<div class="boven" data-oven><input type="number" data-f="t" value="${o.t ?? ""}" placeholder="°C" aria-label="Temperature"><input type="number" data-f="m" value="${o.m ?? ""}" placeholder="min" aria-label="Minutes"><input type="text" data-f="n" value="${esc(o.n || "")}" placeholder="Note (e.g. turn the tin)" aria-label="Note"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove stage">✕</button></div>`;
+  openSheet(`${head(id ? esc(r.name) : "New recipe", "Ingredients, method and oven. Linked ingredients use your Kitchen OS list.")}
+    <form id="bForm" class="list">
+      <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(r.name)}"></label>
+      <label class="f">Kind<select name="kind">${RKINDS.map(([k, l]) => `<option value="${k}" ${k === r.kind ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      <div class="grid3"><label class="f">Makes<input type="number" step="any" name="yield_qty" value="${r.yield_qty ?? ""}"></label>
+        <label class="f">Unit${unitSel(r.yield_unit || "pcs", 'name="yield_unit"')}</label>
+        <label class="f">Language<select name="lang"><option value="en" ${r.lang !== "lt" ? "selected" : ""}>English</option><option value="lt" ${r.lang === "lt" ? "selected" : ""}>Lietuvių</option></select></label></div>
+      <label class="f">Batch description<input type="text" name="yield_note" value="${esc(r.yield_note || "")}" placeholder="e.g. 1 loaf (~8 slices)"></label>
+      <div class="sec"><h4>Ingredients</h4><div id="bIngs">${ings.map(ingRow).join("")}</div><button type="button" class="btn sm" data-act="bading">+ Ingredient</button>
+        <template id="bIngTpl">${ingRow({})}</template>
+        <datalist id="kIngr">${S.kIngr.map(k => `<option value="${esc(k.name)}"></option>`).join("")}</datalist>
+        <datalist id="bGroups">${groups.map(g => `<option value="${esc(g)}"></option>`).join("")}</datalist>
+        <p class="small muted">Use the same group name to keep rows together (e.g. Dry, Wet, Topping). Names that match Kitchen OS get linked for costing.</p></div>
+      <label class="f">Method <span class="small muted">one step per line</span><textarea name="method" style="min-height:160px">${esc(r.method || "")}</textarea></label>
+      <div class="sec"><h4>Oven</h4><div id="bOven">${(r.oven || []).map(ovRow).join("")}</div><button type="button" class="btn sm" data-act="badov">+ Oven stage</button><template id="bOvTpl">${ovRow({})}</template></div>
+      <label class="f">Production schedule<select name="chain_recipe_id"><option value="">Not linked</option>${S.recipes.map(c => `<option value="${c.id}" ${c.id === r.chain_recipe_id ? "selected" : ""}>${esc(c.name)} (${daysOf(c.id)} d)</option>`).join("")}</select><span class="small muted">Links this recipe to its days on the calendar, so task cards can open it at the right batch size.</span></label>
+      <label class="f">Notes<textarea name="notes">${esc(r.notes || "")}</textarea></label>
+      <label class="f">Source<input type="text" name="source" value="${esc(r.source || "")}" placeholder="Book, page, link"></label>
+      <div class="sec"><h4>Colour</h4><div class="swatches" role="radiogroup" aria-label="Colour">${PALETTE.map(c => `<label class="sw" style="--c:${c}" title="${c}"><input type="radio" name="color" value="${c}" ${r.color === c ? "checked" : ""}><span></span></label>`).join("")}<label class="sw none" title="No colour"><input type="radio" name="color" value="" ${!r.color ? "checked" : ""}><span>×</span></label></div></div>
+      <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="bdelete" data-id="${id}">Delete</button>` : ""}</div>
+    </form>`, sh => { sh.querySelector("#bForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveBook(r, e.target)); }); });
+}
+async function saveBook(r, form) {
+  const fd = new FormData(form), g = k => (fd.get(k) ?? "").toString();
+  const oven = $$("#bOven [data-oven]", form).map(el => ({ t: +$("[data-f=t]", el).value || null, m: +$("[data-f=m]", el).value || null, n: $("[data-f=n]", el).value.trim() })).filter(o => o.t || o.m);
+  const row = { name: g("name").trim(), kind: g("kind"), lang: g("lang") || "en", yield_qty: g("yield_qty") === "" ? null : +g("yield_qty"), yield_unit: g("yield_unit") || null, yield_note: g("yield_note").trim() || null,
+    method: g("method").trim() || null, oven, notes: g("notes").trim() || null, source: g("source").trim() || null, color: g("color") || null, chain_recipe_id: g("chain_recipe_id") || null, updated_at: new Date().toISOString() };
+  if (!row.name) throw new Error("Give the recipe a name.");
+  let id = r.id;
+  if (id) await DB.upd("bk_book_recipes", id, row); else { row.position = S.book.length + 1; id = (await DB.ins("bk_book_recipes", row))[0].id; }
+  const ings = $$("#bIngs [data-ing]", form).map((el, i) => { const v = f => $(`[data-f=${f}]`, el).value.trim(); const name = v("name"); const k = S.kIngr.find(x => x.name.toLowerCase() === name.toLowerCase());
+    return { recipe_id: id, name, ingredient_id: k ? k.id : null, qty: v("qty") === "" ? null : +v("qty"), unit: v("unit") || "g", grp: v("grp") || null, note: v("note") || null, position: i + 1 }; }).filter(i => i.name);
+  await DB.del("bk_book_ingredients", S.bookIngs.filter(i => i.recipe_id === id).map(i => i.id));
+  if (ings.length) await DB.ins("bk_book_ingredients", ings);
+  await loadBook(); closeSheet(); toast("Recipe saved."); RB.id = id; RB.x = 1; RB.from = null;
+  if (S.view === "recipes") { try { history.replaceState(null, "", "#recipes/" + id); } catch {} renderRecipes(); } else go("recipes/" + id);
+}
+async function loadBook() {
+  const [b, bi] = await Promise.all([DB.sel("bk_book_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_book_ingredients", { order: [["position"]] })]);
+  S.book = b; S.bookIngs = bi;
+}
+/* book recipe for a planner task (via its schedule recipe) */
+const bookForChain = cid => cid ? S.book.find(r => r.chain_recipe_id === cid) : null;
+
+Object.assign(ACT, {
+  rkind: el => { RB.kind = el.dataset.k; RB.id = null; RB.from = null; if (S.view !== "recipes") go("recipes"); else { try { history.pushState(null, "", "#recipes"); } catch {} renderRecipes(); } },
+  bopen: el => openBook(el.dataset.id),
+  bback: () => { RB.id = null; RB.from = null; try { history.pushState(null, "", "#recipes"); } catch {} renderRecipes(); window.scrollTo({ top: 0 }); },
+  bnew: el => guard(async () => { await loadKitchenIngredients(); bookSheet(null, el.dataset.k || (RB.kind !== "all" ? RB.kind : "bake")); }),
+  bedit: el => guard(async () => { await loadKitchenIngredients(); bookSheet(el.dataset.id); }),
+  bading: () => { $("#bIngs").insertAdjacentHTML("beforeend", $("#bIngTpl").innerHTML); const rows = $$("#bIngs [data-ing]"); const last = rows[rows.length - 1], prev = rows[rows.length - 2]; if (prev) $("[data-f=grp]", last).value = $("[data-f=grp]", prev).value; $("[data-f=name]", last).focus(); },
+  badov: () => $("#bOven").insertAdjacentHTML("beforeend", $("#bOvTpl").innerHTML),
+  bdelete: el => guard(async () => { const r = book(el.dataset.id); if (!r || !confirm(`Delete ${r.name}?`)) return; await DB.del("bk_book_recipes", [r.id]); await loadBook(); closeSheet(); RB.id = null; renderRecipes(); toast("Recipe deleted."); }),
+  bx: el => { RB.x = +el.dataset.x; renderRecipe(book(RB.id)); },
+  bprint: () => window.print(),
+  openbook: el => { closeSheet(); openBook(el.dataset.id, +el.dataset.x || 1, el.dataset.from || null); }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "rSearch") { RB.q = e.target.value; renderRecipeList(); }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "rTarget") { const r = book(RB.id), y = recYield(r); const v = +e.target.value; if (y && v > 0) { RB.x = v / y.q; renderRecipe(r); } }
+});
 
 </script>
 </body>
