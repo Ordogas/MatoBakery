@@ -507,6 +507,34 @@ body.rbpage{background:var(--bg)}
 .shopli .kosn{font-size:12px}
 .sheet:has(#bForm),.sheet:has(#pForm){width:min(880px,100%)}
 
+/* ===== daily choices ===== */
+.cpick{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.csel{display:flex;flex-wrap:wrap;gap:5px}
+.csel:empty{display:none}
+.cchip{display:inline-flex;align-items:center;gap:4px;background:var(--rb-soft);color:var(--ink);border-radius:999px;padding:3px 4px 3px 11px;font-size:14px;font-weight:600}
+.cchip.new{background:var(--sea-soft)}
+.cchip.txt{background:var(--sunk);font-weight:500}
+.cchip small{font-weight:500;color:var(--muted);font-size:11px}
+.cchip button{border:0;background:transparent;width:22px;height:22px;border-radius:50%;font-size:15px;line-height:1;color:var(--muted)}
+.cchip button:hover{background:var(--surface)}
+.cq{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:15px;width:100%}
+.copts{display:flex;flex-direction:column;gap:6px}
+.cgrp{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.cgrp .ulbl{margin-right:4px}
+.copt{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px;display:inline-flex;gap:6px;align-items:center;min-height:30px}
+.copt:hover{border-color:var(--accent)}
+.copt .b{font-size:10px;padding:1px 6px}
+.copt.add{border-style:dashed;color:var(--accent);font-weight:700}
+.cpick.compact .copts{display:none}
+.cpick.compact:focus-within .copts{display:flex;max-height:180px;overflow:auto}
+.slotr{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);white-space:nowrap}
+.partrow{grid-template-columns:1fr 130px 80px 64px auto auto}
+@media (max-width:560px){.partrow{grid-template-columns:1fr 1fr 1fr}}
+.cmiss{margin:4px 0 0;font-size:14px}
+.cmiss summary{cursor:pointer;color:var(--warn,#b45309);font-weight:600}
+.cmiss ul{margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.rcost{margin-top:10px}
+
 </style>
 </head>
 <body class="rbpage">
@@ -774,6 +802,7 @@ const prod = id => S.products.find(p => p.id === id);
 const partsOf = pid => S.parts.filter(x => x.product_id === pid).sort((a, b) => a.position - b.position);
 const usesOf = rid => S.parts.filter(x => x.recipe_id === rid).map(x => ({ x, p: prod(x.product_id) })).filter(u => u.p);
 const kidsOf = id => S.recipes.filter(r => r.parent_id === id);
+const slotFor = rid => [...new Set(S.parts.filter(x => x.choice && x.recipe_id === rid).map(x => prod(x.product_id)).filter(p => p && p.choice_label))];
 const prodDays = pid => Math.max(1, ...partsOf(pid).map(x => daysOf(x.recipe_id) - (x.ready_offset || 0)));
 const prodColor = p => { for (const x of partsOf(p.id)) { const c = rec(x.recipe_id)?.color; if (c) return c; } return p.color || null; };
 const RBX = { rec, ings: ingsOf, kos: id => kos(id), byName: n => { const t = String(n || "").trim().toLowerCase(); return S.recipes.find(r => r.name.trim().toLowerCase() === t) || null; } };
@@ -844,7 +873,7 @@ function card(r) {
   return `<button type="button" class="pcard ${r.color ? "rc" : ""}" data-act="bopen" data-id="${r.id}"${cvar(r.color)}>
     <div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b ${st[1]}">${r.status === "keeper" ? "★ " : ""}${st[0]}</span></div>
     <div class="small muted">${[r.yield_note || (y ? "makes " + fmtQty(y.q, y.u) : ""), ings.length ? `${ings.length} ingredients` : "no ingredients yet", n ? `${n}-day timeline` : "", (r.oven || []).length ? `${ovenMin(r.oven)} min bake` : ""].filter(Boolean).join(" · ")}</div>
-    ${used.length ? `<div class="small">In ${esc(used.join(", "))}</div>` : ""}
+    ${slotFor(r.id).length ? `<div class="small"><span class="b acc">Per-day slot</span> ${esc(slotFor(r.id)[0].choice_label.toLowerCase())} for ${esc(slotFor(r.id).map(p => p.name).join(", "))}</div>` : used.length ? `<div class="small">In ${esc(used.join(", "))}</div>` : ""}
     ${done.length || planned ? `<div class="small">${done.length ? `${plural(done.length, "test")}${done[0].result ? ` · last: <span class="b ${RESULT[done[0].result][1]}">${RESULT[done[0].result][0]}</span>` : ""}` : ""}${planned ? `${done.length ? " · " : ""}test planned ${fmtD(planned.date)}` : ""}</div>` : ""}
     ${par ? `<div class="small muted">Variation of ${esc(par.name)}</div>` : r.origin && !used.length ? `<div class="small muted">From ${esc(r.origin)}</div>` : ""}</button>`;
 }
@@ -886,20 +915,44 @@ function timeline(p) {
   }
   return rows.sort((a, b) => a.rel - b.rel || todRank(a.tod) - todRank(b.tod));
 }
+/* prices for need lines from Kitchen OS, and which ones are missing (and why) */
+function costLines(lines) {
+  const out = { cost: 0, priced: 0, lines: lines.length, missing: [] };
+  for (const l of lines) {
+    const k = kos(l.kid), q = k ? kosAmount(l, k) : null;
+    l.cost = q != null && k.price_per_unit != null ? q * k.price_per_unit : null;
+    if (l.cost != null) { out.cost += l.cost; out.priced++; continue; }
+    const why = !l.kid ? "not linked to Kitchen OS" : !k ? "Kitchen OS item not found" : k.price_per_unit == null ? `no price in Kitchen OS (${k.name})` : `can't convert ${l.ou} to ${kosUnit(k)} (${k.name})`;
+    if (!out.missing.some(m => m.name.toLowerCase() === l.name.toLowerCase())) out.missing.push({ name: l.name, why, link: !l.kid });
+  }
+  return out;
+}
+const missHtml = c => c.missing.length ? `<details class="cmiss"><summary>${c.missing.length} without a price</summary><ul>${c.missing.map(m => `<li><b>${esc(m.name)}</b> <span class="muted">${esc(m.why)}</span></li>`).join("")}</ul><p class="small muted">Prices come from Kitchen OS. Link rows in the component editor, or add the price in Kitchen OS.</p></details>` : "";
 /* ingredients for n pieces of a product, per component, plus cost where Kitchen OS has prices */
 function productNeeds(p, n) {
-  const comps = [], all = { cost: 0, priced: 0, lines: 0 };
+  const comps = [], all = { cost: 0, priced: 0, lines: 0, missing: [] };
   for (const x of partsOf(p.id)) {
     const r = rec(x.recipe_id); if (!r) continue;
     const amt = x.qty_per_unit != null ? x.qty_per_unit * n : null;
     const f = amt != null ? recFactor(r, ingsOf(r.id), amt, x.unit) : null;
     const need = f != null ? needsFor(RBX, r.id, f) : null;
-    let cost = 0, priced = 0;
-    if (need) for (const l of need.lines) { const k = kos(l.kid); const q = k ? kosAmount(l, k) : null; l.cost = q != null && k.price_per_unit != null ? q * k.price_per_unit : null; if (l.cost != null) { cost += l.cost; priced++; } }
-    comps.push({ x, r, amt, f, need, cost, priced });
-    if (need) { all.cost += cost; all.priced += priced; all.lines += need.lines.length; }
+    const c = need ? costLines(need.lines) : null;
+    comps.push({ x, r, amt, f, need, cost: c?.cost || 0, priced: c?.priced || 0 });
+    if (c) { all.cost += c.cost; all.priced += c.priced; all.lines += c.lines; c.missing.forEach(m => { if (!all.missing.some(z => z.name.toLowerCase() === m.name.toLowerCase())) all.missing.push(m); }); }
   }
   return { comps, ...all };
+}
+/* the product's options when a part is picked per day: components of the slot's kind, with cost per piece */
+function slotOptions(p) {
+  const x = partsOf(p.id).find(y => y.choice), slot = x && rec(x.recipe_id); if (!slot) return null;
+  const slots = new Set(S.parts.filter(y => y.choice).map(y => y.recipe_id)), RANK = { keeper: 0, testing: 1, idea: 2 };
+  const pooled = ["filling", "topping", "glaze"].includes(slot.kind);
+  const opts = S.recipes.filter(r => !slots.has(r.id) && (pooled ? r.kind === slot.kind : r.parent_id === slot.id)).sort((a, b) => (RANK[a.status] ?? 3) - (RANK[b.status] ?? 3) || a.name.localeCompare(b.name)).map(r => {
+    const f = x.qty_per_unit != null ? recFactor(r, ingsOf(r.id), x.qty_per_unit, x.unit) : null;
+    const c = f != null ? costLines(needsFor(RBX, r.id, f).lines) : null;
+    return { r, c };
+  });
+  return { x, slot, opts };
 }
 function renderProduct(p) {
   const c = prodColor(p), parts = partsOf(p.id), tl = timeline(p), d = prodDays(p.id), n = V.n || p.batch_size || p.default_qty || 1;
@@ -915,9 +968,13 @@ function renderProduct(p) {
         <div class="row ractions noprint"><button type="button" class="btn primary" data-act="padd">Add to a day</button><button type="button" class="btn" data-act="ptmpl">Usual week (template)</button></div>
       </header>
       <section class="rsec"><h3>Made from</h3>
-        ${parts.length ? `<div class="list mfrom">${parts.map(x => { const r = rec(x.recipe_id); if (!r) return ""; const st = STATUS[r.status || "idea"]; return `<div class="li"><span class="grow"><button type="button" class="linkbtn" data-act="bopen" data-id="${r.id}">${r.color ? `<i class="pdot" style="--rc:${esc(r.color)}"></i>` : ""}${esc(r.name)}</button> <span class="b ${st[1]}">${st[0]}</span><br><span class="small muted">${RKIND1[r.kind] || r.kind} · ${readyLbl(p.stock_mode ? 0 : x.ready_offset)} · ${plural(daysOf(r.id), "day")}</span></span><b>${amtLbl(x)}</b><span class="small muted">per ${esc(p.unit_label === "pcs" ? "piece" : p.unit_label || "piece")}</span></div>`; }).join("")}</div>`
+        ${parts.length ? `<div class="list mfrom">${parts.map(x => { const r = rec(x.recipe_id); if (!r) return ""; const st = STATUS[r.status || "idea"]; return `<div class="li"><span class="grow"><button type="button" class="linkbtn" data-act="bopen" data-id="${r.id}">${r.color ? `<i class="pdot" style="--rc:${esc(r.color)}"></i>` : ""}${esc(r.name)}</button> ${x.choice && p.choice_label ? `<span class="b acc">${esc(p.choice_label)} picked per day</span>` : `<span class="b ${st[1]}">${st[0]}</span>`}<br><span class="small muted">${RKIND1[r.kind] || r.kind} · ${readyLbl(p.stock_mode ? 0 : x.ready_offset)} · ${plural(daysOf(r.id), "day")}${x.choice && p.choice_label ? " · used until something is picked" : ""}</span></span><b>${amtLbl(x)}</b><span class="small muted">per ${esc(p.unit_label === "pcs" ? "piece" : p.unit_label || "piece")}</span></div>`; }).join("")}</div>`
           : `<p class="muted">No components yet. Tap Edit to choose the dough, filling and so on this product is made from.</p>`}
       </section>
+      ${(() => { const so = p.choice_label ? slotOptions(p) : null; if (!so) return ""; return `<section class="rsec"><h3>${esc(p.choice_label)} options <span class="muted small">${so.opts.length}</span></h3>
+        <p class="small muted">${["filling", "topping", "glaze"].includes(so.slot.kind) ? `Your ${esc((RKINDS.find(k => k[0] === so.slot.kind) || [0, "components"])[1].toLowerCase())}` : `Variations of ${esc(so.slot.name)} (Make a variation on it to add one)`}: picked per day in the planner (Needs attention, or the day's plan). New names typed there are added here as ideas.${so.x.qty_per_unit != null ? ` Cost for ${fmtQty(so.x.qty_per_unit, so.x.unit)} per ${esc(p.unit_label === "pcs" ? "piece" : p.unit_label)}.` : ""}</p>
+        <div class="list mfrom">${so.opts.map(o => `<div class="li"><span class="grow"><button type="button" class="linkbtn" data-act="bopen" data-id="${o.r.id}">${esc(o.r.name)}</button> <span class="b ${STATUS[o.r.status || "idea"][1]}">${STATUS[o.r.status || "idea"][0]}</span>${o.c && o.c.missing.length ? `<br><span class="small muted">no price: ${esc(o.c.missing.map(m => m.name).join(", "))}</span>` : !o.c ? `<br><span class="small muted">${ingsOf(o.r.id).length ? "can't scale to a piece yet" : "no ingredients yet"}</span>` : ""}</span><b>${o.c && o.c.priced ? `${o.c.missing.length ? "≥ " : "≈ "}${money(o.c.cost)}` : ""}</b></div>`).join("") || `<p class="small muted">None yet.</p>`}</div>
+        <div class="row noprint" style="margin-top:8px">${["filling", "topping", "glaze"].includes(so.slot.kind) ? `<button type="button" class="btn sm" data-act="bnew" data-k="${so.slot.kind}">+ Add an option</button>` : `<button type="button" class="btn sm" data-act="bopen" data-id="${so.slot.id}">Open ${esc(so.slot.name)} to make a variation</button>`}</div></section>`; })()}
       <section class="rsec"><h3>Timeline</h3>
         ${groups.length ? `<p class="small muted">${p.stock_mode ? "Counted back from the day a batch is made." : "Counted back from the day it's on sale. The planner puts these steps on the calendar for you."}</p><div class="tline">${groups.map(G => `<div class="tday"><div class="tdl">${p.stock_mode && G.rel === 0 ? "Batch day" : relDay(G.rel)}</div><div class="grow">${G.items.map(t => `<div class="tst ${t.none ? "muted" : ""}"${cvar(t.r.color)}><i class="pdot" aria-hidden="true"></i><span class="grow">${esc(t.title)}${t.none ? ` <span class="small">(no steps yet)</span>` : ""}<span class="small muted"> · ${esc(t.r.name)}</span></span>${t.tod ? `<span class="small muted">${esc(t.tod)}</span>` : ""}</div>`).join("")}</div></div>`).join("")}</div>`
           : `<p class="muted small">Add components to see the timeline.</p>`}
@@ -926,7 +983,7 @@ function renderProduct(p) {
         ${need.comps.map(cp => `<h4 class="igrp">${esc(cp.r.name)}${cp.amt != null ? ` <span class="muted">· ${fmtQty(cp.amt, cp.x.unit)}${cp.f != null ? ` · ${Math.round(cp.f * 100) / 100}× the recipe` : ""}</span>` : ""}</h4>
           ${cp.need ? `<ul class="ilist">${cp.need.lines.map(l => `<li><span class="iname">${esc(l.name)}${l.via !== cp.r.name ? ` <span class="muted">${esc(l.via)}</span>` : ""}</span><b>${fmtQty(l.oq, l.ou)}</b>${mh(l.name, l.oq, l.ou, kos(l.kid))}</li>`).join("")}</ul>${cp.need.gaps.length ? `<p class="small muted">${esc(cp.need.gaps.join(" · "))}</p>` : ""}`
             : `<p class="small muted">${cp.x.qty_per_unit == null ? "Set the amount per piece (Edit) to work this out." : !ingsOf(cp.r.id).length ? "No ingredients in this component yet." : `Can't scale: the component's yield is in ${esc(recYield(cp.r)?.u || "?")} but the product uses ${esc(cp.x.unit)}. Set “Makes” on the component, or the amount per piece in grams.`}</p>`}`).join("")}
-        ${need.priced ? `<p class="small"><b>Ingredient cost ≈ ${money(need.cost)}</b> for ${n} · ${money(need.cost / n)} each${need.priced < need.lines ? ` <span class="muted">(prices known for ${need.priced} of ${need.lines} lines in Kitchen OS)</span>` : ""}${p.price != null && need.priced === need.lines ? ` · ${Math.round(100 * (need.cost / n) / p.price)}% of the price` : ""}</p>` : ""}
+        ${need.lines ? `<p class="small"><b>Ingredient cost ${need.missing.length ? "≥" : "≈"} ${money(need.cost)}</b> for ${n} · ${money(need.cost / n)} each${p.price != null && !need.missing.length ? ` · ${Math.round(100 * (need.cost / n) / p.price)}% of the price` : ""}${need.missing.length ? ` <span class="muted">(${need.lines - need.missing.length >= 0 ? `priced ${need.priced} of ${need.lines} lines` : ""})</span>` : ""}</p>${missHtml(need)}` : ""}
       </section>
       ${p.notes ? `<section class="rsec"><h3>Notes</h3><p class="rnotes">${esc(p.notes)}</p></section>` : ""}
     </article>`;
@@ -939,7 +996,7 @@ function productSheet(id, kind) {
   const sorted = S.recipes.slice().sort((a, b) => RKINDS.findIndex(k => k[0] === a.kind) - RKINDS.findIndex(k => k[0] === b.kind) || a.name.localeCompare(b.name));
   const recOpts = sel => RKINDS.map(([k, l]) => { const list = sorted.filter(r => r.kind === k); return list.length ? `<optgroup label="${l}">${list.map(r => `<option value="${r.id}" ${r.id === sel ? "selected" : ""}>${esc(r.name)} (${daysOf(r.id)} d)</option>`).join("")}</optgroup>` : ""; }).join("");
   const offOpts = sel => [0, -1, -2, -3].map(v => `<option value="${v}" ${+sel === v ? "selected" : ""}>${readyLbl(v)}</option>`).join("");
-  const partRow = x => `<div class="partrow" data-part><select data-f="recipe_id" aria-label="Component">${recOpts(x.recipe_id)}</select><select data-f="ready_offset" aria-label="When ready">${offOpts(x.ready_offset || 0)}</select><input type="number" step="any" data-f="qty_per_unit" value="${x.qty_per_unit ?? ""}" placeholder="per piece" aria-label="Amount per piece"><select data-f="unit" aria-label="Unit">${["g", "pcs", "ml"].map(u => `<option ${u === (x.unit || "g") ? "selected" : ""}>${u}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove">✕</button></div>`;
+  const partRow = x => `<div class="partrow" data-part><select data-f="recipe_id" aria-label="Component">${recOpts(x.recipe_id)}</select><select data-f="ready_offset" aria-label="When ready">${offOpts(x.ready_offset || 0)}</select><input type="number" step="any" data-f="qty_per_unit" value="${x.qty_per_unit ?? ""}" placeholder="per piece" aria-label="Amount per piece"><select data-f="unit" aria-label="Unit">${["g", "pcs", "ml"].map(u => `<option ${u === (x.unit || "g") ? "selected" : ""}>${u}</option>`).join("")}</select><label class="slotr" title="This part is picked per day (topping, filling, flavour)"><input type="radio" name="slot" data-f="choice" ${x.choice ? "checked" : ""}> per day</label><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove">✕</button></div>`;
   openSheet(`${head(id ? esc(p.name) : "New product", esc(KIND[p.kind][0]))}
     <form id="pForm" class="list">
       <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(p.name)}"></label>
@@ -947,7 +1004,7 @@ function productSheet(id, kind) {
       <div class="grid3"><label class="f">Category<input type="text" name="category" value="${esc(p.category || "")}" placeholder="Focaccia, Buns…"></label>
       <label class="f">Price €<input type="number" step="0.01" name="price" value="${p.price ?? ""}"></label>
       <label class="f">Sold per<input type="text" name="unit_label" value="${esc(p.unit_label || "pcs")}" placeholder="pcs, slices, cake"></label></div>
-      <div class="sec"><h4>Made from</h4><p class="small muted">Components, when each must be ready, and how much goes into one piece. The amount drives batch totals and the shopping list.</p><div id="pParts">${parts.map(partRow).join("")}</div>
+      <div class="sec"><h4>Made from</h4><p class="small muted">Components, when each must be ready, and how much goes into one piece. The amount drives batch totals and the shopping list. Mark the part you pick per day (e.g. Bun fillings) as <b>per day</b>: it holds the portion and steps, and the options are your other components of that kind.</p><div id="pParts">${parts.map(partRow).join("")}</div>
         ${S.recipes.length ? `<button type="button" class="btn sm" data-act="addpart">+ Component</button>` : `<p class="small muted">Add components first (Components tab).</p>`}
         <template id="partTpl">${partRow({ recipe_id: sorted[0]?.id, ready_offset: 0, unit: "g" })}</template></div>
       <div class="sec"><h4>Planning</h4><div class="grid2"><label class="f">Usual quantity a day<input type="number" name="default_qty" min="0" value="${p.default_qty}"></label></div>
@@ -977,7 +1034,7 @@ async function saveProduct(p, form) {
   if (!row.name) throw new Error("Give the product a name.");
   let id = p.id;
   if (id) await DB.upd("bk_products", id, row); else { row.position = S.products.length + 1; id = (await DB.ins("bk_products", row))[0].id; }
-  const rows = $$("#pParts [data-part]", form).map((el, i) => ({ product_id: id, recipe_id: $("[data-f=recipe_id]", el).value, ready_offset: +$("[data-f=ready_offset]", el).value, qty_per_unit: $("[data-f=qty_per_unit]", el).value === "" ? null : +$("[data-f=qty_per_unit]", el).value, unit: $("[data-f=unit]", el).value, position: i })).filter(r => r.recipe_id);
+  const rows = $$("#pParts [data-part]", form).map((el, i) => ({ product_id: id, recipe_id: $("[data-f=recipe_id]", el).value, ready_offset: +$("[data-f=ready_offset]", el).value, qty_per_unit: $("[data-f=qty_per_unit]", el).value === "" ? null : +$("[data-f=qty_per_unit]", el).value, unit: $("[data-f=unit]", el).value, choice: !!row.choice_label && $("[data-f=choice]", el).checked, position: i })).filter(r => r.recipe_id);
   await DB.del("bk_product_parts", partsOf(id).map(x => x.id));
   if (rows.length) await DB.ins("bk_product_parts", rows);
   await load(); closeSheet(); changed(true); toast("Product saved."); openP(id);
@@ -1014,9 +1071,10 @@ function renderRecipe(r) {
         <h2>${esc(r.name)}</h2>
         <div class="seg stseg noprint" role="group" aria-label="Recipe status">${Object.entries(STATUS).map(([k, v]) => `<button type="button" data-act="bstatus" data-k="${k}" aria-pressed="${st === k}" title="${v[2]}">${k === "keeper" ? "★ " : ""}${v[0]}</button>`).join("")}</div>
         <div class="rfacts">${par ? `<span><b>Variation of</b> <button type="button" class="linkbtn" data-act="bopen" data-id="${par.id}">${esc(par.name)}</button></span>` : r.origin ? `<span><b>From</b> ${esc(r.origin)}</span>` : ""}${(r.oven || []).length ? `<span><b>Oven</b> ${esc(ovenLine(r.oven))}</span>` : ""}${cdays ? `<span><b>Takes</b> ${plural(cdays, "day")}</span>` : ""}${uses.length ? `<span><b>Used in</b> ${uses.map(u => `<button type="button" class="linkbtn" data-act="popen" data-id="${u.p.id}">${esc(u.p.name)}</button>`).join(", ")}</span>` : ""}</div>
-        <div class="row ractions noprint"><button type="button" class="btn" data-act="tplan">Plan a test bake</button><button type="button" class="btn" data-act="tlog">Log a test</button><button type="button" class="btn" data-act="bvar">Make a variation</button><button type="button" class="btn ghost" data-act="bidea">Send to planner as an idea</button></div>
+        <div class="row ractions noprint"><button type="button" class="btn" data-act="tplan">Plan a test bake</button><button type="button" class="btn" data-act="tlog">Log a test</button><button type="button" class="btn" data-act="bvar">Make a variation</button><button type="button" class="btn ghost" data-act="bidea">Use for a day's choice</button></div>
       </header>
       ${V.from ? `<p class="note noprint">${esc(V.from)}</p>` : ""}
+      ${slotFor(r.id).length ? `<p class="note">This is the per-day slot for ${esc(slotFor(r.id).map(p => p.name).join(", "))}: its portion and days & steps are used until a ${esc(slotFor(r.id)[0].choice_label.toLowerCase())} is picked. The options are ${["filling", "topping", "glaze"].includes(r.kind) ? `your other ${esc((RKINDS.find(k => k[0] === r.kind) || [0, "components"])[1].toLowerCase())}` : "its variations (Make a variation)"}; picking one uses its own ingredients (and its own steps, if it has any).</p>` : ""}
       <div class="rgrid">
         <section class="rcol">
           <div class="rscale noprint" role="group" aria-label="Batch size"><span class="ulbl">Batch</span>${[0.5, 1, 2, 3].map(f => `<button type="button" class="chip" data-act="bx" data-x="${f}" aria-pressed="${x === f}">×${FRAC[f] || f}</button>`).join("")}
@@ -1024,6 +1082,7 @@ function renderRecipe(r) {
           ${x !== 1 ? `<p class="small muted">Scaled ×${Math.round(x * 100) / 100}${y ? ` · ${fmtQty(target, y.u)}` : ""}</p>` : ""}
           <h3>Ingredients</h3>
           ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => { const sb = subOf(i); return `<li><span class="iname">${sb ? `<button type="button" class="linkbtn" data-act="bopen" data-id="${sb.id}">${esc(i.name)}</button>` : esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b>${mh(i.name, i.qty == null ? null : i.qty * x, i.unit, kos(i.ingredient_id))}</li>`; }).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
+          ${(() => { if (!ings.length) return ""; const c = costLines(needsFor(RBX, r.id, x).lines); return `<p class="small rcost"><b>Ingredient cost ${c.missing.length ? "≥" : "≈"} ${money(c.cost)}</b>${y ? ` · ${money(c.cost / (y.q * x))} per ${esc(y.u === "pcs" ? "piece" : y.u)}` : ""}${x !== 1 ? ` (×${Math.round(x * 100) / 100})` : ""}</p>${missHtml(c)}`; })()}
         </section>
         <section class="rcol">
           <h3>Method</h3>
@@ -1240,7 +1299,7 @@ const ACT = {
   bprint: () => window.print(),
   bstatus: el => guard(async () => { const r = rec(V.id); if (!r) return; await DB.upd("bk_recipes", r.id, { status: el.dataset.k, updated_at: new Date().toISOString() }); await load(); changed(); render(); }),
   bvar: () => guard(async () => { const r = rec(V.id); if (r) await makeVariation(r); }),
-  bidea: () => { const r = rec(V.id); if (!r) return; const ings = ingsOf(r.id).slice(0, 6).map(i => i.name.toLowerCase()); post("rb:idea", { text: `${r.name}${ings.length ? ": " + ings.join(", ") : ""}` }); },
+  bidea: () => { const r = rec(V.id); if (!r) return; post("rb:idea", { text: r.name, id: r.id }); },
   tplan: () => { const r = rec(V.id); if (r) planSheet(r); },
   tpsave: () => guard(savePlan),
   tlog: () => { const r = rec(V.id); if (r) trialSheet(r); },

@@ -507,6 +507,34 @@ body.rbpage{background:var(--bg)}
 .shopli .kosn{font-size:12px}
 .sheet:has(#bForm),.sheet:has(#pForm){width:min(880px,100%)}
 
+/* ===== daily choices ===== */
+.cpick{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.csel{display:flex;flex-wrap:wrap;gap:5px}
+.csel:empty{display:none}
+.cchip{display:inline-flex;align-items:center;gap:4px;background:var(--rb-soft);color:var(--ink);border-radius:999px;padding:3px 4px 3px 11px;font-size:14px;font-weight:600}
+.cchip.new{background:var(--sea-soft)}
+.cchip.txt{background:var(--sunk);font-weight:500}
+.cchip small{font-weight:500;color:var(--muted);font-size:11px}
+.cchip button{border:0;background:transparent;width:22px;height:22px;border-radius:50%;font-size:15px;line-height:1;color:var(--muted)}
+.cchip button:hover{background:var(--surface)}
+.cq{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:15px;width:100%}
+.copts{display:flex;flex-direction:column;gap:6px}
+.cgrp{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.cgrp .ulbl{margin-right:4px}
+.copt{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px;display:inline-flex;gap:6px;align-items:center;min-height:30px}
+.copt:hover{border-color:var(--accent)}
+.copt .b{font-size:10px;padding:1px 6px}
+.copt.add{border-style:dashed;color:var(--accent);font-weight:700}
+.cpick.compact .copts{display:none}
+.cpick.compact:focus-within .copts{display:flex;max-height:180px;overflow:auto}
+.slotr{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);white-space:nowrap}
+.partrow{grid-template-columns:1fr 130px 80px 64px auto auto}
+@media (max-width:560px){.partrow{grid-template-columns:1fr 1fr 1fr}}
+.cmiss{margin:4px 0 0;font-size:14px}
+.cmiss summary{cursor:pointer;color:var(--warn,#b45309);font-weight:600}
+.cmiss ul{margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.rcost{margin-top:10px}
+
 </style>
 </head>
 <body>
@@ -771,6 +799,20 @@ const partsOf = pid => S.parts.filter(x => x.product_id === pid).sort((a, b) => 
 const stepsOf = rid => S.steps.filter(s => s.recipe_id === rid).sort((a, b) => a.day - b.day || a.position - b.position);
 const daysOf = rid => Math.max(1, ...stepsOf(rid).map(s => s.day));
 const order = id => S.orders.find(o => o.id === id);
+/* daily choices: the product part marked as the choice slot, the options (components of the same kind) and
+   what each part stands for once something is picked: [{rid: ingredients from, time: steps from, share}] */
+const slotOf = pid => partsOf(pid).find(x => x.choice) || null;
+const isSlotRec = rid => S.parts.some(x => x.choice && x.recipe_id === rid);
+/* fillings, toppings and glazes: every component of that kind. A whole bake or dough (cookie flavours): its variations */
+const KINDPOOL = new Set(["filling", "topping", "glaze"]);
+const optionsFor = pid => { const x = slotOf(pid), sl = x ? rec(x.recipe_id) : null, k = sl?.kind || null; const RANK = { keeper: 0, testing: 1, idea: 2 };
+  return S.recipes.filter(r => !isSlotRec(r.id) && (!k || (KINDPOOL.has(k) ? r.kind === k : r.parent_id === sl.id))).sort((a, b) => (RANK[a.status] ?? 3) - (RANK[b.status] ?? 3) || a.name.localeCompare(b.name)); };
+const pickedIds = pl => (Array.isArray(pl?.choice_ids) ? pl.choice_ids : []).filter(id => rec(id));
+function partUses(x, ids) {
+  const ch = x.choice ? (ids || []).map(rec).filter(Boolean) : [];
+  if (!ch.length) return [{ rid: x.recipe_id, time: x.recipe_id, share: 1 }];
+  return ch.map(r => ({ rid: r.id, time: stepsOf(r.id).length ? r.id : x.recipe_id, share: 1 / ch.length }));
+}
 const recColor = id => rec(id)?.color || null;
 const prodColor = pid => { for (const x of partsOf(pid)) { const c = recColor(x.recipe_id); if (c) return c; } return prod(pid)?.color || null; };
 const cvar = c => c ? ` style="--rc:${esc(c)}"` : "";
@@ -819,20 +861,22 @@ function desiredTasks(plans, A, B, batches = []) {
   const want = new Map();
   const add = (pid, date, qty, src) => {
     const p = prod(pid); if (!p) return;
-    for (const part of partsOf(pid)) {
-      const steps = stepsOf(part.recipe_id); if (!steps.length) continue;
-      const N = daysOf(part.recipe_id);
+    for (const part of partsOf(pid)) for (const use of partUses(part, src.ids)) {
+      const rid = use.time, steps = stepsOf(rid); if (!steps.length) continue;
+      const N = daysOf(rid);
       const ready = addDays(date, src.batch ? 0 : (part.ready_offset || 0));
       if (ready < A || ready > B) continue;
+      const c = use.rid !== part.recipe_id && use.time === part.recipe_id ? rec(use.rid)?.name : src.c;
       for (const s of steps) {
-        const key = `${part.recipe_id}|${s.id}|${ready}`;
+        const key = `${rid}|${s.id}|${ready}`;
         let t = want.get(key);
         if (!t) {
-          t = { gen_key: key, date: addDays(ready, -(N - s.day)), title: s.title, kind: "step", recipe_id: part.recipe_id, step_id: s.id,
-                chain_key: `${part.recipe_id}|${ready}`, day_index: s.day, day_count: N, time_hint: s.time_hint || null, position: s.position || 0, sources: [] };
+          t = { gen_key: key, date: addDays(ready, -(N - s.day)), title: s.title, kind: "step", recipe_id: rid, step_id: s.id,
+                chain_key: `${rid}|${ready}`, day_index: s.day, day_count: N, time_hint: s.time_hint || null, position: s.position || 0, sources: [] };
           want.set(key, t);
         }
-        t.sources.push({ ...src, p: p.name, q: qty, a: part.qty_per_unit ? Math.round(part.qty_per_unit * qty * 10) / 10 : null, u: part.unit });
+        const { ids, ...rest } = src;
+        t.sources.push({ ...rest, c: c || null, p: p.name, q: qty, a: part.qty_per_unit ? Math.round(part.qty_per_unit * qty * use.share * 10) / 10 : null, u: part.unit });
       }
     }
   };
@@ -840,7 +884,7 @@ function desiredTasks(plans, A, B, batches = []) {
     if (pl.status === "cancelled" || !(pl.qty > 0)) continue;
     const p = prod(pl.product_id); if (!p || (p.stock_mode && !pl.order_id)) continue;
     const o = pl.order_id ? order(pl.order_id) : null;
-    add(pl.product_id, pl.date, pl.qty, { plan: pl.id, c: pl.choice || null, o: o ? o.code : null });
+    add(pl.product_id, pl.date, pl.qty, { plan: pl.id, c: pl.choice || null, o: o ? o.code : null, ids: pickedIds(pl) });
   }
   for (const b of batches) if (b.status !== "cancelled" && b.qty > 0) add(b.product_id, b.date, b.qty, { batch: b.id, c: null, o: null });
   return want;
@@ -877,7 +921,7 @@ async function syncTasks(A, B, pre) {
 /* decisions: planned items whose product needs a choice that hasn't been made */
 function decisionsIn(plans) {
   const t = todayISO();
-  return plans.filter(pl => { const p = prod(pl.product_id); return p && p.choice_label && !pl.choice && pl.status === "planned" && !pl.order_id && pl.date >= t && pl.qty > 0; })
+  return plans.filter(pl => { const p = prod(pl.product_id); return p && p.choice_label && !pl.choice && !pickedIds(pl).length && pl.status === "planned" && !pl.order_id && pl.date >= t && pl.qty > 0; })
     .map(pl => { const p = prod(pl.product_id); return { pl, p, due: addDays(pl.date, -(p.decide_days || 0)) }; })
     .sort((a, b) => a.due.localeCompare(b.due) || a.pl.date.localeCompare(b.pl.date));
 }
@@ -1233,7 +1277,7 @@ function renderSetup() {
         <button type="button" class="btn sm ghost" data-act="stockedit" data-id="${s.id}">Edit</button></div>`).join("")}</div>
       <div class="row" style="margin-top:10px"><button type="button" class="btn" data-act="stockedit">+ Freezer item</button></div>`;
   } else if (tab === "settings") {
-    const f = setting("form"), L = orderLinks(), links = setting("links"), ideas = setting("ideas");
+    const f = setting("form"), L = orderLinks(), links = setting("links");
     const cats = [...new Set(S.products.filter(p => p.choice_label).map(p => p.category || p.name))];
     body = `<form id="setForm" class="list" style="max-width:720px">
       <section class="sec"><h4>Online order form</h4><div class="list">
@@ -1245,8 +1289,6 @@ function renderSetup() {
         <label class="f">Payment note<textarea name="payment_note">${esc(f.payment_note || "")}</textarea></label>
         <label class="f">Phone or email customers can contact<input type="text" name="contact" value="${esc(f.contact || "")}"></label>
       </div></section>
-      <section class="sec"><h4>Ideas per category</h4><p class="small muted">One per line. They show up as quick picks when you decide toppings or flavours. Paste favourites from the Taste Lab here.</p>
-        <div class="list">${cats.map(c => `<label class="f">${esc(c)}<textarea data-idea="${esc(c)}">${esc((ideas[c] || []).join("\n"))}</textarea></label>`).join("")}</div></section>
       <section class="sec"><h4>Links</h4><div class="list">
         <label class="f">Taste Lab address<input type="text" name="filling_lab" value="${esc(links.filling_lab || CFG.fillingLab)}"></label>
         <label class="f">Staff order link<span class="linkbox"><input type="text" readonly value="${esc(L.staff)}"><button type="button" class="btn sm" data-act="copy" data-v="${esc(L.staff)}">Copy</button></span></label>
@@ -1315,26 +1357,22 @@ function dayPlanSheet(date) {
 }
 function planRow(pl) {
   const p = prod(pl.product_id);
-  return `<div class="li" data-plan="${pl.id}" data-product="${pl.product_id}"><div class="grow"><b>${esc(p?.name || "")}</b>${p?.choice_label ? `<input type="text" data-f="choice" value="${esc(pl.choice || "")}" placeholder="${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count})` : ""}" style="margin-top:4px" aria-label="${esc(p.choice_label)}">` : ""}</div>
+  return `<div class="li" data-plan="${pl.id}" data-product="${pl.product_id}"><div class="grow"><b>${esc(p?.name || "")}</b>${p?.choice_label ? `<div class="small muted">${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count})` : ""}</div>${choicePicker(p, pl, { compact: true })}` : ""}</div>
     <input type="number" inputmode="numeric" min="0" data-f="qty" value="${pl.qty}" style="width:76px" aria-label="Quantity"><button type="button" class="btn sm ghost" data-act="dprm" aria-label="Remove">✕</button></div>`;
 }
 
 /* --- decision sheet --- */
 async function decisionSheet(planId, add) {
   const pl = S.plan.find(x => x.id === planId) || (await DB.sel("bk_plan", { eq: { id: planId } }))[0]; if (!pl) return;
-  const p = prod(pl.product_id);
-  const hist = (await DB.sel("bk_plan", { eq: { product_id: p.id }, notnull: "choice", order: [["date", false]], limit: 60 })).map(x => x.choice);
-  const past = [...new Set(hist)].slice(0, 12);
-  const cat = p.category || p.name, ideas = (setting("ideas")[cat] || []).filter(i => !past.includes(i));
-  const same = S.plan.filter(x => x.product_id === p.id && !x.order_id && !x.choice && x.id !== pl.id && x.date >= todayISO() && mondayOf(x.date) === mondayOf(pl.date)).sort((a, b) => a.date.localeCompare(b.date));
-  const fl = setting("links").filling_lab || CFG.fillingLab;
+  const p = prod(pl.product_id), k = slotKind(p.id);
+  const hist = await DB.sel("bk_plan", { eq: { product_id: p.id }, order: [["date", false]], limit: 80 });
+  const recent = [...new Set(hist.flatMap(x => pickedIds(x)))].slice(0, 8);
+  const same = S.plan.filter(x => x.product_id === p.id && !x.order_id && !x.choice && !pickedIds(x).length && x.id !== pl.id && x.date >= todayISO() && mondayOf(x.date) === mondayOf(pl.date)).sort((a, b) => a.date.localeCompare(b.date));
   openSheet(`${head(`${esc(p.name)}: ${esc(p.choice_label)}`, `For ${fmtD(pl.date)} · decide by ${fmtD(addDays(pl.date, -(p.decide_days || 0)))}`)}
-    <label class="f">${esc(p.choice_label)}${p.choice_count > 1 ? ` (${p.choice_count}, one per line or comma-separated)` : ""}<textarea id="dcVal" placeholder="e.g. Plum, thyme & brown butter">${esc(add != null ? add : (pl.choice || ""))}</textarea></label>
-    ${past.length ? `<div class="sec"><h4>Used before</h4><div class="pills">${past.map(c => `<button type="button" class="pill" data-act="dcpick" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>` : ""}
-    ${ideas.length ? `<div class="sec"><h4>Ideas</h4><div class="pills">${ideas.map(c => `<button type="button" class="pill" data-act="dcpick" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>` : ""}
+    <div class="f"><span>${esc(p.choice_label)}${p.choice_count > 1 ? ` <span class="muted">(${p.choice_count})</span>` : ""}</span>${choicePicker(p, pl, { add, recent })}</div>
+    <p class="small muted">${k ? KINDPOOL.has(k) ? `Options are your ${esc(KINDL[k].toLowerCase())} in Recipes. ` : `Options are the variations of ${esc(rec(slotOf(p.id).recipe_id).name)} in Recipes. ` : ""}A new name is saved as a component idea, so you can add notes or a recipe to it later.</p>
     <div class="sec"><button type="button" class="btn" data-act="labpick" data-id="${pl.id}">Find it in the Lab →</button> <span class="small muted">Browse recipes, trios, pairings or the generator, then tap “Use in planner”.</span></div>
     ${same.length ? `<label class="f inline sec"><input type="checkbox" id="dcSame" checked> Use for the other ${same.length} day${same.length > 1 ? "s" : ""} this week too (${same.map(x => DOW[weekday(x.date) - 1]).join(", ")})</label>` : ""}
-    <label class="f inline"><input type="checkbox" id="dcIdea"> Save to ideas for ${esc(cat)}</label>
     <div class="row sec"><button type="button" class="btn primary" data-act="dcsave" data-id="${pl.id}" data-same="${same.map(x => x.id).join(",")}">Save</button></div>`);
 }
 
@@ -1421,12 +1459,11 @@ function stockSheet(id) {
 /* ================= FILLING LAB ================= */
 let PICK = null;
 let IDEAS_OPEN = false, IDEA_NEW = null;
-const ideaCount = () => Object.values(setting("ideas")).reduce((a, l) => a + (l || []).length, 0);
 function labHeight() { for (const w of [$("#labWrap"), $("#rbWrap")]) if (w && !w.classList.contains("hidden")) w.style.height = Math.max(320, window.innerHeight - $(".top").getBoundingClientRect().height) + "px"; }
 window.addEventListener("resize", labHeight);
 function renderLabBar() {
   const sub = $("#subnav"); if (!sub) return;
-  const ideasBtn = `<button type="button" class="btn sm ${IDEAS_OPEN ? "primary" : ""}" data-act="idtoggle" aria-expanded="${IDEAS_OPEN}">Saved ideas <span class="b">${ideaCount()}</span></button>`;
+  const ideasBtn = `<button type="button" class="btn sm ${IDEAS_OPEN ? "primary" : ""}" data-act="idtoggle" aria-expanded="${IDEAS_OPEN}">Ideas <span class="b">${ideaCount()}</span></button>`;
   if (PICK) {
     const p = prod(PICK.product_id);
     sub.innerHTML = `<div class="labbar pick"><span><b>Picking ${esc(p?.choice_label || "an idea")}</b> for ${esc(p?.name || "")} · ${fmtD(PICK.date)}. Tap “Use in planner” on anything.</span><span class="spacer"></span>${ideasBtn}<button type="button" class="btn sm" data-act="labcancel">Back without picking</button></div>`;
@@ -1441,26 +1478,6 @@ function showLab(on) {
   const fr = $("#labFrame"); const tell = () => { try { fr.contentWindow.postMessage({ type: "bk:pick", on: !!PICK }, location.origin); } catch {} };
   tell(); fr.onload = tell;
 }
-function ideaCats() { return [...new Set([...S.products.filter(p => p.choice_label && p.active).map(p => p.category || p.name), ...Object.keys(setting("ideas"))])]; }
-function renderIdeas() {
-  const d = $("#ideasDrawer"); if (!d) return;
-  d.classList.toggle("hidden", !IDEAS_OPEN); if (!IDEAS_OPEN) return;
-  const ideas = setting("ideas"), cats = ideaCats();
-  d.innerHTML = `<div class="sheet-h"><div><h3>Saved ideas</h3><div class="small muted">They show up as quick picks when you decide toppings, fillings or flavours.</div></div><button type="button" class="x" data-act="idtoggle" aria-label="Close ideas">×</button></div>
-    ${cats.map(c => `<section class="sec"><h4>${esc(c)} <span class="muted">${(ideas[c] || []).length}</span></h4>
-      <div class="list">${(ideas[c] || []).map((v, i) => `<div class="li ${IDEA_NEW && IDEA_NEW.c === c && IDEA_NEW.v === v ? "fresh" : ""}"><span class="grow">${esc(v)}</span><button type="button" class="btn sm ghost" data-act="iduse" data-c="${esc(c)}" data-i="${i}">Use…</button><button type="button" class="btn sm ghost" data-act="idrecipe" data-c="${esc(c)}" data-i="${i}" title="Develop it as a recipe">Make recipe</button><button type="button" class="btn sm ghost" data-act="iddel" data-c="${esc(c)}" data-i="${i}" aria-label="Delete idea">✕</button></div>`).join("") || `<div class="small muted">Nothing yet.</div>`}</div></section>`).join("")}`;
-  const fresh = d.querySelector(".fresh"); if (fresh) fresh.scrollIntoView({ block: "nearest" });
-}
-async function ideaSheet(text, src, catPre) {
-  const cats = ideaCats();
-  const plans = await DB.sel("bk_plan", { gte: { date: todayISO() }, lte: { date: addDays(todayISO(), 21) } });
-  const groups = decisionGroups(plans).slice(0, 12);
-  openSheet(`${head("Idea from the Lab", src ? esc(src) : "")}
-    <div class="list"><label class="f">Idea<textarea id="idText">${esc(text)}</textarea></label></div>
-    ${groups.length ? `<div class="sec"><h4>Use it now for</h4><div class="list">${groups.map(g => `<button type="button" class="li" style="text-align:left" data-act="iddecide" data-id="${g.items[0].id}"><span class="grow"><b>${esc(g.p.name)}: ${esc(g.p.choice_label)}</b><br><span class="small muted">${dayRange(g.items)} · decide by ${fmtD(g.due)}</span></span><span class="b ${g.due <= todayISO() ? "warn" : ""}">→</span></button>`).join("")}</div></div>` : ""}
-    <div class="sec"><h4>Or save it for later</h4><div class="row"><select id="idCat" aria-label="Category">${cats.map(c => `<option ${c === catPre ? "selected" : ""}>${esc(c)}</option>`).join("")}<option value="General">General</option></select><button type="button" class="btn primary" data-act="idsave">Save idea</button></div></div>
-    <div class="sec"><h4>Or develop it properly</h4><button type="button" class="btn" data-act="idtorecipe">Start a recipe from it →</button><p class="small muted">Opens it in Recipes as a draft you can tweak, test and keep.</p></div>`);
-}
 window.addEventListener("message", e => {
   if (e.origin !== location.origin || !e.data || e.data.type !== "bk:idea") return;
   guard(async () => {
@@ -1469,7 +1486,7 @@ window.addEventListener("message", e => {
       const pk = PICK; PICK = null;
       await go(pk.view);
       const cur = (pk.draft || "").trim();
-      await decisionSheet(pk.id, cur ? (cur.includes(text) ? cur : cur + ", " + text) : text);
+      await decisionSheet(pk.id, text);
     } else await ideaSheet(text, e.data.src);
   });
 });
@@ -1842,15 +1859,17 @@ const ACT = {
   /* day plan sheet */
   dprm: el => { const row = el.closest("[data-plan]"); row.dataset.removed = "1"; row.style.display = "none"; },
   dpsave: async el => {
-    const date = el.dataset.date, ins = [], dels = [];
+    const date = el.dataset.date, ins = [], dels = [], made = new Map();
     for (const row of $$("#dpRows [data-plan]")) {
-      const id = row.dataset.plan, qty = Math.max(0, +$("[data-f=qty]", row).value || 0), choice = $("[data-f=choice]", row)?.value.trim() || null;
-      if (id.startsWith("new-")) { if (!row.dataset.removed && qty > 0) ins.push({ date, product_id: row.dataset.product, qty, choice }); continue; }
+      const id = row.dataset.plan, qty = Math.max(0, +$("[data-f=qty]", row).value || 0), pk = $(".cpick", row);
+      const ch = pk && !row.dataset.removed && !(id.startsWith("new-") && qty <= 0) ? await commitPick(row.dataset.product, readPick(pk), made) : { choice: null, choice_ids: [] };
+      if (id.startsWith("new-")) { if (!row.dataset.removed && qty > 0) ins.push({ date, product_id: row.dataset.product, qty, ...ch }); continue; }
       if (row.dataset.removed) { dels.push(id); continue; }
-      const old = S.plan.find(x => x.id === id); if (old && (old.qty !== qty || (old.choice || null) !== choice)) await DB.upd("bk_plan", id, { qty, choice });
+      const old = S.plan.find(x => x.id === id); if (old && (old.qty !== qty || (old.choice || null) !== ch.choice || JSON.stringify(pickedIds(old)) !== JSON.stringify(ch.choice_ids))) await DB.upd("bk_plan", id, { qty, ...ch });
     }
     if (dels.length) await DB.del("bk_plan", dels);
     if (ins.length) await DB.ins("bk_plan", ins);
+    await afterNewIdeas(made);
     await syncTasks(addDays(date, -14), date); closeSheet(); toast("Day saved. Steps updated."); await refresh();
   },
   dpfill: async el => { const n = await fillFromTemplate(el.dataset.date, 1); closeSheet(); toast(n ? `Added ${n} products.` : "Nothing missing."); await refresh(); },
@@ -1874,26 +1893,16 @@ const ACT = {
     closeSheet(true); await go("lab");
   },
   labcancel: async () => { const pk = PICK; PICK = null; await go(pk ? pk.view : "week"); if (pk) await decisionSheet(pk.id, pk.draft); },
-  idsave: async () => {
-    const v = $("#idText").value.trim(), cat = $("#idCat").value; if (!v) return;
-    const ideas = { ...setting("ideas") }; ideas[cat] = [...new Set([...(ideas[cat] || []), v])];
-    await DB.ups("bk_settings", { key: "ideas", value: ideas }, "key"); await loadStatic(); closeSheet();
-    IDEAS_OPEN = true; IDEA_NEW = { c: cat, v }; if (S.view === "lab") showLab(true); toast(`Saved to ${cat} ideas.`);
-  },
-  iddecide: async el => { const v = $("#idText").value.trim(); closeSheet(true); const pl = (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0]; const cur = (pl?.choice || "").trim(); await decisionSheet(el.dataset.id, cur ? cur + ", " + v : v); },
   idtoggle: () => { IDEAS_OPEN = !IDEAS_OPEN; IDEA_NEW = null; renderLabBar(); renderIdeas(); },
-  iddel: async el => { const ideas = { ...setting("ideas") }; const l = [...(ideas[el.dataset.c] || [])]; l.splice(+el.dataset.i, 1); ideas[el.dataset.c] = l; await DB.ups("bk_settings", { key: "ideas", value: ideas }, "key"); await loadStatic(); showLab(true); },
-  iduse: async el => { const v = (setting("ideas")[el.dataset.c] || [])[+el.dataset.i]; if (v) await ideaSheet(v, "Saved idea", el.dataset.c); },
-  /* decision sheet */
-  dcpick: el => { const ta = $("#dcVal"); const v = el.dataset.v; ta.value = ta.value.trim() ? (ta.value.trim().includes(v) ? ta.value : ta.value.trim() + ", " + v) : v; ta.focus(); },
   dcsave: async el => {
-    const v = $("#dcVal").value.trim(); if (!v) { toast("Write the choice first.", true); return; }
+    const sel = readPick($("#scrim .cpick")); if (!sel.length) { toast("Pick or type something first.", true); return; }
+    const pl0 = S.plan.find(x => x.id === el.dataset.id) || (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0];
+    const made = new Map(), ch = await commitPick(pl0.product_id, sel, made);
     const ids = [el.dataset.id, ...(($("#dcSame")?.checked && el.dataset.same) ? el.dataset.same.split(",") : [])].filter(Boolean);
-    for (const id of ids) await DB.upd("bk_plan", id, { choice: v });
-    const pl = S.plan.find(x => x.id === el.dataset.id) || (await DB.sel("bk_plan", { eq: { id: el.dataset.id } }))[0];
-    if ($("#dcIdea")?.checked) { const p = prod(pl.product_id), cat = p.category || p.name, ideas = { ...setting("ideas") }; ideas[cat] = [...new Set([...(ideas[cat] || []), v])]; await DB.ups("bk_settings", { key: "ideas", value: ideas }, "key"); await loadStatic(); }
-    const dates = S.plan.filter(x => ids.includes(x.id)).map(x => x.date).concat(pl.date).sort();
-    await syncTasks(addDays(dates[0], -14), dates[dates.length - 1]); closeSheet(); toast("Decided."); await refresh();
+    for (const id of ids) await DB.upd("bk_plan", id, ch);
+    await afterNewIdeas(made);
+    const dates = S.plan.filter(x => ids.includes(x.id)).map(x => x.date).concat(pl0.date).sort();
+    await syncTasks(addDays(dates[0], -14), dates[dates.length - 1]); closeSheet(); toast(made.size ? `Decided. ${made.size} new idea${made.size > 1 ? "s" : ""} added to Recipes.` : "Decided."); await refresh();
   },
   savelog: async () => {
     const moved = [];
@@ -1930,8 +1939,7 @@ document.addEventListener("submit", e => {
   guard(async () => {
     const fd = new FormData(e.target), form = { ...setting("form") };
     for (const k of ["title", "intro", "pickup_place", "bank_recipient", "bank_iban", "payment_note", "contact"]) form[k] = (fd.get(k) || "").trim();
-    const ideas = { ...setting("ideas") }; $$("[data-idea]", e.target).forEach(t => { ideas[t.dataset.idea] = t.value.split("\n").map(s => s.trim()).filter(Boolean); });
-    await DB.ups("bk_settings", [{ key: "form", value: form }, { key: "ideas", value: ideas }, { key: "links", value: { ...setting("links"), filling_lab: (fd.get("filling_lab") || "").trim() } }], "key");
+    await DB.ups("bk_settings", [{ key: "form", value: form }, { key: "links", value: { ...setting("links"), filling_lab: (fd.get("filling_lab") || "").trim() } }], "key");
     await loadStatic(); toast("Settings saved.");
   });
 });
@@ -2022,7 +2030,7 @@ window.addEventListener("message", e => {
   if (d.type === "rb:ready") { RB_READY = true; const q = RBQ; RBQ = []; q.forEach(rbPost); return; }
   if (d.type === "rb:route") { RB.id = d.id || null; const h = "#recipes" + (d.id ? "/" + d.id : ""); if (S.view === "recipes" && location.hash !== h) { try { history.pushState(null, "", h); } catch {} } return; }
   if (d.type === "rb:changed") { RB_SYNC = guard(() => afterRecipes(d.sync)); return; }
-  if (d.type === "rb:idea") { guard(() => ideaSheet(String(d.text || "").slice(0, 300), "From Recipes")); return; }
+  if (d.type === "rb:idea") { guard(async () => { if (d.id && !rec(d.id)) await loadStatic(); await ideaSheet(String(d.text || "").slice(0, 300), "From Recipes", d.id && rec(d.id) ? d.id : null); }); return; }
   if (d.type === "rb:goto") { guard(async () => { await RB_SYNC; if (d.date) S.week = mondayOf(d.date); if (d.tab) { S.stab = d.tab; store.set("bk.stab", d.tab); } go(d.view || "week"); }); return; }
   if (d.type === "bk:recipe" && d.draft) { sendDraft(d.draft); toast("Added to Recipes as a draft."); }
 });
@@ -2030,7 +2038,6 @@ window.addEventListener("message", e => {
 Object.assign(ACT, {
   openbook: el => { closeSheet(); RB.id = el.dataset.id; RB.x = +el.dataset.x || 1; RB.from = el.dataset.from || null; go("recipes/" + RB.id); },
   logtrial: el => { closeSheet(); RB.id = el.dataset.rid; RB.x = 1; RB.from = null; go("recipes/" + RB.id); rbPost({ type: "rb:log", trial: el.dataset.id }); },
-  idrecipe: el => { const v = (setting("ideas")[el.dataset.c] || [])[+el.dataset.i]; if (!v) return; sendDraft({ name: v.length > 60 ? v.slice(0, 57).trim() + "…" : v, notes: v, origin: `Planner idea (${el.dataset.c})`, status: "idea" }); },
   idtorecipe: () => { const v = ($("#idText")?.value || "").trim(); if (!v) return; closeSheet(); sendDraft({ name: v.length > 60 ? v.slice(0, 57).trim() + "…" : v, notes: v, origin: "Taste Lab idea", status: "idea" }); }
 });
 
@@ -2073,17 +2080,19 @@ function shopCompute(A, B, plans, batches, trials) {
   };
   const addProd = (pid, date, qty, src) => {
     const p = prod(pid); if (!p) return;
-    for (const x of partsOf(pid)) {
-      const r = rec(x.recipe_id); if (!r) continue;
-      const ready = addDays(date, src.batch ? 0 : (x.ready_offset || 0)), start = addDays(ready, -(daysOf(r.id) - 1));
+    for (const x of partsOf(pid)) for (const pu of partUses(x, src.ids)) {
+      const r = rec(pu.rid); if (!r) continue;
+      const ready = addDays(date, src.batch ? 0 : (x.ready_offset || 0)), start = addDays(ready, -(daysOf(pu.time) - 1));
       if (start < A || start > B) continue;
-      use(r.id, start, x.qty_per_unit != null ? x.qty_per_unit * qty : null, x.unit || "g", { p: p.name, q: qty, c: src.c || null, o: src.o || null, pid });
+      /* an open choice nobody has picked yet: counted from the slot component if it has ingredients, else flagged */
+      const open = x.choice && p.choice_label && !(src.ids || []).length && !src.batch;
+      use(r.id, start, x.qty_per_unit != null ? x.qty_per_unit * qty * pu.share : null, x.unit || "g", { p: p.name, q: qty, c: src.c || null, o: src.o || null, pid, open, label: p.choice_label, plan: src.plan || null });
     }
   };
   for (const pl of plans) {
     if (pl.status === "cancelled" || !(pl.qty > 0)) continue;
     const p = prod(pl.product_id); if (!p || (p.stock_mode && !pl.order_id)) continue;
-    addProd(pl.product_id, pl.date, pl.qty, { c: pl.choice, o: pl.order_id ? order(pl.order_id)?.code : null });
+    addProd(pl.product_id, pl.date, pl.qty, { c: pl.choice, o: pl.order_id ? order(pl.order_id)?.code : null, ids: pickedIds(pl), plan: pl.id });
   }
   for (const b of batches) if (b.status === "planned" && b.qty > 0) addProd(b.product_id, b.date, b.qty, { batch: true });
   const tests = trials.filter(t => t.date >= A && t.date <= B && rec(t.recipe_id));
@@ -2111,9 +2120,10 @@ function shopCompute(A, B, plans, batches, trials) {
     const who = [...new Set(u.srcs.map(s => s.p))].join(", ");
     comps.push({ ...u, r, f });
     if (f == null) {
-      const y = recYield(r), why = u.unknown ? `amount per piece not set on ${who}` : !ings.length ? "no ingredients yet" : y ? `it makes ${fmtQty(y.q, y.u)} but ${who} counts it in ${u.unit}` : `set how many ${u.unit} it makes`;
+      const open = u.srcs.find(s => s.open && !s.c);
+      const y = recYield(r), why = u.unknown ? `amount per piece not set on ${who}` : open && !ings.length ? `${open.label.toLowerCase()} not picked yet for ${who}` : !ings.length ? "no ingredients yet" : y ? `it makes ${fmtQty(y.q, y.u)} but ${who} counts it in ${u.unit}` : `set how many ${u.unit} it makes`;
       const gk = r.id + "|" + why; let g = gaps.find(x => x.k === gk);
-      if (!g) gaps.push(g = { k: gk, name: r.name, why, days: [], rid: r.id, pid: u.unknown ? u.srcs[0]?.pid : null });
+      if (!g) gaps.push(g = { k: gk, name: r.name, why, days: [], rid: r.id, pid: u.unknown ? u.srcs[0]?.pid : null, plan: open && !u.unknown && !ings.length ? open.plan : null });
       g.days.push(u.date);
       continue;
     }
@@ -2183,13 +2193,14 @@ function renderShop() {
     <div class="pchips shopr noprint" role="group" aria-label="Dates">${Object.entries(SHOPR).map(([k, l]) => `<button type="button" class="chip" data-act="shopr" data-k="${k}" aria-pressed="${S.shop === k}">${l}</button>`).join("")}
       <span class="shopcus"><input type="date" id="shopA" value="${A}" aria-label="From"> – <input type="date" id="shopB" value="${B}" aria-label="To"></span></div>
     <p class="small muted">${fmtD(A)}${A !== B ? ` – ${fmtD(B)}` : ""}: ingredients for everything planned, approved orders, stock batches and test bakes, on the day you start making them. ${d.list.length ? `<b>${left} of ${d.list.length}</b> still to get${total ? ` · ≈ ${money(total)}` : ""}.` : ""}${d.pending ? ` ${d.pending} order request${d.pending > 1 ? "s" : ""} waiting for approval ${d.pending > 1 ? "aren't" : "isn't"} included.` : ""}</p>
+    ${(() => { const miss = d.list.filter(it => !st[it.key]?.got && shopLeft(it) > 0 && packLine(it, shopLeft(it)).cost == null); return miss.length ? `<details class="cmiss noprint"><summary>${miss.length} without a price, not in the total</summary><ul>${miss.map(it => `<li><b>${esc(it.name)}</b> <span class="muted">${!it.k ? "not linked to Kitchen OS" : it.k.price_per_unit == null ? `no price in Kitchen OS (${esc(it.k.name)})` : `can't convert to ${esc(kosUnit(it.k))} (${esc(it.k.name)})`}</span>${!it.k ? ` <button type="button" class="linkbtn small" data-act="shoplink" data-k="${esc(it.key)}">Link</button>` : ""}</li>`).join("")}</ul></details>` : ""; })()}
     <div class="seg noprint" role="group" aria-label="View"><button type="button" data-act="shopv" data-k="day" aria-pressed="${S.shopView === "day"}">By day</button><button type="button" data-act="shopv" data-k="sup" aria-pressed="${S.shopView === "sup"}">Totals by supplier</button></div>
     ${!d.list.length && !d.gaps.length ? `<div class="empty-state">Nothing planned in these days yet. Fill the week from the template, or pick other dates.</div>` : ""}
     ${S.shopView === "sup" ? groups.map(G => `<section class="sec"><h4>${esc(G.g)} <span class="muted">${G.items.length}</span></h4><div class="list">${G.items.map(it => shopLine(it)).join("")}</div></section>`).join("")
       : byDay.map(x => `<section class="sec shopday"><h4>${fmtD(x.day)} <span class="muted">${x.items.length} ingredient${x.items.length === 1 ? "" : "s"}</span></h4>
         <div class="small muted shopfor">${x.comps.map(c => `<span${cvar(c.r.color)}><i class="pdot"></i>${esc(c.r.name)}${c.test ? " (test bake)" : c.f != null ? ` ×${Math.round(c.f * 100) / 100}` : ""} <span class="muted">for ${esc([...new Set(c.srcs.map(s => s.p + (s.o ? " " + s.o : "")))].join(", "))}${c.srcs.some(s => s.c) ? ` · ${esc([...new Set(c.srcs.map(s => s.c).filter(Boolean))].join("; "))}` : ""}</span></span>`).join("")}</div>
         <div class="list">${x.items.map(it => shopLine(it, { day: x.day })).join("")}</div></section>`).join("")}
-    ${d.gaps.length ? `<section class="sec"><h4>Can't count yet <span class="muted">${d.gaps.length}</span></h4><p class="small muted">These aren't in the list. Fix them in Recipes and come back.</p><div class="list">${d.gaps.map(g => `<div class="li"><span class="grow small">${esc(g.t)}</span>${g.pid || g.rid ? `<button type="button" class="btn sm ghost" data-view="recipes/${g.pid ? "p/" + g.pid : g.rid}">Fix</button>` : ""}</div>`).join("")}</div></section>` : ""}
+    ${d.gaps.length ? `<section class="sec"><h4>Can't count yet <span class="muted">${d.gaps.length}</span></h4><p class="small muted">These aren't in the list. Fix them in Recipes and come back.</p><div class="list">${d.gaps.map(g => `<div class="li"><span class="grow small">${esc(g.t)}</span>${g.plan ? `<button type="button" class="btn sm ghost" data-act="decide" data-id="${g.plan}">Decide</button>` : g.pid || g.rid ? `<button type="button" class="btn sm ghost" data-view="recipes/${g.pid ? "p/" + g.pid : g.rid}">Fix</button>` : ""}</div>`).join("")}</div></section>` : ""}
   </div>`;
 }
 function shopText() {
@@ -2237,6 +2248,106 @@ document.addEventListener("change", e => {
   if (g) guard(async () => { const k = g.dataset.shopgot; await saveShopState({ [k]: { ...(shopState()[k] || {}), got: g.checked } }); renderShop(); });
   if (h) guard(async () => { const k = h.dataset.shophave; await saveShopState({ [k]: { ...(shopState()[k] || {}), have: Math.max(0, +h.value || 0) } }); renderShop(); });
   if (e.target.id === "shopA" || e.target.id === "shopB") { const a = $("#shopA").value, b = $("#shopB").value; if (a && b && a <= b) { S.shop = "custom"; S.shopA = a; S.shopB = b; refresh(); } }
+});
+
+/* ================= DAILY CHOICES & IDEAS ================= */
+/* Toppings, fillings and flavours are picked from components. The product's choice slot (e.g. Bun fillings) sets the
+   kind; options are the other components of that kind, best first (keepers, then testing, then ideas). Typing a new
+   name adds it as a component idea, so every choice ends up in Recipes where notes and a recipe can grow.
+   Saved ideas are component ideas too (status "idea"). */
+const KINDL = { dough: "Doughs", bake: "Bakes", filling: "Fillings & creams", topping: "Toppings", glaze: "Glazes & finishes", other: "Other" };
+const KIND1 = { dough: "dough", bake: "bake", filling: "filling", topping: "topping", glaze: "glaze", other: "idea" };
+const STB = { keeper: ["★ Keeper", "st-keep"], testing: ["Testing", "st-test"], idea: ["Idea", "st-idea"] };
+const slotKind = pid => { const x = slotOf(pid); return x ? rec(x.recipe_id)?.kind || null : null; };
+const recByName = n => { const t = String(n || "").trim().toLowerCase(); return S.recipes.find(r => r.name.trim().toLowerCase() === t) || null; };
+/* initial chips for a plan row: picked components, then any old free text that isn't one of them */
+function pickState(pl, add) {
+  const ids = pickedIds(pl), sel = ids.map(id => ({ id, name: rec(id).name }));
+  if (!ids.length && pl?.choice) pl.choice.split(/\s*[,\n;]\s*/).filter(Boolean).forEach(t => { const r = recByName(t); sel.push(r ? { id: r.id, name: r.name } : { text: t, name: t }); });
+  const extra = typeof add === "string" ? add.split(/\s*[\n;]\s*/).filter(Boolean) : add ? [add] : [];
+  for (const a of extra) { const r = typeof a === "object" ? rec(a.id) : recByName(a); const name = r ? r.name : String(a).trim(); if (!name || sel.some(s => s.name.toLowerCase() === name.toLowerCase())) continue; sel.push(r ? { id: r.id, name } : { add: name, name }); }
+  return sel;
+}
+const chipHtml = s => `<span class="cchip ${s.add ? "new" : s.text ? "txt" : ""}" ${s.id ? `data-id="${s.id}"` : s.add ? `data-new="${esc(s.add)}"` : `data-text="${esc(s.text)}"`}>${esc(s.name)}${s.add ? ` <small>new idea</small>` : ""}<button type="button" data-act="cprm" aria-label="Remove ${esc(s.name)}">×</button></span>`;
+function choicePicker(p, pl, opt = {}) {
+  const k = slotKind(p.id), sel = pickState(pl, opt.add);
+  return `<div class="cpick ${opt.compact ? "compact" : ""}" data-pid="${p.id}" data-recent="${esc((opt.recent || []).join(","))}">
+    <div class="csel">${sel.map(chipHtml).join("")}</div>
+    <input type="text" class="cq" placeholder="${k && KINDPOOL.has(k) ? `Pick ${esc(KINDL[k].toLowerCase())}, or type a new one` : `Pick ${esc((p.choice_label || "one").toLowerCase())}, or type a new one`}" autocomplete="off" aria-label="${esc(p.choice_label || "Choice")}">
+    <div class="copts">${optsHtml(p.id, "", sel, opt.recent || [])}</div></div>`;
+}
+function optsHtml(pid, q, sel, recent) {
+  const t = q.trim().toLowerCase(), have = new Set(sel.map(s => s.id).filter(Boolean)), names = new Set(sel.map(s => s.name.toLowerCase()));
+  const pool = optionsFor(pid).filter(r => !have.has(r.id) && (!t || r.name.toLowerCase().includes(t)));
+  const rec1 = recent.map(id => pool.find(r => r.id === id)).filter(Boolean), rest = pool.filter(r => !rec1.includes(r));
+  const btn = r => `<button type="button" class="copt" data-act="cpadd" data-id="${r.id}">${esc(r.name)} <span class="b ${STB[r.status || "idea"][1]}">${STB[r.status || "idea"][0]}</span></button>`;
+  const exact = t && (pool.some(r => r.name.toLowerCase() === t) || names.has(t));
+  return `${rec1.length && !t ? `<div class="cgrp"><span class="ulbl">Used before</span>${rec1.slice(0, 6).map(btn).join("")}</div>` : ""}
+    <div class="cgrp">${(t ? pool : rest).slice(0, 14).map(btn).join("")}${t && !exact ? `<button type="button" class="copt add" data-act="cpnew" data-v="${esc(q.trim())}">+ New idea “${esc(q.trim())}”</button>` : ""}${!pool.length && !t ? `<span class="small muted">Nothing to pick yet: type a name to add it as an idea.</span>` : ""}</div>`;
+}
+function readPick(root) { return $$(".cchip", root).map(c => c.dataset.id ? { id: c.dataset.id } : c.dataset.new ? { add: c.dataset.new } : { text: c.dataset.text }); }
+const pickHasNew = sel => sel.some(s => s.add);
+/* creates component ideas for new names (once per name per save) → { choice_ids, choice } */
+async function commitPick(pid, sel, made = new Map()) {
+  const k = slotKind(pid) || "other", ids = [], names = [];
+  for (const s of sel) {
+    if (s.id && rec(s.id)) { ids.push(s.id); names.push(rec(s.id).name); continue; }
+    if (s.text) { names.push(s.text); continue; }
+    const key = s.add.toLowerCase(); let id = made.get(key) || recByName(s.add)?.id;
+    if (!id) { const p = prod(pid), sl = slotOf(pid); id = (await DB.ins("bk_recipes", { name: s.add.slice(0, 120), kind: k, status: "idea", origin: `Planner: ${p ? p.name : "choice"}`, notes: s.add.length > 120 ? s.add : null, parent_id: sl && !KINDPOOL.has(k) ? sl.recipe_id : null, position: S.recipes.length + 1 }))[0].id; made.set(key, id); }
+    ids.push(id); names.push(s.add);
+  }
+  return { choice_ids: ids, choice: names.length ? names.join(", ") : null };
+}
+async function afterNewIdeas(made) { if (!made.size) return; await loadStatic(); rbPost({ type: "rb:reload" }); }
+function pickAdd(root, s) { const box = $(".csel", root); if ($$(".cchip", box).some(c => (c.dataset.id && c.dataset.id === s.id) || c.textContent.replace(/×|new idea/g, "").trim().toLowerCase() === s.name.toLowerCase())) return; box.insertAdjacentHTML("beforeend", chipHtml(s)); }
+function pickRefresh(root) { const q = $(".cq", root).value; $(".copts", root).innerHTML = optsHtml(root.dataset.pid, q, $$(".cchip", root).map(c => ({ id: c.dataset.id, name: c.firstChild.textContent.trim() })), (root.dataset.recent || "").split(",").filter(Boolean)); }
+
+Object.assign(ACT, {
+  cpadd: el => { const root = el.closest(".cpick"), r = rec(el.dataset.id); if (!r) return; pickAdd(root, { id: r.id, name: r.name }); $(".cq", root).value = ""; pickRefresh(root); },
+  cpnew: el => { const root = el.closest(".cpick"), v = el.dataset.v, r = recByName(v); pickAdd(root, r ? { id: r.id, name: r.name } : { add: v, name: v }); $(".cq", root).value = ""; pickRefresh(root); },
+  cprm: el => { const root = el.closest(".cpick"); el.closest(".cchip").remove(); pickRefresh(root); }
+});
+document.addEventListener("input", e => { if (e.target.classList?.contains("cq")) pickRefresh(e.target.closest(".cpick")); });
+document.addEventListener("keydown", e => {
+  if (!e.target.classList?.contains("cq") || e.key !== "Enter") return;
+  e.preventDefault(); const root = e.target.closest(".cpick"), v = e.target.value.trim(); if (!v) return;
+  const r = optionsFor(root.dataset.pid).find(x => x.name.toLowerCase() === v.toLowerCase()) || recByName(v);
+  pickAdd(root, r ? { id: r.id, name: r.name } : { add: v, name: v }); e.target.value = ""; pickRefresh(root);
+});
+
+/* ---------- ideas: component ideas, quick to save from the Lab ---------- */
+const ideaRecs = () => S.recipes.filter(r => (r.status || "idea") === "idea");
+const ideaCount = () => ideaRecs().length;
+function renderIdeas() {
+  const d = $("#ideasDrawer"); if (!d) return;
+  d.classList.toggle("hidden", !IDEAS_OPEN); if (!IDEAS_OPEN) return;
+  const list = ideaRecs(), kinds = Object.keys(KINDL).filter(k => list.some(r => r.kind === k));
+  d.innerHTML = `<div class="sheet-h"><div><h3>Ideas</h3><div class="small muted">Component ideas: they show up as options when you pick toppings, fillings or flavours, and live in Recipes → Components.</div></div><button type="button" class="x" data-act="idtoggle" aria-label="Close ideas">×</button></div>
+    ${kinds.map(k => `<section class="sec"><h4>${esc(KINDL[k])} <span class="muted">${list.filter(r => r.kind === k).length}</span></h4>
+      <div class="list">${list.filter(r => r.kind === k).map(r => `<div class="li ${IDEA_NEW === r.id ? "fresh" : ""}"><span class="grow">${esc(r.name)}${r.origin ? `<br><span class="small muted">${esc(r.origin)}</span>` : ""}</span><button type="button" class="btn sm ghost" data-act="iduse" data-id="${r.id}">Use…</button><button type="button" class="btn sm ghost" data-act="openbook" data-id="${r.id}">Open</button></div>`).join("")}</div></section>`).join("") || `<p class="small muted">No ideas yet. Tap “Use in planner” on anything in the Lab.</p>`}`;
+  const fresh = d.querySelector(".fresh"); if (fresh) fresh.scrollIntoView({ block: "nearest" });
+}
+async function ideaSheet(text, src, rid) {
+  const plans = await DB.sel("bk_plan", { gte: { date: todayISO() }, lte: { date: addDays(todayISO(), 21) } });
+  const groups = decisionGroups(plans).slice(0, 12), r = rid ? rec(rid) : null;
+  const guess = r ? r.kind : /topping|focaccia|crumb|streusel|crunch/i.test(text) ? "topping" : /dough|brioche|laminat/i.test(text) ? "dough" : /glaze|icing|syrup/i.test(text) ? "glaze" : "filling";
+  openSheet(`${head(r ? esc(r.name) : "Idea from the Lab", src ? esc(src) : "")}
+    ${r ? "" : `<div class="list"><label class="f">Idea<textarea id="idText">${esc(text)}</textarea></label></div>`}
+    ${groups.length ? `<div class="sec"><h4>Use it now for</h4><div class="list">${groups.map(g => `<button type="button" class="li" style="text-align:left" data-act="iddecide" data-id="${g.items[0].id}" data-rid="${rid || ""}"><span class="grow"><b>${esc(g.p.name)}: ${esc(g.p.choice_label)}</b><br><span class="small muted">${dayRange(g.items)} · decide by ${fmtD(g.due)}</span></span></button>`).join("")}</div></div>` : ""}
+    ${r ? `<div class="sec"><button type="button" class="btn" data-act="openbook" data-id="${r.id}">Open in Recipes →</button></div>` : `<div class="sec"><h4>Or save it as an idea</h4><div class="row"><select id="idKind" aria-label="Kind">${Object.entries(KINDL).map(([k, l]) => `<option value="${k}" ${k === guess ? "selected" : ""}>${esc(l)}</option>`).join("")}</select><button type="button" class="btn primary" data-act="idsave">Save idea</button></div><p class="small muted">It becomes a component idea: it shows up when you pick ${esc(KINDL[guess].toLowerCase())}, and you can write it up in Recipes later.</p></div>
+    <div class="sec"><h4>Or develop it now</h4><button type="button" class="btn" data-act="idtorecipe">Start a recipe from it →</button></div>`}`);
+}
+Object.assign(ACT, {
+  idsave: async () => {
+    const v = $("#idText").value.trim(), kind = $("#idKind").value; if (!v) return;
+    const ex = recByName(v.slice(0, 120));
+    const id = ex ? ex.id : (await DB.ins("bk_recipes", { name: v.slice(0, 120), kind, status: "idea", origin: "Taste Lab idea", notes: v.length > 120 ? v : null, position: S.recipes.length + 1 }))[0].id;
+    await loadStatic(); rbPost({ type: "rb:reload" }); closeSheet();
+    IDEAS_OPEN = true; IDEA_NEW = id; if (S.view === "lab") showLab(true); toast(ex ? "Already an idea." : `Saved to ${KINDL[kind].toLowerCase()} ideas.`);
+  },
+  iddecide: async el => { const rid = el.dataset.rid, v = rid ? null : $("#idText").value.trim(); closeSheet(true); await decisionSheet(el.dataset.id, rid ? { id: rid } : v); },
+  iduse: async el => { const r = rec(el.dataset.id); if (r) await ideaSheet(r.name, "Idea", r.id); }
 });
 
 </script>
