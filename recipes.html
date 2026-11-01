@@ -214,7 +214,7 @@ textarea{min-height:80px;resize:vertical}
 .steprow{display:grid;grid-template-columns:1fr 120px 70px auto;gap:6px;margin-bottom:6px;align-items:center}
 .ingrow{display:grid;grid-template-columns:1fr 80px 70px auto;gap:6px;margin-bottom:6px}
 .partrow{display:grid;grid-template-columns:1fr 130px 80px 64px auto;gap:6px;margin-bottom:6px;align-items:center}
-@media (max-width:560px){.steprow,.partrow{grid-template-columns:1fr 1fr}.ingrow{grid-template-columns:1fr 70px 60px auto}}
+@media (max-width:560px){.steprow,.partrow{grid-template-columns:1fr 1fr}.steprow [data-f=title],.partrow [data-f=recipe_id]{grid-column:1 / -1}.ingrow{grid-template-columns:1fr 70px 60px auto}}
 .stock{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
 .stepper{display:flex;align-items:center;gap:4px}
 .stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:18px}
@@ -455,6 +455,57 @@ body.rbpage{background:var(--bg)}
 .chk2{display:flex;gap:8px;align-items:center;font-size:15px}
 .toastbtn{margin-left:10px;border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px}
 @media (max-width:640px){.trow{flex-wrap:wrap}.tdate{min-width:0;width:100%}}
+/* ===== Recipes: products & components ===== */
+.rtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 10px}
+.rtabs button{border:0;background:none;font:inherit;font-family:var(--f-head,inherit);font-size:18px;font-weight:700;color:var(--muted);padding:8px 14px 10px;border-bottom:3px solid transparent;margin-bottom:-1px}
+.rtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--rb)}
+.rintro{margin:0 0 10px;max-width:760px}
+.mfrom .li{background:var(--surface)}
+.mfrom .li > b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.mfrom .linkbtn{color:var(--ink);text-decoration:none;font-size:15px}
+.mfrom .linkbtn .pdot,.tst[style*="--rc"] .pdot{display:inline-block}
+.rhead + .rsec{border-top:0;margin-top:0}
+.tline{display:flex;flex-direction:column;gap:8px}
+.tday{display:flex;gap:12px;align-items:flex-start}
+.tdl{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:104px;padding-top:7px;text-transform:uppercase;letter-spacing:.04em}
+.tday .grow{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.tst{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--rc,var(--line));font-size:15px}
+.tst .grow{flex-direction:row;display:block}
+.printonly{display:none}
+.rsec h3 .rtarget{display:inline-flex;margin:0 4px}
+@media (max-width:560px){.tday{flex-direction:column;gap:4px}.tdl{padding-top:0}}
+@media print{.printonly{display:inline}}
+/* ===== Shopping ===== */
+.shopr{margin:0 0 8px;align-items:center}
+.shopr .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:14px;min-height:34px}
+.shopr .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.shopcus{display:inline-flex;gap:4px;align-items:center;font-size:14px;color:var(--muted)}
+.shopcus input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 6px;font-size:14px;min-width:0}
+.shop .seg{margin:4px 0 6px}
+.shopli{background:var(--surface);align-items:center}
+.shopli .chk{position:relative;cursor:pointer}
+.shopli .chk input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.shopli .chk .box{display:none}
+.shopli .chk:has(input:checked){background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.shopli .chk:has(input:checked) .box{display:grid}
+.shopli .chk:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.shopli.got .grow b,.shopli.got .shopq b{text-decoration:line-through;color:var(--muted)}
+.shopq{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.shopli .have{width:76px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px;font-size:14px}
+.shopfor{display:flex;flex-wrap:wrap;gap:4px 14px;margin:-2px 0 8px}
+.shopfor .pdot{display:inline-block}
+@media (max-width:560px){.shopli{flex-wrap:wrap}.shopli .grow{flex-basis:calc(100% - 40px)}.shopq{margin-left:30px;align-items:flex-start;text-align:left}.shopli .have{margin-left:auto}}
+@media print{.shopli .have{border:0}.shop .bar .btn{display:none}}
+.ilist .mh{text-transform:none;letter-spacing:0;font-weight:400;padding:0;font-size:12px;color:var(--muted);white-space:nowrap;min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.ksug{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:-2px 0 4px}
+.ksug[hidden]{display:none}
+.kchip{border:1px dashed var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:13px;min-height:28px}
+.kchip:hover{border-color:var(--accent)}
+.kchip.none{border-style:solid;color:var(--muted)}
+.kchip.on{border-style:solid;border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.kchip.on .muted{color:inherit;opacity:.8}
+.shopli .kosn{font-size:12px}
+.sheet:has(#bForm),.sheet:has(#pForm){width:min(880px,100%)}
 
 </style>
 </head>
@@ -581,55 +632,206 @@ function fmtQty(q, u) {
 const ovenLine = o => (o || []).map(s => `${s.t} °C · ${s.m} min`).join(" → ");
 const ovenMin = o => (o || []).reduce((a, s) => a + (+s.m || 0), 0);
 
+/* ---------- amounts, scaling and ingredient needs (planner, Recipes and the shopping list) ---------- */
+/* base units: g, ml, pcs; spoons count as ml; pinch and drop stay as they are */
+const UBASE = { g: ["g", 1], kg: ["g", 1000], ml: ["ml", 1], l: ["ml", 1000], pcs: ["pcs", 1], tbsp: ["ml", 15], tsp: ["ml", 5], pinch: ["pinch", 1], drop: ["drop", 1] };
+const toBase = (q, u) => { const b = UBASE[u || "g"] || [u || "g", 1]; return { q: (+q || 0) * b[1], u: b[0] }; };
+const gramsOf = (q, u) => { const b = toBase(q, u); return b.u === "g" || b.u === "ml" ? b.q : null; };
+const recWeight = ings => ings.reduce((a, i) => a + (gramsOf(i.qty, i.unit) || 0), 0);
+/* how many times a recipe is needed to get `amount` `unit` of it, or null when it can't be worked out.
+   Grams can always be worked out from the ingredient weight; pieces need "Makes N pcs". */
+function recFactor(r, ings, amount, unit) {
+  if (!r || !(amount > 0)) return null;
+  const a = toBase(amount, unit), y = recYield(r), yb = y ? toBase(y.q, y.u) : null;
+  if (yb && yb.q > 0 && yb.u === a.u) return a.q / yb.q;
+  if (a.u === "g" || a.u === "ml") {
+    if (yb && (yb.u === "g" || yb.u === "ml") && yb.q > 0) return a.q / yb.q;
+    const w = recWeight(ings); if (w > 0) return a.q / w;
+  }
+  return null;
+}
+/* Ingredient lines needed for `factor` × recipe. A row named like another recipe (and not linked to Kitchen OS)
+   is expanded into that recipe's ingredients, e.g. "Honey mascarpone cream" inside the rye cookies.
+   RB = { rec(id), ings(id), byName(name) }. Returns { lines: [{key, name, kid, q, u, via}], gaps: [text] } */
+function needsFor(RB, rid, factor, out = { lines: [], gaps: [] }, via = "", depth = 0) {
+  const r = RB.rec(rid); if (!r) return out;
+  const ings = RB.ings(rid);
+  if (!ings.length) { out.gaps.push(`${r.name}: no ingredients yet`); return out; }
+  for (const i of ings) {
+    if (i.qty == null || i.qty === "") continue;
+    const sub = !i.ingredient_id && depth < 3 ? RB.byName(i.name) : null;
+    if (sub && sub.id !== rid) {
+      const f = recFactor(sub, RB.ings(sub.id), i.qty * factor, i.unit);
+      if (f != null) { needsFor(RB, sub.id, f, out, sub.name, depth + 1); continue; }
+    }
+    const b = toBase(i.qty * factor, i.unit), k = RB.kos ? RB.kos(i.ingredient_id) : null;
+    out.lines.push({ key: i.ingredient_id || "n:" + i.name.trim().toLowerCase(), name: i.name, kid: i.ingredient_id || null, q: b.q, u: b.u, oq: i.qty * factor, ou: i.unit, g: gramsFor(i.name, i.qty * factor, i.unit, k), via: via || r.name });
+  }
+  return out;
+}
+/* Kitchen OS items: amounts in their unit (kg, liter, piece…), price and packs */
+const KU = { kg: ["g", 1000], g: ["g", 1], liter: ["ml", 1000], l: ["ml", 1000], litre: ["ml", 1000], ml: ["ml", 1], piece: ["pcs", 1], pcs: ["pcs", 1], vnt: ["pcs", 1] };
+function inKos(q, u, k) {
+  const m = k && KU[(k.unit || "").toLowerCase()]; if (!m) return null;
+  if (m[0] === u) return q / m[1];
+  const d = +k.density || 1;
+  if (m[0] === "g" && u === "ml") return q * d / m[1];
+  if (m[0] === "ml" && u === "g") return q / d / m[1];
+  return null;
+}
+const kosUnit = k => ({ kg: "kg", liter: "l", litre: "l", l: "l", piece: "pcs", ml: "ml", g: "g" })[(k?.unit || "").toLowerCase()] || k?.unit || "";
+const KCOLS = "id,name,unit,category,price_per_unit,pack_size,pack_min_qty,supplier,density";
+
+/* ---------- metric for pieces and spoons, English names, Kitchen OS suggestions ---------- */
+const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* grams per piece (rough averages; an egg is 20 g yolk + 30 g white) */
+const PIECE_G = [[/yolk|trynia|trynys/, 20], [/egg white|whites|baltym/, 30], [/\beggs?\b|kiaus/, 50], [/banana|banan/, 120], [/lemon|citrin/, 100], [/\blimes?\b|laim/, 65], [/orange|apelsin/, 180], [/apple|obuol/, 180], [/\bpears?\b|kriaus/, 180], [/garlic clove/, 5], [/vanilla (pod|bean)/, 3], [/gelatin.*(leaf|leaves|sheet)/, 2]];
+/* grams per teaspoon (a tablespoon is 3 teaspoons) */
+const SPOON_G = [[/(flaky|flake|kosher|maldon|crystal).*salt|salt.*(flake|crystal)/, 3], [/salt|druska/, 6], [/icing|powdered sugar|pudr/, 2.5], [/brown sugar|muscovado|\brud/, 4.5], [/sugar|cukr/, 4], [/baking powder|kepimo milt/, 4], [/baking soda|bicarb|\bsoda/, 5], [/yeast|miel/, 3], [/honey|medus|syrup|sirup|malt|salykl|molasses|treacle|glucose/, 7], [/extract|ekstrakt|vanilla paste/, 4.5], [/\boil\b|aliej/, 4.5], [/butter|sviest/, 4.7], [/flour|miltai/, 2.6], [/cinnamon|cardamom|nutmeg|ginger|clove|allspice|spice|pepper|paprika|cumin|turmeric|cayenne|fennel|anise|cocoa|kakav|matcha|ground|maltas|milteliai|powder/, 2]];
+const pieceG = name => { const n = norm(name); const m = PIECE_G.find(([re]) => re.test(n)); return m ? m[1] : null; };
+const spoonG = (name, k) => { const n = norm(name); const m = SPOON_G.find(([re]) => re.test(n)); return m ? m[1] : 5 * (+k?.density || 1); };
+/* grams for an amount, or null when it can't be known (pieces of something without a usual weight) */
+function gramsFor(name, q, u, k) {
+  if (q == null || q === "") return null; q = +q;
+  const d = +k?.density || 1;
+  switch (u || "g") {
+    case "g": return q; case "kg": return q * 1000; case "ml": return q * d; case "l": return q * 1000 * d;
+    case "tsp": return q * spoonG(name, k); case "tbsp": return q * 3 * spoonG(name, k);
+    case "pinch": return q * 0.4; case "drop": return q * 0.05;
+    case "pcs": { const w = pieceG(name) || (k ? pieceG(k.name) : null); return w ? q * w : null; }
+  }
+  return null;
+}
+/* "½ tsp ≈ 2 g", "6 pcs ≈ 300 g", "120 g ≈ 6 yolks" style hint, or "" */
+function metricHint(name, q, u, k) {
+  if (q == null || q === "") return "";
+  if (["tsp", "tbsp", "pcs"].includes(u)) { const g = gramsFor(name, q, u, k); return g != null ? `≈ ${fmtQty(g, "g")}` : ""; }
+  if (u === "g" || u === "kg") { const w = pieceG(name); if (w) { const n = gramsFor(name, q, u, k) / w; return `≈ ${Math.round(n * 10) / 10} pcs`; } }
+  return "";
+}
+/* the English name used for a Kitchen OS item in bakery recipes: the most used one, shortest on a tie */
+function enNames(ings) {
+  const m = new Map();
+  for (const i of ings) if (i.ingredient_id && i.name) { const c = m.get(i.ingredient_id) || new Map(); const n = i.name.trim(); c.set(n, (c.get(n) || 0) + 1); m.set(i.ingredient_id, c); }
+  const out = new Map(); for (const [kid, c] of m) out.set(kid, [...c.entries()].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length).map(x => x[0])); return out;
+}
+/* English words → stems found in Kitchen OS (Lithuanian) names, for suggestions only */
+const KDICT = { flour: ["miltai"], wheat: ["kvietin"], plain: ["ap kvietin"], ap: ["ap kvietin"], "all-purpose": ["ap kvietin"], rye: ["rugin"], spelt: ["spelt"], oat: ["aviz"], oats: ["aviz"], rice: ["ryz"], durum: ["durum"], semolina: ["durum"], polenta: ["polent"], cornmeal: ["polent"],
+  sugar: ["cukrus"], icing: ["pudr"], powdered: ["pudr"], brown: ["rud", "muscovado"], muscovado: ["muscovado"], syrup: ["sirup"], honey: ["medus"], salt: ["druska"], sea: ["juros"], flaky: ["juros"], iodised: ["joduot"], iodized: ["joduot"],
+  butter: ["sviest"], milk: ["pien"], cream: ["grietinel"], whipping: ["plakim"], double: ["plakim"], heavy: ["plakim"], sour: ["=grietine"], cheese: ["sur", "cheese"], curd: ["varsk"], quark: ["varsk"], cottage: ["varsk"], yogurt: ["jogurt"], yoghurt: ["jogurt"],
+  egg: ["kiaus"], eggs: ["kiaus"], yolk: ["tryn"], yolks: ["tryn"], whites: ["baltym"], yeast: ["miel"], baking: ["kepimo", "soda"], powder: ["milteli"], soda: ["soda"], bicarbonate: ["soda"],
+  chocolate: ["sokolad"], dark: ["juod"], white: ["balt"], cocoa: ["kakav"], vanilla: ["vanil"], cinnamon: ["cinamon"], cardamom: ["kardamon"], ginger: ["imbier"], anise: ["anyz"], pepper: ["pipir"], cumin: ["kumin"], caraway: ["kmyn"], fennel: ["pankol"], seeds: ["sekl"],
+  poppy: ["aguon"], sesame: ["sezam"], black: ["juod"], sunflower: ["saulegraz"], pumpkin: ["moliug"], flax: ["linu"], linseed: ["linu"], hemp: ["kanap"], pistachio: ["pistacij"], pistachios: ["pistacij"], cashew: ["anakard"], pine: ["kedr"], almond: ["migdol"], almonds: ["migdol"], flaked: ["skilt"], hazelnut: ["lazdyn"], walnut: ["graikin"],
+  banana: ["banan"], bananas: ["banan"], ripe: ["prinok"], apple: ["obuol"], pear: ["kriaus"], lemon: ["citrin"], lime: ["laim"], orange: ["apelsin"], raspberry: ["aviet"], raspberries: ["aviet"], strawberry: ["brask"], blueberry: ["silauog"], currant: ["serbent"], blackcurrant: ["serbent"], cranberry: ["spanguol"], rhubarb: ["rabarbar"], mango: ["mang"], passion: ["pasiflor"], carrot: ["mork"], carrots: ["mork"], peeled: ["skust", "lupt"],
+  oil: ["aliej", "oil"], olive: ["alyvuog", "olive", "evo"], malt: ["salykl"], condensed: ["rududu"], pectin: ["pektin"], agar: ["agar"], gelatin: ["zelatin"], juice: ["sult"], vinegar: ["act"], wine: ["vyn"], cognac: ["konjak"], brandy: ["konjak"], cherry: ["vysn"], liqueur: ["liker"], water: ["vanduo"] };
+/* phrases checked before single words */
+const KPHR = { "sour cream": ["=grietine"], "cream cheese": ["cream cheese", "philadelphia"], "condensed milk": ["rududu", "kondens"], "egg white": ["baltym"], "egg yolk": ["tryn"], "brown sugar": ["rud", "muscovado"], "icing sugar": ["pudr"], "powdered sugar": ["pudr"], "white chocolate": ["baltas sokolad"], "dark chocolate": ["juodas sokolad"], "olive oil": ["alyvuog", "olive", "evo"], "sunflower oil": ["saulegraz"], "baking powder": ["kepimo milt"], "baking soda": ["soda"], "plain flour": ["ap kvietin"], "all-purpose flour": ["ap kvietin"], "rye flour": ["rugin"], "whipping cream": ["plakim"], "heavy cream": ["plakim"], "double cream": ["plakim"] };
+const kHas = (kn, st) => st[0] === "=" ? kn.split(/[^a-z0-9]+/).includes(st.slice(1)) : kn.split(/[^a-z0-9]+/).some(w => w.startsWith(st)) || (st.includes(" ") && kn.includes(st));
+/* Kitchen OS items that might match a bakery ingredient name: [{k, score, en}] best first */
+function kosSuggest(name, kIngr, ings, max = 5) {
+  const n = norm(name).trim(); if (n.length < 2) return [];
+  const learned = new Map(); for (const i of ings) if (i.ingredient_id && norm(i.name).trim() === n) learned.set(i.ingredient_id, (learned.get(i.ingredient_id) || 0) + 1);
+  const toks = n.split(/[^a-z0-9-]+/).filter(t => t.length > 1), en = enNames(ings);
+  return kIngr.map(k => {
+    const kn = norm(k.name); let s = (learned.get(k.id) || 0) * 100;
+    if (n.length > 3 && (kn.includes(n) || n.includes(kn))) s += 40;
+    for (const [ph, sts] of Object.entries(KPHR)) if (n.includes(ph) && sts.some(st => kHas(kn, st))) s += 20;
+    for (const t of toks) { if ((KDICT[t] || []).some(st => kHas(kn, st))) s += 10; else if (t.length > 3 && kn.includes(t)) s += 8; }
+    if (s) s -= kn.split(/\s+/).length * 0.5;
+    return { k, score: s, en: (en.get(k.id) || []).slice(0, 2) };
+  }).filter(x => x.score >= 8).sort((a, b) => b.score - a.score).slice(0, max);
+}
+/* a need line in the Kitchen OS item's unit (kg, l, pieces…) */
+function kosAmount(l, k) {
+  const m = k && KU[(k.unit || "").toLowerCase()]; if (!m) return null;
+  if (m[0] === "pcs") { if (l.u === "pcs") return l.q / m[1]; const w = pieceG(l.name) || pieceG(k.name); return l.g != null && w ? l.g / w / m[1] : null; }
+  return l.g != null ? inKos(l.g, "g", k) : inKos(l.q, l.u, k);
+}
+
 /* ================= RECIPES (recipes.html) ================= */
-/* The recipe book, shown inside the planner as its own section (like the Taste Lab).
-   Flow: idea (a draft, often from the Lab) → testing (test bakes on the planner, results logged) → keeper (what worked).
-   Tables: bk_book_recipes, bk_book_ingredients, bk_book_trials. Planner tables are only read, apart from adding
-   test-bake tasks to bk_tasks. ingredient_id points at Kitchen OS ingredients by id. */
+/* Everything about what you make lives here, shown inside the planner as its own section:
+   - Products: what you sell. Made from components (an amount per piece, ready on the sale day or before),
+     with price, ordering, stock and open-choice settings, the day-by-day timeline and "add to a day".
+   - Components: doughs, fillings, creams, toppings, bakes… with ingredients, method, oven, the days & steps
+     the calendar uses, and the test log. Flow: idea → testing (test bakes on the planner) → keeper.
+   Tables: bk_products, bk_product_parts, bk_recipes, bk_recipe_steps, bk_recipe_ingredients, bk_recipe_trials.
+   The planner owns the calendar (plan, tasks, template); this page tells it to rebuild steps after changes.
+   ingredient_id points at Kitchen OS ingredients by id; Kitchen OS itself is only read. */
 const EMBED = window.parent !== window;
 if (!EMBED) { const m = /^#r\/(.+)$/.exec(location.hash); location.replace("index.html#recipes" + (m ? "/" + m[1] : "")); }
-const S = { book: [], bookIngs: [], trials: [], recipes: [], steps: [], products: [], parts: [], kIngr: [] };
-const V = { id: null, x: 1, status: "all", q: "", from: null };
+const S = { recipes: [], ings: [], steps: [], trials: [], products: [], parts: [], tmpl: [], kIngr: [] };
+const V = { tab: store.get("bk.rtab", "products"), id: null, pid: null, x: 1, n: null, status: "all", q: "", from: null };
 const RKINDS = [["dough", "Doughs"], ["bake", "Bakes"], ["filling", "Fillings & creams"], ["topping", "Toppings"], ["glaze", "Glazes & finishes"], ["other", "Other"]];
 const RKIND1 = { dough: "Dough", bake: "Bake", filling: "Filling", topping: "Topping", glaze: "Glaze", other: "Other" };
 const STATUS = { idea: ["Idea", "st-idea", "A draft to try"], testing: ["Testing", "st-test", "Being tried out"], keeper: ["Keeper", "st-keep", "Worked really well"] };
 const RESULT = { great: ["Worked great", "ok"], ok: ["OK, needs work", "sea"], miss: ["Didn't work", "warn"] };
-const book = id => S.book.find(r => r.id === id);
-const bookIngs = id => S.bookIngs.filter(i => i.recipe_id === id).sort((a, b) => a.position - b.position);
+const rec = id => S.recipes.find(r => r.id === id);
+const ingsOf = id => S.ings.filter(i => i.recipe_id === id).sort((a, b) => a.position - b.position);
 const trialsOf = id => S.trials.filter(t => t.recipe_id === id).sort((a, b) => b.date.localeCompare(a.date) || String(b.created_at).localeCompare(String(a.created_at)));
-const stepsOf = cid => S.steps.filter(s => s.recipe_id === cid).sort((a, b) => a.day - b.day || a.position - b.position);
-const daysOf = cid => Math.max(1, ...stepsOf(cid).map(s => s.day));
+const stepsOf = rid => S.steps.filter(s => s.recipe_id === rid).sort((a, b) => a.day - b.day || a.position - b.position);
+const daysOf = rid => Math.max(1, ...stepsOf(rid).map(s => s.day));
 const prod = id => S.products.find(p => p.id === id);
-const usedBy = r => r && r.chain_recipe_id ? [...new Set(S.parts.filter(p => p.recipe_id === r.chain_recipe_id).map(p => prod(p.product_id)?.name).filter(Boolean))] : [];
-const kidsOf = id => S.book.filter(r => r.parent_id === id);
+const partsOf = pid => S.parts.filter(x => x.product_id === pid).sort((a, b) => a.position - b.position);
+const usesOf = rid => S.parts.filter(x => x.recipe_id === rid).map(x => ({ x, p: prod(x.product_id) })).filter(u => u.p);
+const kidsOf = id => S.recipes.filter(r => r.parent_id === id);
+const prodDays = pid => Math.max(1, ...partsOf(pid).map(x => daysOf(x.recipe_id) - (x.ready_offset || 0)));
+const prodColor = p => { for (const x of partsOf(p.id)) { const c = rec(x.recipe_id)?.color; if (c) return c; } return p.color || null; };
+const RBX = { rec, ings: ingsOf, kos: id => kos(id), byName: n => { const t = String(n || "").trim().toLowerCase(); return S.recipes.find(r => r.name.trim().toLowerCase() === t) || null; } };
+const kos = id => S.kIngr.find(k => k.id === id);
 const post = (type, data = {}) => { if (EMBED) window.parent.postMessage({ type, ...data }, location.origin); };
-const short = s => s.length > 60 ? s.slice(0, 57).trim() + "…" : s;
+const routeKey = () => V.pid ? "p/" + V.pid : V.id ? V.id : V.tab === "components" ? "components" : null;
+const cvar = c => c ? ` style="--rc:${esc(c)}"` : "";
+const mh = (name, q, u, k) => { const h = metricHint(name, q, u, k); return h ? `<span class="mh">${esc(h)}</span>` : ""; };
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const relDay = n => n === 0 ? "Sale day" : n === -1 ? "1 day before" : `${-n} days before`;
+const readyLbl = o => !o ? "ready on the sale day" : `ready ${-o} day${o < -1 ? "s" : ""} before`;
 
 async function load() {
   const safe = p => p.catch(() => []);
-  const [b, bi, tr, recipes, steps, products, parts] = await Promise.all([
-    DB.sel("bk_book_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_book_ingredients", { order: [["position"]] }), safe(DB.sel("bk_book_trials", { order: [["date"]] })),
-    DB.sel("bk_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_recipe_steps"), DB.sel("bk_products", { order: [["position"], ["name"]] }), DB.sel("bk_product_parts")]);
-  Object.assign(S, { book: b, bookIngs: bi, trials: tr, recipes, steps, products, parts });
+  const [recipes, ings, steps, trials, products, parts, tmpl] = await Promise.all([
+    DB.sel("bk_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_recipe_ingredients", { order: [["position"]] }), DB.sel("bk_recipe_steps"),
+    safe(DB.sel("bk_recipe_trials", { order: [["date"]] })), DB.sel("bk_products", { order: [["position"], ["name"]] }), DB.sel("bk_product_parts"), safe(DB.sel("bk_template_items"))]);
+  Object.assign(S, { recipes, ings, steps, trials, products, parts, tmpl });
 }
-async function kitchen() { if (S.kIngr.length) return; try { S.kIngr = await DB.sel("ingredients", { cols: "id,name,unit,category", order: [["name"]] }); } catch { S.kIngr = []; } }
+async function kitchen() { if (S.kIngr.length) return; try { S.kIngr = await DB.sel("ingredients", { cols: KCOLS, order: [["name"]] }); } catch { S.kIngr = []; } }
+/* structure changed (products, parts, steps): the planner rebuilds its generated steps */
+const changed = sync => post("rb:changed", { sync: !!sync });
 
-/* ---------- list ---------- */
-function render() { if (V.id && book(V.id)) renderRecipe(book(V.id)); else { V.id = null; renderList(); } post("rb:route", { id: V.id }); }
+/* ---------- routing ---------- */
+function render() {
+  if (V.pid && prod(V.pid)) renderProduct(prod(V.pid));
+  else if (V.id && rec(V.id)) renderRecipe(rec(V.id));
+  else { V.id = null; V.pid = null; renderList(); }
+  post("rb:route", { id: routeKey() });
+}
+function open(id, x, from) { V.pid = null; V.id = id; V.x = x || 1; V.from = from || null; V.tab = "components"; render(); window.scrollTo({ top: 0 }); }
+function openP(id, n) { V.id = null; V.pid = id; V.n = n || null; V.from = null; V.tab = "products"; render(); window.scrollTo({ top: 0 }); }
+function openKey(key, x, from) {
+  if (!key || key === "products" || key === "components") { V.id = V.pid = null; V.from = null; if (key) V.tab = key; render(); return; }
+  if (key.startsWith("p/")) openP(key.slice(2)); else open(key, x, from);
+}
+
+/* ---------- lists ---------- */
+function tabs() {
+  return `<div class="rtabs" role="tablist" aria-label="Recipes">${[["products", "Products", S.products.length], ["components", "Components", S.recipes.length]].map(([k, l, n]) =>
+    `<button type="button" role="tab" data-act="rtab" data-t="${k}" aria-selected="${V.tab === k}">${l} <span class="muted">${n}</span></button>`).join("")}</div>`;
+}
 function renderList() {
-  const cnt = k => k === "all" ? S.book.length : S.book.filter(r => (r.status || "idea") === k).length;
-  $("#main").innerHTML = `<div class="rbtools">
+  if (V.tab === "products") return renderProducts();
+  const cnt = k => k === "all" ? S.recipes.length : S.recipes.filter(r => (r.status || "idea") === k).length;
+  $("#main").innerHTML = `${tabs()}<p class="small muted rintro">Doughs, fillings, creams, toppings and bakes: ingredients, method, oven and the days & steps the calendar uses. Products are built from these.</p>
+    <div class="rbtools">
       <div class="seg" role="group" aria-label="Filter by status">${[["all", "All"], ["idea", "Ideas"], ["testing", "Testing"], ["keeper", "Keepers"]].map(([k, l]) => `<button type="button" data-act="vstatus" data-k="${k}" aria-pressed="${V.status === k}">${l} <span class="muted">${cnt(k)}</span></button>`).join("")}</div>
-      <input type="search" id="rSearch" class="rsearch" placeholder="Search recipes or ingredients" value="${esc(V.q)}" aria-label="Search recipes">
-      <span class="spacer"></span><button type="button" class="btn primary" data-act="bnew">+ New recipe</button></div>
+      <input type="search" id="rSearch" class="rsearch" placeholder="Search components or ingredients" value="${esc(V.q)}" aria-label="Search components">
+      <span class="spacer"></span><button type="button" class="btn primary" data-act="bnew">+ New component</button></div>
     <div id="rList"></div>`;
   renderCards();
 }
 function renderCards() {
   const q = V.q.trim().toLowerCase();
-  const hit = r => (V.status === "all" || (r.status || "idea") === V.status) && (!q || r.name.toLowerCase().includes(q) || bookIngs(r.id).some(i => i.name.toLowerCase().includes(q)) || (r.notes || "").toLowerCase().includes(q));
+  const hit = r => (V.status === "all" || (r.status || "idea") === V.status) && (!q || r.name.toLowerCase().includes(q) || ingsOf(r.id).some(i => i.name.toLowerCase().includes(q)) || (r.notes || "").toLowerCase().includes(q));
   const html = RKINDS.map(([k, l]) => {
-    const list = S.book.filter(r => r.kind === k && hit(r)).sort((a, b) => ({ keeper: 0, testing: 1, idea: 2 })[a.status || "idea"] - ({ keeper: 0, testing: 1, idea: 2 })[b.status || "idea"] || a.name.localeCompare(b.name));
+    const list = S.recipes.filter(r => r.kind === k && hit(r)).sort((a, b) => ({ keeper: 0, testing: 1, idea: 2 })[a.status || "idea"] - ({ keeper: 0, testing: 1, idea: 2 })[b.status || "idea"] || a.name.localeCompare(b.name));
     if (!list.length && (q || V.status !== "all" || k !== "dough")) return "";
     return `<section class="sec"><h4>${l} <span class="muted">${list.length}</span></h4><div class="cards">${list.map(card).join("")}
       ${q ? "" : `<button type="button" class="pcard addcard" data-act="bnew" data-k="${k}">+ Add ${RKIND1[k].toLowerCase()}</button>`}</div></section>`;
@@ -637,30 +839,181 @@ function renderCards() {
   $("#rList").innerHTML = html || `<p class="muted">Nothing here yet.${V.status === "idea" ? " Send ideas from the Taste Lab with “Add to Recipes”." : ""}</p>`;
 }
 function card(r) {
-  const ings = bookIngs(r.id), y = recYield(r), tr = trialsOf(r.id), done = tr.filter(t => t.status === "done"), planned = tr.find(t => t.status === "planned"), st = STATUS[r.status || "idea"], par = r.parent_id && book(r.parent_id);
+  const ings = ingsOf(r.id), y = recYield(r), tr = trialsOf(r.id), done = tr.filter(t => t.status === "done"), planned = tr.find(t => t.status === "planned"), st = STATUS[r.status || "idea"], par = r.parent_id && rec(r.parent_id);
+  const n = stepsOf(r.id).length ? daysOf(r.id) : 0, used = [...new Set(usesOf(r.id).map(u => u.p.name))];
   return `<button type="button" class="pcard ${r.color ? "rc" : ""}" data-act="bopen" data-id="${r.id}"${cvar(r.color)}>
     <div class="row"><h4>${esc(r.name)}</h4><span class="spacer"></span><span class="b ${st[1]}">${r.status === "keeper" ? "★ " : ""}${st[0]}</span></div>
-    <div class="small muted">${[r.yield_note || (y ? fmtQty(y.q, y.u) : ""), ings.length ? `${ings.length} ingredients` : "no ingredients yet", (r.oven || []).length ? `${ovenMin(r.oven)} min bake` : ""].filter(Boolean).join(" · ")}</div>
-    ${done.length || planned ? `<div class="small">${done.length ? `${done.length} test${done.length > 1 ? "s" : ""}${done[0].result ? ` · last: <span class="b ${RESULT[done[0].result][1]}">${RESULT[done[0].result][0]}</span>` : ""}` : ""}${planned ? `${done.length ? " · " : ""}test planned ${fmtD(planned.date)}` : ""}</div>` : ""}
-    ${par ? `<div class="small muted">Variation of ${esc(par.name)}</div>` : r.origin ? `<div class="small muted">From ${esc(r.origin)}</div>` : ""}</button>`;
+    <div class="small muted">${[r.yield_note || (y ? "makes " + fmtQty(y.q, y.u) : ""), ings.length ? `${ings.length} ingredients` : "no ingredients yet", n ? `${n}-day timeline` : "", (r.oven || []).length ? `${ovenMin(r.oven)} min bake` : ""].filter(Boolean).join(" · ")}</div>
+    ${used.length ? `<div class="small">In ${esc(used.join(", "))}</div>` : ""}
+    ${done.length || planned ? `<div class="small">${done.length ? `${plural(done.length, "test")}${done[0].result ? ` · last: <span class="b ${RESULT[done[0].result][1]}">${RESULT[done[0].result][0]}</span>` : ""}` : ""}${planned ? `${done.length ? " · " : ""}test planned ${fmtD(planned.date)}` : ""}</div>` : ""}
+    ${par ? `<div class="small muted">Variation of ${esc(par.name)}</div>` : r.origin && !used.length ? `<div class="small muted">From ${esc(r.origin)}</div>` : ""}</button>`;
+}
+const weekLine = pid => {
+  const t = S.tmpl.filter(x => x.product_id === pid && x.qty > 0).sort((a, b) => a.weekday - b.weekday); if (!t.length) return "";
+  const same = t.every(x => x.qty === t[0].qty), days = t.length === 7 ? "Every day" : t.map(x => DOW[x.weekday - 1]).join(" ");
+  return same ? `${days} · ${t[0].qty}` : t.map(x => `${DOW[x.weekday - 1]} ${x.qty}`).join(" · ");
+};
+function renderProducts() {
+  const q = V.q.trim().toLowerCase();
+  const hit = p => !q || p.name.toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q) || partsOf(p.id).some(x => (rec(x.recipe_id)?.name || "").toLowerCase().includes(q));
+  $("#main").innerHTML = `${tabs()}<p class="small muted rintro">What you sell: components with amounts per piece, when each must be ready, the timeline, price, ordering and stock. Add a product to a day here, or set its usual week in the planner's week template.</p>
+    <div class="rbtools"><input type="search" id="pSearch" class="rsearch" placeholder="Search products" value="${esc(V.q)}" aria-label="Search products"><span class="spacer"></span><button type="button" class="btn primary" data-act="pnew">+ New product</button></div>
+    ${["regular", "seasonal", "special"].map(k => {
+      const list = S.products.filter(p => p.kind === k && hit(p));
+      if (!list.length && q) return "";
+      return `<section class="sec"><h4>${KIND[k][0]}s <span class="muted">${list.length}</span></h4><div class="cards">${list.map(pcard).join("")}
+        ${q ? "" : `<button type="button" class="pcard addcard" data-act="pnew" data-k="${k}">+ Add ${KIND[k][0].toLowerCase()}</button>`}</div></section>`;
+    }).join("")}`;
+}
+function pcard(p) {
+  const parts = partsOf(p.id).map(x => rec(x.recipe_id)).filter(Boolean), d = prodDays(p.id), c = prodColor(p), wk = weekLine(p.id);
+  return `<button type="button" class="pcard ${c ? "rc" : ""}" data-act="popen" data-id="${p.id}"${cvar(c)}>
+    <div class="row"><h4>${esc(p.name)}</h4><span class="spacer"></span>${p.active ? "" : `<span class="b">Off</span>`}${p.stock_mode ? `<span class="b acc">From stock</span>` : ""}${p.orderable ? `<span class="b spe">Orderable</span>` : ""}</div>
+    <div class="small muted">${parts.length ? esc(parts.map(r => r.name).join(" + ")) : "No components yet"} · ${plural(d, "day")}</div>
+    <div class="small">${[p.price != null ? `${money(p.price)} / ${esc(p.unit_label || "pcs")}` : "", wk ? esc(wk) : "", p.choice_label ? `Decide ${esc(p.choice_label.toLowerCase())}` : ""].filter(Boolean).join(" · ")}</div></button>`;
 }
 
-/* ---------- recipe page ---------- */
-const cvar = c => c ? ` style="--rc:${esc(c)}"` : "";
+/* ---------- product page ---------- */
+/* timeline for one sale: every component's steps, counted back from its ready day */
+function timeline(p) {
+  const rows = [];
+  for (const x of partsOf(p.id)) {
+    const r = rec(x.recipe_id); if (!r) continue;
+    const N = daysOf(r.id), off = p.stock_mode ? 0 : (x.ready_offset || 0);
+    const st = stepsOf(r.id);
+    if (!st.length) rows.push({ rel: off, r, title: `${r.name} ready`, tod: "", none: true });
+    for (const s of st) rows.push({ rel: off - (N - s.day), r, title: s.title, tod: s.time_hint || "" });
+  }
+  return rows.sort((a, b) => a.rel - b.rel || todRank(a.tod) - todRank(b.tod));
+}
+/* ingredients for n pieces of a product, per component, plus cost where Kitchen OS has prices */
+function productNeeds(p, n) {
+  const comps = [], all = { cost: 0, priced: 0, lines: 0 };
+  for (const x of partsOf(p.id)) {
+    const r = rec(x.recipe_id); if (!r) continue;
+    const amt = x.qty_per_unit != null ? x.qty_per_unit * n : null;
+    const f = amt != null ? recFactor(r, ingsOf(r.id), amt, x.unit) : null;
+    const need = f != null ? needsFor(RBX, r.id, f) : null;
+    let cost = 0, priced = 0;
+    if (need) for (const l of need.lines) { const k = kos(l.kid); const q = k ? kosAmount(l, k) : null; l.cost = q != null && k.price_per_unit != null ? q * k.price_per_unit : null; if (l.cost != null) { cost += l.cost; priced++; } }
+    comps.push({ x, r, amt, f, need, cost, priced });
+    if (need) { all.cost += cost; all.priced += priced; all.lines += need.lines.length; }
+  }
+  return { comps, ...all };
+}
+function renderProduct(p) {
+  const c = prodColor(p), parts = partsOf(p.id), tl = timeline(p), d = prodDays(p.id), n = V.n || p.batch_size || p.default_qty || 1;
+  const need = productNeeds(p, n), wk = S.tmpl.filter(x => x.product_id === p.id);
+  const groups = []; tl.forEach(t => { let G = groups.find(g => g.rel === t.rel); if (!G) groups.push(G = { rel: t.rel, items: [] }); G.items.push(t); });
+  const amtLbl = x => x.qty_per_unit != null ? fmtQty(x.qty_per_unit, x.unit) : `<span class="muted">amount not set</span>`;
+  $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← Products</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="pedit" data-id="${p.id}">Edit</button></div>
+    <article class="rpage">
+      <header class="rhead ${c ? "rc" : ""}"${cvar(c)}>
+        <div class="eyebrow">${KIND[p.kind][0]}${p.category ? " · " + esc(p.category) : ""}${p.active ? "" : " · off"}</div>
+        <h2>${esc(p.name)}</h2>
+        <div class="rfacts">${p.price != null ? `<span><b>Price</b> ${money(p.price)} / ${esc(p.unit_label || "pcs")}</span>` : ""}<span><b>Takes</b> ${plural(d, "day")}</span>${wk.some(x => x.qty > 0) ? `<span><b>Usual week</b> ${esc(weekLine(p.id))}</span>` : ""}${p.choice_label ? `<span><b>Decide</b> ${esc(p.choice_label)}, ${plural(p.decide_days, "day")} before</span>` : ""}${p.orderable ? `<span><b>Orders</b> ${plural(p.lead_days, "day")} notice · ${p.deposit_pct}% deposit</span>` : ""}${p.stock_mode ? `<span><b>From stock</b> keeps ${plural(p.shelf_days || 7, "day")}${p.batch_size ? ` · batch ${p.batch_size}` : ""}</span>` : ""}</div>
+        <div class="row ractions noprint"><button type="button" class="btn primary" data-act="padd">Add to a day</button><button type="button" class="btn" data-act="ptmpl">Usual week (template)</button></div>
+      </header>
+      <section class="rsec"><h3>Made from</h3>
+        ${parts.length ? `<div class="list mfrom">${parts.map(x => { const r = rec(x.recipe_id); if (!r) return ""; const st = STATUS[r.status || "idea"]; return `<div class="li"><span class="grow"><button type="button" class="linkbtn" data-act="bopen" data-id="${r.id}">${r.color ? `<i class="pdot" style="--rc:${esc(r.color)}"></i>` : ""}${esc(r.name)}</button> <span class="b ${st[1]}">${st[0]}</span><br><span class="small muted">${RKIND1[r.kind] || r.kind} · ${readyLbl(p.stock_mode ? 0 : x.ready_offset)} · ${plural(daysOf(r.id), "day")}</span></span><b>${amtLbl(x)}</b><span class="small muted">per ${esc(p.unit_label === "pcs" ? "piece" : p.unit_label || "piece")}</span></div>`; }).join("")}</div>`
+          : `<p class="muted">No components yet. Tap Edit to choose the dough, filling and so on this product is made from.</p>`}
+      </section>
+      <section class="rsec"><h3>Timeline</h3>
+        ${groups.length ? `<p class="small muted">${p.stock_mode ? "Counted back from the day a batch is made." : "Counted back from the day it's on sale. The planner puts these steps on the calendar for you."}</p><div class="tline">${groups.map(G => `<div class="tday"><div class="tdl">${p.stock_mode && G.rel === 0 ? "Batch day" : relDay(G.rel)}</div><div class="grow">${G.items.map(t => `<div class="tst ${t.none ? "muted" : ""}"${cvar(t.r.color)}><i class="pdot" aria-hidden="true"></i><span class="grow">${esc(t.title)}${t.none ? ` <span class="small">(no steps yet)</span>` : ""}<span class="small muted"> · ${esc(t.r.name)}</span></span>${t.tod ? `<span class="small muted">${esc(t.tod)}</span>` : ""}</div>`).join("")}</div></div>`).join("")}</div>`
+          : `<p class="muted small">Add components to see the timeline.</p>`}
+      </section>
+      <section class="rsec"><h3>Ingredients for <label class="rtarget noprint"><input type="number" id="pN" min="1" step="1" value="${n}" inputmode="numeric" aria-label="Pieces"></label><span class="printonly">${n}</span> ${esc(p.unit_label || "pcs")}</h3>
+        ${need.comps.map(cp => `<h4 class="igrp">${esc(cp.r.name)}${cp.amt != null ? ` <span class="muted">· ${fmtQty(cp.amt, cp.x.unit)}${cp.f != null ? ` · ${Math.round(cp.f * 100) / 100}× the recipe` : ""}</span>` : ""}</h4>
+          ${cp.need ? `<ul class="ilist">${cp.need.lines.map(l => `<li><span class="iname">${esc(l.name)}${l.via !== cp.r.name ? ` <span class="muted">${esc(l.via)}</span>` : ""}</span><b>${fmtQty(l.oq, l.ou)}</b>${mh(l.name, l.oq, l.ou, kos(l.kid))}</li>`).join("")}</ul>${cp.need.gaps.length ? `<p class="small muted">${esc(cp.need.gaps.join(" · "))}</p>` : ""}`
+            : `<p class="small muted">${cp.x.qty_per_unit == null ? "Set the amount per piece (Edit) to work this out." : !ingsOf(cp.r.id).length ? "No ingredients in this component yet." : `Can't scale: the component's yield is in ${esc(recYield(cp.r)?.u || "?")} but the product uses ${esc(cp.x.unit)}. Set “Makes” on the component, or the amount per piece in grams.`}</p>`}`).join("")}
+        ${need.priced ? `<p class="small"><b>Ingredient cost ≈ ${money(need.cost)}</b> for ${n} · ${money(need.cost / n)} each${need.priced < need.lines ? ` <span class="muted">(prices known for ${need.priced} of ${need.lines} lines in Kitchen OS)</span>` : ""}${p.price != null && need.priced === need.lines ? ` · ${Math.round(100 * (need.cost / n) / p.price)}% of the price` : ""}</p>` : ""}
+      </section>
+      ${p.notes ? `<section class="rsec"><h3>Notes</h3><p class="rnotes">${esc(p.notes)}</p></section>` : ""}
+    </article>`;
+}
+
+/* ---------- product editor ---------- */
+function productSheet(id, kind) {
+  const p = id ? prod(id) : { id: null, name: "", kind: kind || "regular", category: "", price: null, unit_label: "pcs", default_qty: 12, choice_label: "", choice_count: 1, decide_days: 2, orderable: kind === "special", lead_days: 2, deposit_pct: 50, order_note: "", active: true, notes: "", stock_mode: false, shelf_days: 7, batch_size: null };
+  const parts = id ? partsOf(id) : [];
+  const sorted = S.recipes.slice().sort((a, b) => RKINDS.findIndex(k => k[0] === a.kind) - RKINDS.findIndex(k => k[0] === b.kind) || a.name.localeCompare(b.name));
+  const recOpts = sel => RKINDS.map(([k, l]) => { const list = sorted.filter(r => r.kind === k); return list.length ? `<optgroup label="${l}">${list.map(r => `<option value="${r.id}" ${r.id === sel ? "selected" : ""}>${esc(r.name)} (${daysOf(r.id)} d)</option>`).join("")}</optgroup>` : ""; }).join("");
+  const offOpts = sel => [0, -1, -2, -3].map(v => `<option value="${v}" ${+sel === v ? "selected" : ""}>${readyLbl(v)}</option>`).join("");
+  const partRow = x => `<div class="partrow" data-part><select data-f="recipe_id" aria-label="Component">${recOpts(x.recipe_id)}</select><select data-f="ready_offset" aria-label="When ready">${offOpts(x.ready_offset || 0)}</select><input type="number" step="any" data-f="qty_per_unit" value="${x.qty_per_unit ?? ""}" placeholder="per piece" aria-label="Amount per piece"><select data-f="unit" aria-label="Unit">${["g", "pcs", "ml"].map(u => `<option ${u === (x.unit || "g") ? "selected" : ""}>${u}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove">✕</button></div>`;
+  openSheet(`${head(id ? esc(p.name) : "New product", esc(KIND[p.kind][0]))}
+    <form id="pForm" class="list">
+      <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(p.name)}"></label>
+      <label class="f">Type<select name="kind">${Object.entries(KIND).map(([k, v]) => `<option value="${k}" ${k === p.kind ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label></div>
+      <div class="grid3"><label class="f">Category<input type="text" name="category" value="${esc(p.category || "")}" placeholder="Focaccia, Buns…"></label>
+      <label class="f">Price €<input type="number" step="0.01" name="price" value="${p.price ?? ""}"></label>
+      <label class="f">Sold per<input type="text" name="unit_label" value="${esc(p.unit_label || "pcs")}" placeholder="pcs, slices, cake"></label></div>
+      <div class="sec"><h4>Made from</h4><p class="small muted">Components, when each must be ready, and how much goes into one piece. The amount drives batch totals and the shopping list.</p><div id="pParts">${parts.map(partRow).join("")}</div>
+        ${S.recipes.length ? `<button type="button" class="btn sm" data-act="addpart">+ Component</button>` : `<p class="small muted">Add components first (Components tab).</p>`}
+        <template id="partTpl">${partRow({ recipe_id: sorted[0]?.id, ready_offset: 0, unit: "g" })}</template></div>
+      <div class="sec"><h4>Planning</h4><div class="grid2"><label class="f">Usual quantity a day<input type="number" name="default_qty" min="0" value="${p.default_qty}"></label></div>
+        <label class="f inline" style="margin-top:8px"><input type="checkbox" name="stock_mode" ${p.stock_mode ? "checked" : ""}> Made in batches and sold from stock (e.g. almond cookies, tinginys)</label>
+        <div class="grid2" style="margin-top:8px"><label class="f">Keeps for (days)<input type="number" name="shelf_days" min="1" value="${p.shelf_days || 7}"></label>
+        <label class="f">Usual batch size<input type="number" name="batch_size" min="1" value="${p.batch_size ?? ""}"></label></div>
+        <p class="small muted">Stock products: daily quantities mean expected sales, and the Stock tab tells you when to make the next batch.</p></div>
+      <div class="sec"><h4>Open choice</h4><div class="grid3">
+        <label class="f">What to decide<input type="text" name="choice_label" value="${esc(p.choice_label || "")}" placeholder="Toppings, Flavours…"></label>
+        <label class="f">How many<input type="number" name="choice_count" min="1" value="${p.choice_count}"></label>
+        <label class="f">Decide days before<input type="number" name="decide_days" min="0" value="${p.decide_days}"></label></div></div>
+      <div class="sec"><h4>Orders</h4><label class="f inline"><input type="checkbox" name="orderable" ${p.orderable ? "checked" : ""}> Show on the order forms</label>
+        <div class="grid2" style="margin-top:8px"><label class="f">Min. notice (days)<input type="number" name="lead_days" min="0" value="${p.lead_days}"></label>
+        <label class="f">Deposit %<input type="number" name="deposit_pct" min="0" max="100" value="${p.deposit_pct}"></label></div>
+        <label class="f" style="margin-top:8px">Note on the form<input type="text" name="order_note" value="${esc(p.order_note || "")}"></label></div>
+      <label class="f">Notes<textarea name="notes">${esc(p.notes || "")}</textarea></label>
+      <label class="f inline sec"><input type="checkbox" name="active" ${p.active ? "checked" : ""}> Active</label>
+      <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="pdel" data-id="${id}">Delete</button>` : ""}</div>
+    </form>`, sh => { sh.querySelector("#pForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveProduct(p, e.target)); }); });
+}
+async function saveProduct(p, form) {
+  const fd = new FormData(form), g = k => (fd.get(k) ?? "").toString();
+  const row = { name: g("name").trim(), kind: g("kind"), category: g("category").trim() || null, price: g("price") === "" ? null : +g("price"), default_qty: +g("default_qty") || 0,
+    choice_label: g("choice_label").trim() || null, choice_count: Math.max(1, +g("choice_count") || 1), decide_days: Math.max(0, +g("decide_days") || 0),
+    orderable: !!fd.get("orderable"), lead_days: Math.max(0, +g("lead_days") || 0), deposit_pct: Math.min(100, Math.max(0, +g("deposit_pct") || 0)), unit_label: g("unit_label").trim() || "pcs",
+    order_note: g("order_note").trim() || null, notes: g("notes").trim() || null, active: !!fd.get("active"), stock_mode: !!fd.get("stock_mode"), shelf_days: Math.max(1, +g("shelf_days") || 7), batch_size: g("batch_size") === "" ? null : Math.max(1, +g("batch_size")) };
+  if (!row.name) throw new Error("Give the product a name.");
+  let id = p.id;
+  if (id) await DB.upd("bk_products", id, row); else { row.position = S.products.length + 1; id = (await DB.ins("bk_products", row))[0].id; }
+  const rows = $$("#pParts [data-part]", form).map((el, i) => ({ product_id: id, recipe_id: $("[data-f=recipe_id]", el).value, ready_offset: +$("[data-f=ready_offset]", el).value, qty_per_unit: $("[data-f=qty_per_unit]", el).value === "" ? null : +$("[data-f=qty_per_unit]", el).value, unit: $("[data-f=unit]", el).value, position: i })).filter(r => r.recipe_id);
+  await DB.del("bk_product_parts", partsOf(id).map(x => x.id));
+  if (rows.length) await DB.ins("bk_product_parts", rows);
+  await load(); closeSheet(); changed(true); toast("Product saved."); openP(id);
+}
+function addDaySheet(p) {
+  const tm = addDays(todayISO(), 1);
+  openSheet(`${head("Add to a day", esc(p.name))}
+    <div class="list"><div class="grid2"><label class="f">Day<input type="date" id="adDate" value="${tm}"></label>
+      <label class="f">How many (${esc(p.unit_label || "pcs")})<input type="number" id="adQty" min="1" value="${p.default_qty || 1}" inputmode="numeric"></label></div>
+      <p class="small muted">${p.stock_mode ? "A stock product: this adds expected sales. Plan a batch in the Stock tab to make it." : `Adds it to what's on sale that day. The planner puts the ${plural(prodDays(p.id), "day")} of steps before it on the calendar.`}</p>
+      <div class="row"><button type="button" class="btn primary" data-act="adsave">Add to planner</button></div></div>`);
+}
+async function saveAddDay() {
+  const p = prod(V.pid), date = $("#adDate").value, qty = Math.max(1, Math.round(+$("#adQty").value || 0)); if (!p || !date || !qty) return;
+  const ex = (await DB.sel("bk_plan", { eq: { date, product_id: p.id } })).find(r => !r.order_id && r.status !== "cancelled");
+  if (ex) await DB.upd("bk_plan", ex.id, { qty: (ex.qty || 0) + qty }); else await DB.ins("bk_plan", { date, product_id: p.id, qty });
+  closeSheet(); changed(true);
+  toastLink(`${qty} × ${p.name} on ${fmtD(date)}${ex ? ` (now ${(ex.qty || 0) + qty})` : ""}.`, "See it in the planner", () => post("rb:goto", { view: "week", date }));
+}
+
+/* ---------- component page ---------- */
 function renderRecipe(r) {
-  const ings = bookIngs(r.id), y = recYield(r), x = V.x || 1, st = r.status || "idea";
+  const ings = ingsOf(r.id), y = recYield(r), x = V.x || 1, st = r.status || "idea";
   const groups = []; ings.forEach(i => { const g = i.grp || ""; let G = groups.find(z => z.g === g); if (!G) groups.push(G = { g, items: [] }); G.items.push(i); });
-  const chain = r.chain_recipe_id ? stepsOf(r.chain_recipe_id) : [], cdays = r.chain_recipe_id ? daysOf(r.chain_recipe_id) : 0, used = usedBy(r);
+  const chain = stepsOf(r.id), cdays = chain.length ? daysOf(r.id) : 0, uses = usesOf(r.id);
   const method = (r.method || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
   const target = y ? Math.round(y.q * x * 100) / 100 : null;
-  const tr = trialsOf(r.id), par = r.parent_id && book(r.parent_id), kids = kidsOf(r.id);
-  $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← All recipes</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="bedit" data-id="${r.id}">Edit</button></div>
+  const tr = trialsOf(r.id), par = r.parent_id && rec(r.parent_id), kids = kidsOf(r.id);
+  const subOf = i => !i.ingredient_id ? RBX.byName(i.name) : null;
+  $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← Components</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="bedit" data-id="${r.id}">Edit</button></div>
     <article class="rpage">
       <header class="rhead ${r.color ? "rc" : ""}"${cvar(r.color)}>
-        <div class="eyebrow">${RKIND1[r.kind] || r.kind}${r.yield_note ? " · " + esc(r.yield_note) : ""}</div>
+        <div class="eyebrow">${RKIND1[r.kind] || r.kind}${r.yield_note ? " · " + esc(r.yield_note) : y ? " · makes " + fmtQty(y.q, y.u) : ""}</div>
         <h2>${esc(r.name)}</h2>
         <div class="seg stseg noprint" role="group" aria-label="Recipe status">${Object.entries(STATUS).map(([k, v]) => `<button type="button" data-act="bstatus" data-k="${k}" aria-pressed="${st === k}" title="${v[2]}">${k === "keeper" ? "★ " : ""}${v[0]}</button>`).join("")}</div>
-        <div class="rfacts">${par ? `<span><b>Variation of</b> <button type="button" class="linkbtn" data-act="bopen" data-id="${par.id}">${esc(par.name)}</button></span>` : r.origin ? `<span><b>From</b> ${esc(r.origin)}</span>` : ""}${(r.oven || []).length ? `<span><b>Oven</b> ${esc(ovenLine(r.oven))}</span>` : ""}${cdays ? `<span><b>Schedule</b> ${cdays} day${cdays > 1 ? "s" : ""}</span>` : ""}${used.length ? `<span><b>Used in</b> ${esc(used.join(", "))}</span>` : ""}</div>
+        <div class="rfacts">${par ? `<span><b>Variation of</b> <button type="button" class="linkbtn" data-act="bopen" data-id="${par.id}">${esc(par.name)}</button></span>` : r.origin ? `<span><b>From</b> ${esc(r.origin)}</span>` : ""}${(r.oven || []).length ? `<span><b>Oven</b> ${esc(ovenLine(r.oven))}</span>` : ""}${cdays ? `<span><b>Takes</b> ${plural(cdays, "day")}</span>` : ""}${uses.length ? `<span><b>Used in</b> ${uses.map(u => `<button type="button" class="linkbtn" data-act="popen" data-id="${u.p.id}">${esc(u.p.name)}</button>`).join(", ")}</span>` : ""}</div>
         <div class="row ractions noprint"><button type="button" class="btn" data-act="tplan">Plan a test bake</button><button type="button" class="btn" data-act="tlog">Log a test</button><button type="button" class="btn" data-act="bvar">Make a variation</button><button type="button" class="btn ghost" data-act="bidea">Send to planner as an idea</button></div>
       </header>
       ${V.from ? `<p class="note noprint">${esc(V.from)}</p>` : ""}
@@ -670,7 +1023,7 @@ function renderRecipe(r) {
             ${y ? `<label class="rtarget">Make <input type="number" id="rTarget" min="0" step="any" value="${target}" inputmode="decimal"> ${esc(y.u)}</label>` : ""}</div>
           ${x !== 1 ? `<p class="small muted">Scaled ×${Math.round(x * 100) / 100}${y ? ` · ${fmtQty(target, y.u)}` : ""}</p>` : ""}
           <h3>Ingredients</h3>
-          ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => `<li><span class="iname">${esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b></li>`).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
+          ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => { const sb = subOf(i); return `<li><span class="iname">${sb ? `<button type="button" class="linkbtn" data-act="bopen" data-id="${sb.id}">${esc(i.name)}</button>` : esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b>${mh(i.name, i.qty == null ? null : i.qty * x, i.unit, kos(i.ingredient_id))}</li>`; }).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
         </section>
         <section class="rcol">
           <h3>Method</h3>
@@ -680,6 +1033,11 @@ function renderRecipe(r) {
           ${r.source ? `<p class="small muted">Source: ${esc(r.source)}</p>` : ""}
         </section>
       </div>
+      <section class="rsec"><h3>Days & steps</h3>
+        ${chain.length ? `<div class="chain">${chain.map(s => `<div class="st"><span class="d">Day ${s.day}${s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(s.title)}${s.minutes ? ` <span class="small muted">${s.minutes} min</span>` : ""}</span>${s.time_hint ? `<span class="small muted">${esc(s.time_hint)}</span>` : ""}</div>`).join("")}</div><p class="small muted noprint">The planner puts these on the calendar for every product that uses this component. The last day is when it's ready.</p>`
+          : `<p class="small muted">No steps yet. Add them with Edit so products using this get it on the calendar.</p>`}
+        ${uses.length ? `<div class="pchips">${uses.map(u => `<button type="button" class="pc" data-act="popen" data-id="${u.p.id}">${esc(u.p.name)}${u.x.qty_per_unit != null ? ` · ${fmtQty(u.x.qty_per_unit, u.x.unit)} each` : ""}</button>`).join("")}</div>` : ""}
+      </section>
       <section class="rsec">
         <h3>Test log <span class="muted small">${tr.length}</span></h3>
         ${tr.length ? `<div class="tlog">${tr.map(t => `<div class="trow ${t.status}">
@@ -690,28 +1048,31 @@ function renderRecipe(r) {
           : `<p class="muted small">No tests yet. Plan a test bake to put it on the calendar, or log one you've already made.</p>`}
       </section>
       ${par || kids.length ? `<section class="rsec"><h3>Variations</h3><div class="pchips">${par ? `<button type="button" class="pc" data-act="bopen" data-id="${par.id}">↑ ${esc(par.name)}</button>` : ""}${kids.map(k => `<button type="button" class="pc" data-act="bopen" data-id="${k.id}">${esc(k.name)} <span class="b ${STATUS[k.status || "idea"][1]}">${STATUS[k.status || "idea"][0]}</span></button>`).join("")}</div></section>` : ""}
-      ${chain.length ? `<section class="rsec"><h3>Production schedule</h3><div class="chain">${chain.map(s => `<div class="st"><span class="d">Day ${s.day}${s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(s.title)}</span>${s.time_hint ? `<span class="small muted">${esc(s.time_hint)}</span>` : ""}</div>`).join("")}</div><p class="small muted noprint">Days and steps are edited in the planner: Setup → Schedules.</p></section>` : ""}
     </article>`;
 }
-function open(id, x, from) { V.id = id; V.x = x || 1; V.from = from || null; render(); window.scrollTo({ top: 0 }); }
 
-/* ---------- edit sheet ---------- */
+/* ---------- component editor ---------- */
 function editSheet(id, preset) {
-  const r = id ? book(id) : Object.assign({ id: null, name: "", kind: "bake", status: "idea", yield_qty: null, yield_unit: "pcs", yield_note: "", method: "", oven: [], notes: "", source: "", color: null, chain_recipe_id: null }, preset || {});
-  const ings = id ? bookIngs(id) : (preset && preset.ings) || [];
-  const groups = [...new Set(S.bookIngs.map(i => i.grp).filter(Boolean))];
+  const r = id ? rec(id) : Object.assign({ id: null, name: "", kind: "bake", status: "idea", yield_qty: null, yield_unit: "pcs", yield_note: "", method: "", oven: [], notes: "", source: "", color: null }, preset || {});
+  const ings = id ? ingsOf(id) : (preset && preset.ings) || [];
+  const steps = id ? stepsOf(id) : [];
+  const groups = [...new Set(S.ings.map(i => i.grp).filter(Boolean))];
   const unitSel = (u, attr) => `<select ${attr}>${UNITS.map(x => `<option value="${x}" ${x === (u || "g") ? "selected" : ""}>${x}</option>`).join("")}</select>`;
-  const kName = i => (S.kIngr.find(k => k.id === i.ingredient_id) || {}).name || "";
+  const kName = i => (kos(i.ingredient_id) || {}).name || "";
   const ingRow = i => `<div class="bing" data-ing>
-      <input type="text" data-f="name" value="${esc(i.name || "")}" placeholder="Ingredient" aria-label="Ingredient">
+      <input type="text" data-f="name" list="rNames" value="${esc(i.name || "")}" placeholder="Ingredient" aria-label="Ingredient">
       <input type="number" step="any" data-f="qty" value="${i.qty ?? ""}" placeholder="Amount" aria-label="Amount">
       ${unitSel(i.unit, 'data-f="unit" aria-label="Unit"')}
       <input type="text" data-f="grp" list="bGroups" value="${esc(i.grp || "")}" placeholder="Group" aria-label="Group">
       <input type="text" data-f="note" value="${esc(i.note || "")}" placeholder="Note" aria-label="Note">
-      <input type="text" data-f="kos" list="kIngr" value="${esc(kName(i))}" placeholder="Kitchen OS item" aria-label="Kitchen OS item" class="${i.ingredient_id ? "linked" : ""}">
-      <button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove ingredient">✕</button></div>`;
+      <input type="text" data-f="kos" list="kIngr" value="${esc(kName(i))}" placeholder="Kitchen OS item (optional)" aria-label="Kitchen OS item" class="${i.ingredient_id ? "linked" : ""}">
+      <button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove ingredient">✕</button>
+      <div class="ksug" hidden></div></div>`;
   const ovRow = o => `<div class="boven" data-oven><input type="number" data-f="t" value="${o.t ?? ""}" placeholder="°C" aria-label="Temperature"><input type="number" data-f="m" value="${o.m ?? ""}" placeholder="min" aria-label="Minutes"><input type="text" data-f="n" value="${esc(o.n || "")}" placeholder="Note (e.g. turn the tin)" aria-label="Note"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove stage">✕</button></div>`;
-  openSheet(`${head(id ? esc(r.name) : "New recipe", "Ingredients, method and oven. Names that match Kitchen OS ingredients get linked for costing.")}
+  const stepRow = s => `<div class="steprow" data-step="${s.id || "new"}"><input type="text" data-f="title" value="${esc(s.title || "")}" placeholder="Step, e.g. Mix dough, bulk ferment" aria-label="Step"><select data-f="time_hint" aria-label="Time of day"><option value="">any time</option>${TOD.map(x => `<option ${x === (s.time_hint || "").toLowerCase() ? "selected" : ""}>${x}</option>`).join("")}</select><input type="number" data-f="minutes" value="${s.minutes ?? ""}" placeholder="min" aria-label="Minutes"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove step">✕</button><input type="hidden" data-f="day" value="${s.day || 1}"></div>`;
+  const maxDay = Math.max(1, ...steps.map(s => s.day));
+  const dayBox = d => `<div class="stepday" data-day="${d}"><h5>Day ${d}${d === maxDay ? " · ready" : ""}</h5><div class="dsteps">${steps.filter(s => s.day === d).map(stepRow).join("")}</div><button type="button" class="btn sm" data-act="addstep">+ Step</button></div>`;
+  openSheet(`${head(id ? esc(r.name) : "New component", "Ingredients, method, oven and its days & steps. Names that match Kitchen OS ingredients get linked for costing and shopping.")}
     <form id="bForm" class="list">
       <div class="grid2"><label class="f">Name<input type="text" name="name" required value="${esc(r.name)}"></label>
       <label class="f">Kind<select name="kind">${RKINDS.map(([k, l]) => `<option value="${k}" ${k === r.kind ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>
@@ -721,28 +1082,57 @@ function editSheet(id, preset) {
       <label class="f">Batch description<input type="text" name="yield_note" value="${esc(r.yield_note || "")}" placeholder="e.g. 1 loaf (~8 slices)"></label>
       <div class="sec"><h4>Ingredients</h4><div id="bIngs">${ings.map(ingRow).join("")}</div><button type="button" class="btn sm" data-act="bading">+ Ingredient</button>
         <template id="bIngTpl">${ingRow({})}</template>
-        <datalist id="kIngr">${S.kIngr.map(k => `<option value="${esc(k.name)}"></option>`).join("")}</datalist>
+        <datalist id="kIngr">${(() => { const en = enNames(S.ings); return S.kIngr.map(k => `<option value="${esc(k.name)}"${en.get(k.id) ? ` label="${esc(en.get(k.id).slice(0, 3).join(", "))}"` : ""}></option>`).join(""); })()}</datalist>
+        <datalist id="rNames">${[...new Set(S.ings.map(i => i.name.trim()))].sort((a, b) => a.localeCompare(b)).map(n => `<option value="${esc(n)}"></option>`).join("")}${S.recipes.filter(x => x.id !== r.id).map(x => `<option value="${esc(x.name)}" label="component"></option>`).join("")}</datalist>
         <datalist id="bGroups">${groups.map(g => `<option value="${esc(g)}"></option>`).join("")}</datalist>
-        <p class="small muted">Use the same group name to keep rows together (e.g. Dry, Wet, Topping). The last field links the row to a Kitchen OS ingredient for costing.</p></div>
+        <p class="small muted">Write names in English; the name field suggests ones you've used before. The last field links a row to a Kitchen OS item for costing and shopping: suggestions appear under the row, but it's optional, so new pastry ingredients can stay bakery-only. Same group name keeps rows together (Dry, Wet, Topping). An ingredient named exactly like another component (e.g. “Honey mascarpone cream”) is counted through that component's own ingredients.</p></div>
       <label class="f">Method <span class="small muted">one step per line</span><textarea name="method" style="min-height:160px">${esc(r.method || "")}</textarea></label>
       <div class="sec"><h4>Oven</h4><div id="bOven">${(r.oven || []).map(ovRow).join("")}</div><button type="button" class="btn sm" data-act="badov">+ Oven stage</button><template id="bOvTpl">${ovRow({})}</template></div>
-      <label class="f">Production schedule<select name="chain_recipe_id"><option value="">Not linked</option>${S.recipes.map(c => `<option value="${c.id}" ${c.id === r.chain_recipe_id ? "selected" : ""}>${esc(c.name)} (${daysOf(c.id)} d)</option>`).join("")}</select><span class="small muted">For regular items: links this recipe to its days on the calendar, so task cards open it at the right batch size.</span></label>
+      <div class="sec"><h4>Days & steps</h4><p class="small muted">What goes on the calendar. Spread the work over days; the last day is when it's ready (e.g. a 3-day focaccia: poolish, mix and fold, pan and bake).</p>
+        <div id="rDays">${Array.from({ length: maxDay }, (_, i) => dayBox(i + 1)).join("")}</div>
+        <button type="button" class="btn sm" data-act="addday">+ Day</button>
+        <template id="stepTpl">${stepRow({ day: 1 })}</template></div>
       <label class="f">Notes<textarea name="notes">${esc(r.notes || "")}</textarea></label>
       <div class="grid2"><label class="f">Source<input type="text" name="source" value="${esc(r.source || "")}" placeholder="Book, page, link"></label><label class="f">Came from<input type="text" name="origin" value="${esc(r.origin || "")}" placeholder="e.g. Taste Lab · Crème pâtissière"></label></div>
-      <div class="sec"><h4>Colour</h4><div class="swatches" role="radiogroup" aria-label="Colour">${PALETTE.map(c => `<label class="sw" style="--c:${c}" title="${c}"><input type="radio" name="color" value="${c}" ${r.color === c ? "checked" : ""}><span></span></label>`).join("")}<label class="sw none" title="No colour"><input type="radio" name="color" value="" ${!r.color ? "checked" : ""}><span>×</span></label></div></div>
+      <div class="sec"><h4>Colour on the calendar</h4><div class="swatches" role="radiogroup" aria-label="Colour">${PALETTE.map(c => `<label class="sw" style="--c:${c}" title="${c}"><input type="radio" name="color" value="${c}" ${r.color === c ? "checked" : ""}><span></span></label>`).join("")}<label class="sw none" title="No colour"><input type="radio" name="color" value="" ${!r.color ? "checked" : ""}><span>×</span></label></div></div>
       <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="bdelete" data-id="${id}">Delete</button>` : ""}</div>
-    </form>`, sh => { sh.querySelector("#bForm").addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); });
+    </form>`, sh => { const f = sh.querySelector("#bForm"); f.addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); $$("#bIngs [data-ing]", f).forEach(ksug); });
 }
+/* Kitchen OS suggestions under an ingredient row: a nudge, never forced */
+function ksug(row) {
+  const box = $(".ksug", row), name = $("[data-f=name]", row).value.trim(), kf = $("[data-f=kos]", row);
+  const linked = S.kIngr.some(k => k.name.toLowerCase() === kf.value.trim().toLowerCase());
+  kf.classList.toggle("linked", linked);
+  if (!box) return;
+  const isComp = RBX.byName(name);
+  if (linked || kf.value.trim() || !name || isComp || row.dataset.nosug) { box.hidden = true; box.innerHTML = ""; return; }
+  const sug = kosSuggest(name, S.kIngr, S.ings);
+  if (!sug.length) { box.hidden = true; box.innerHTML = ""; return; }
+  box.innerHTML = `<span class="small muted">Kitchen OS?</span>${sug.map(x => `<button type="button" class="kchip" data-act="kpick" data-v="${esc(x.k.name)}">${esc(x.k.name)}${x.en.length ? ` <span class="muted">${esc(x.en.join(", "))}</span>` : ""}</button>`).join("")}<button type="button" class="kchip none" data-act="knone">Keep bakery-only</button>`;
+  box.hidden = false;
+}
+let KSUG_T = null;
+function relabelDays(form) { const boxes = $$("#rDays .stepday", form); boxes.forEach((b, i) => { b.dataset.day = i + 1; $("h5", b).textContent = `Day ${i + 1}${i === boxes.length - 1 ? " · ready" : ""}`; $$("[data-f=day]", b).forEach(h => h.value = i + 1); }); }
 async function saveRecipe(r, form) {
   const fd = new FormData(form), g = k => (fd.get(k) ?? "").toString();
   const oven = $$("#bOven [data-oven]", form).map(el => ({ t: +$("[data-f=t]", el).value || null, m: +$("[data-f=m]", el).value || null, n: $("[data-f=n]", el).value.trim() })).filter(o => o.t || o.m);
   const row = { name: g("name").trim(), kind: g("kind"), status: g("status") || "idea", yield_qty: g("yield_qty") === "" ? null : +g("yield_qty"), yield_unit: g("yield_unit") || null, yield_note: g("yield_note").trim() || null,
-    method: g("method").trim() || null, oven, notes: g("notes").trim() || null, source: g("source").trim() || null, origin: g("origin").trim() || null, color: g("color") || null, chain_recipe_id: g("chain_recipe_id") || null, updated_at: new Date().toISOString() };
-  if (!row.name) throw new Error("Give the recipe a name.");
+    method: g("method").trim() || null, oven, notes: g("notes").trim() || null, source: g("source").trim() || null, origin: g("origin").trim() || null, color: g("color") || null, updated_at: new Date().toISOString() };
+  if (!row.name) throw new Error("Give the component a name.");
   let id = r.id;
-  if (id) await DB.upd("bk_book_recipes", id, row); else { row.position = S.book.length + 1; if (r.parent_id) row.parent_id = r.parent_id; id = (await DB.ins("bk_book_recipes", row))[0].id; }
+  if (id) await DB.upd("bk_recipes", id, row); else { row.position = S.recipes.length + 1; if (r.parent_id) row.parent_id = r.parent_id; id = (await DB.ins("bk_recipes", row))[0].id; }
   await saveIngs(id, $$("#bIngs [data-ing]", form).map(el => { const v = f => $(`[data-f=${f}]`, el).value.trim(); return { name: v("name"), qty: v("qty") === "" ? null : +v("qty"), unit: v("unit") || "g", grp: v("grp") || null, note: v("note") || null, kos: v("kos") }; }));
-  await load(); closeSheet(); toast("Recipe saved."); post("rb:changed"); open(id, 1, null);
+  const stepsChanged = await saveSteps(id, $$("#rDays [data-step]", form).map((el, i) => ({ id: el.dataset.step, day: +$("[data-f=day]", el).value || 1, title: $("[data-f=title]", el).value.trim(), time_hint: $("[data-f=time_hint]", el).value || null, minutes: $("[data-f=minutes]", el).value === "" ? null : +$("[data-f=minutes]", el).value, position: i })));
+  await load(); closeSheet(); toast("Saved."); changed(stepsChanged || !!usesOf(id).length); open(id, 1, null);
+}
+async function saveSteps(id, list) {
+  const steps = list.filter(s => s.title), old = stepsOf(id);
+  const same = old.length === steps.length && old.every((o, i) => o.id === steps[i].id && o.day === steps[i].day && o.title === steps[i].title && (o.time_hint || null) === steps[i].time_hint && (o.minutes ?? null) === steps[i].minutes);
+  if (same) return false;
+  await DB.del("bk_recipe_steps", old.filter(o => !steps.some(s => s.id === o.id)).map(o => o.id));
+  for (const s of steps.filter(s => s.id !== "new")) { const { id: sid, ...rest } = s; await DB.upd("bk_recipe_steps", sid, rest); }
+  const ns = steps.filter(s => s.id === "new").map(({ id: _, ...rest }) => ({ ...rest, recipe_id: id })); if (ns.length) await DB.ins("bk_recipe_steps", ns);
+  return true;
 }
 async function saveIngs(id, list) {
   await kitchen();
@@ -750,8 +1140,8 @@ async function saveIngs(id, list) {
   /* kos = the Kitchen OS field from the editor (undefined for copies and drafts, which keep their link) */
   const link = i => { const k = find(i.kos) || find(i.name); return k ? k.id : i.kos === undefined ? (i.ingredient_id || null) : null; };
   const rows = list.filter(i => i.name).map((i, n) => ({ recipe_id: id, name: i.name, ingredient_id: link(i), qty: i.qty ?? null, unit: i.unit || "g", grp: i.grp || null, note: i.note || null, position: n + 1 }));
-  await DB.del("bk_book_ingredients", S.bookIngs.filter(i => i.recipe_id === id).map(i => i.id));
-  if (rows.length) await DB.ins("bk_book_ingredients", rows);
+  await DB.del("bk_recipe_ingredients", S.ings.filter(i => i.recipe_id === id).map(i => i.id));
+  if (rows.length) await DB.ins("bk_recipe_ingredients", rows);
 }
 
 /* ---------- tests ---------- */
@@ -765,12 +1155,12 @@ function planSheet(r) {
       <div class="row"><button type="button" class="btn primary" data-act="tpsave">Add to planner</button></div></div>`);
 }
 async function savePlan() {
-  const r = book(V.id), date = $("#tpDate").value; if (!r || !date) return;
+  const r = rec(V.id), date = $("#tpDate").value; if (!r || !date) return;
   const changes = $("#tpChanges").value.trim() || null;
   const task = (await DB.ins("bk_tasks", { date, title: `Test bake: ${r.name}`, kind: "custom", time_hint: $("#tpTod").value || null, notes: changes ? `Trying: ${changes}` : "Test bake from Recipes" }))[0];
-  await DB.ins("bk_book_trials", { recipe_id: r.id, date, task_id: task.id, status: "planned", changes });
-  if ((r.status || "idea") === "idea") await DB.upd("bk_book_recipes", r.id, { status: "testing", updated_at: new Date().toISOString() });
-  await load(); closeSheet(); post("rb:changed"); render();
+  await DB.ins("bk_recipe_trials", { recipe_id: r.id, date, task_id: task.id, status: "planned", changes });
+  if ((r.status || "idea") === "idea") await DB.upd("bk_recipes", r.id, { status: "testing", updated_at: new Date().toISOString() });
+  await load(); closeSheet(); changed(); render();
   toastLink(`Test bake added to ${fmtD(date)}.`, "See it in the planner", () => post("rb:goto", { view: "week", date }));
 }
 function trialSheet(r, t) {
@@ -781,37 +1171,38 @@ function trialSheet(r, t) {
       <div class="f"><span>Result</span><div class="seg" role="radiogroup" aria-label="Result">${Object.entries(RESULT).map(([k, v]) => `<label class="segopt"><input type="radio" name="trRes" value="${k}" ${t.result === k ? "checked" : ""}><span>${v[0]}</span></label>`).join("")}</div></div>
       <label class="f">What did you change?<input type="text" id="trChanges" value="${esc(t.changes || "")}" placeholder="e.g. 20% less sugar, baked 5 min longer"></label>
       <label class="f">Notes<textarea id="trNotes" placeholder="Texture, taste, what to try next">${esc(t.notes || "")}</textarea></label>
-      ${st !== "keeper" ? `<label class="chk2"><input type="checkbox" id="trKeep"> Mark the recipe as a keeper (it worked really well)</label>` : ""}
+      ${st !== "keeper" ? `<label class="chk2"><input type="checkbox" id="trKeep"> Mark it as a keeper (it worked really well)</label>` : ""}
       <div class="row"><button type="button" class="btn primary" data-act="trsave" data-id="${t.id || ""}">Save</button><span class="spacer"></span>${t.id ? `<button type="button" class="btn warn" data-act="trdel" data-id="${t.id}">Delete</button>` : ""}</div></div>`,
     sh => { sh.querySelectorAll("[name=trRes]").forEach(el => el.addEventListener("change", () => { const k = sh.querySelector("#trKeep"); if (k) k.checked = el.value === "great" && el.checked; })); });
 }
 async function saveTrial(id) {
-  const r = book(V.id); if (!r) return;
+  const r = rec(V.id); if (!r) return;
   const res = $("[name=trRes]:checked")?.value || null;
   const row = { recipe_id: r.id, date: $("#trDate").value || todayISO(), result: res, changes: $("#trChanges").value.trim() || null, notes: $("#trNotes").value.trim() || null, status: "done" };
   const old = id ? S.trials.find(t => t.id === id) : null;
-  if (old) await DB.upd("bk_book_trials", id, row); else await DB.ins("bk_book_trials", row);
+  if (old) await DB.upd("bk_recipe_trials", id, row); else await DB.ins("bk_recipe_trials", row);
   if (old && old.task_id) { try { await DB.upd("bk_tasks", old.task_id, { status: "done" }); } catch {} }
   const keep = $("#trKeep")?.checked;
   const next = keep ? "keeper" : (r.status || "idea") === "idea" ? "testing" : null;
-  if (next) await DB.upd("bk_book_recipes", r.id, { status: next, updated_at: new Date().toISOString() });
-  await load(); closeSheet(); post("rb:changed"); render(); toast(keep ? "Saved as a keeper ★" : "Test logged.");
+  if (next) await DB.upd("bk_recipes", r.id, { status: next, updated_at: new Date().toISOString() });
+  await load(); closeSheet(); changed(); render(); toast(keep ? "Saved as a keeper ★" : "Test logged.");
 }
 async function makeVariation(r) {
-  const row = { name: `${r.name} (variation)`, kind: r.kind, status: "testing", yield_qty: r.yield_qty, yield_unit: r.yield_unit, yield_note: r.yield_note, method: r.method, oven: r.oven || [], notes: r.notes, source: r.source, origin: r.origin, color: r.color, chain_recipe_id: null, parent_id: r.id, position: S.book.length + 1 };
-  const id = (await DB.ins("bk_book_recipes", row))[0].id;
-  await saveIngs(id, bookIngs(r.id).map(i => ({ ...i })));
-  await load(); post("rb:changed"); open(id, 1, `A copy of ${r.name}. Change what you want to try, then plan a test bake.`); await kitchen(); editSheet(id);
+  const row = { name: `${r.name} (variation)`, kind: r.kind, status: "testing", yield_qty: r.yield_qty, yield_unit: r.yield_unit, yield_note: r.yield_note, method: r.method, oven: r.oven || [], notes: r.notes, source: r.source, origin: r.origin, color: r.color, parent_id: r.id, position: S.recipes.length + 1 };
+  const id = (await DB.ins("bk_recipes", row))[0].id;
+  await saveIngs(id, ingsOf(r.id).map(i => ({ ...i })));
+  const st = stepsOf(r.id).map(({ id: _, recipe_id: __, ...s }) => ({ ...s, recipe_id: id })); if (st.length) await DB.ins("bk_recipe_steps", st);
+  await load(); changed(); open(id, 1, `A copy of ${r.name}. Change what you want to try, then plan a test bake.`); await kitchen(); editSheet(id);
 }
 /* drafts arriving from the Taste Lab or a planner idea */
 let lastDraft = { key: "", at: 0 };
 async function addDraft(d) {
   const key = (d.origin || "") + "|" + (d.name || ""); if (key === lastDraft.key && Date.now() - lastDraft.at < 4000) return; lastDraft = { key, at: Date.now() };
   const row = { name: (d.name || "Untitled idea").slice(0, 120), kind: RKIND1[d.kind] ? d.kind : "bake", status: d.status || "idea", yield_qty: d.yield_qty ?? null, yield_unit: d.yield_unit || null, yield_note: d.yield_note || null,
-    method: (Array.isArray(d.method) ? d.method.join("\n") : d.method) || null, oven: d.oven || [], notes: d.notes || null, source: d.source || null, origin: d.origin || null, position: S.book.length + 1 };
-  const id = (await DB.ins("bk_book_recipes", row))[0].id;
+    method: (Array.isArray(d.method) ? d.method.join("\n") : d.method) || null, oven: d.oven || [], notes: d.notes || null, source: d.source || null, origin: d.origin || null, position: S.recipes.length + 1 };
+  const id = (await DB.ins("bk_recipes", row))[0].id;
   if ((d.ings || []).length) await saveIngs(id, d.ings);
-  await load(); post("rb:changed");
+  await load(); changed();
   open(id, 1, `Added from ${d.origin || "an idea"}. Make it yours with Edit, then plan a test bake.`);
 }
 function toastLink(msg, label, fn) {
@@ -823,45 +1214,67 @@ function toastLink(msg, label, fn) {
 /* ---------- actions ---------- */
 const ACT = {
   close: () => closeSheet(),
+  rtab: el => { V.tab = el.dataset.t; store.set("bk.rtab", V.tab); V.q = ""; V.id = V.pid = null; render(); },
   vstatus: el => { V.status = el.dataset.k; renderList(); },
   bopen: el => open(el.dataset.id),
-  bback: () => { V.id = null; V.from = null; render(); window.scrollTo({ top: 0 }); },
+  popen: el => openP(el.dataset.id),
+  bback: () => { V.id = null; V.pid = null; V.from = null; render(); window.scrollTo({ top: 0 }); },
   bnew: el => guard(async () => { await kitchen(); editSheet(null, { kind: el.dataset.k || "bake" }); }),
   bedit: el => guard(async () => { await kitchen(); editSheet(el.dataset.id); }),
+  pnew: el => productSheet(null, el.dataset.k || "regular"),
+  pedit: el => productSheet(el.dataset.id),
+  pdel: el => guard(async () => { const p = prod(el.dataset.id); if (!p || !confirm(`Delete ${p.name}? Its planned days and steps go too. To pause it, untick Active instead.`)) return; await DB.del("bk_products", [p.id]); await load(); closeSheet(); changed(true); V.pid = null; render(); toast("Product deleted."); }),
+  padd: () => { const p = prod(V.pid); if (p) addDaySheet(p); },
+  adsave: () => guard(saveAddDay),
+  ptmpl: () => post("rb:goto", { view: "setup", tab: "template" }),
+  kpick: el => { const row = el.closest("[data-ing]"); $("[data-f=kos]", row).value = el.dataset.v; ksug(row); },
+  knone: el => { const row = el.closest("[data-ing]"); row.dataset.nosug = "1"; ksug(row); },
+  addpart: () => $("#pParts").insertAdjacentHTML("beforeend", $("#partTpl").innerHTML),
   bading: () => { $("#bIngs").insertAdjacentHTML("beforeend", $("#bIngTpl").innerHTML); const rows = $$("#bIngs [data-ing]"); const last = rows[rows.length - 1], prev = rows[rows.length - 2]; if (prev) $("[data-f=grp]", last).value = $("[data-f=grp]", prev).value; $("[data-f=name]", last).focus(); },
   badov: () => $("#bOven").insertAdjacentHTML("beforeend", $("#bOvTpl").innerHTML),
-  rmrow: el => el.closest("[data-ing],[data-oven]").remove(),
-  bdelete: el => guard(async () => { const r = book(el.dataset.id); if (!r || !confirm(`Delete ${r.name}?`)) return; await DB.del("bk_book_recipes", [r.id]); await load(); closeSheet(); post("rb:changed"); V.id = null; render(); toast("Recipe deleted."); }),
-  bx: el => { V.x = +el.dataset.x; renderRecipe(book(V.id)); },
+  addstep: el => { const box = el.closest(".stepday"); $(".dsteps", box).insertAdjacentHTML("beforeend", $("#stepTpl").innerHTML.replace('value="1"', `value="${box.dataset.day}"`)); const t = $$("[data-f=title]", box); t[t.length - 1]?.focus(); },
+  addday: el => { const days = $("#rDays"); const n = $$(".stepday", days).length + 1; days.insertAdjacentHTML("beforeend", `<div class="stepday" data-day="${n}"><h5></h5><div class="dsteps">${$("#stepTpl").innerHTML.replace('value="1"', `value="${n}"`)}</div><button type="button" class="btn sm" data-act="addstep">+ Step</button></div>`); relabelDays(el.closest("form")); },
+  rmrow: el => { const row = el.closest("[data-ing],[data-oven],[data-part],[data-step]"); const form = el.closest("form"); row.remove(); if (form && $("#rDays", form)) { const boxes = $$("#rDays .stepday", form); const last = boxes[boxes.length - 1]; if (boxes.length > 1 && last && !$("[data-step]", last)) { last.remove(); relabelDays(form); } } },
+  bdelete: el => guard(async () => { const r = rec(el.dataset.id); if (!r) return; const u = [...new Set(usesOf(r.id).map(x => x.p.name))]; if (!confirm(`Delete ${r.name}?${u.length ? ` ${u.join(", ")} will lose this component.` : ""}`)) return; await DB.del("bk_recipes", [r.id]); await load(); closeSheet(); changed(!!u.length); V.id = null; render(); toast("Deleted."); }),
+  bx: el => { V.x = +el.dataset.x; renderRecipe(rec(V.id)); },
   bprint: () => window.print(),
-  bstatus: el => guard(async () => { const r = book(V.id); if (!r) return; await DB.upd("bk_book_recipes", r.id, { status: el.dataset.k, updated_at: new Date().toISOString() }); await load(); post("rb:changed"); render(); }),
-  bvar: () => guard(async () => { const r = book(V.id); if (r) await makeVariation(r); }),
-  bidea: () => { const r = book(V.id); if (!r) return; const ings = bookIngs(r.id).slice(0, 6).map(i => i.name.toLowerCase()); post("rb:idea", { text: `${r.name}${ings.length ? ": " + ings.join(", ") : ""}` }); },
-  tplan: () => { const r = book(V.id); if (r) planSheet(r); },
+  bstatus: el => guard(async () => { const r = rec(V.id); if (!r) return; await DB.upd("bk_recipes", r.id, { status: el.dataset.k, updated_at: new Date().toISOString() }); await load(); changed(); render(); }),
+  bvar: () => guard(async () => { const r = rec(V.id); if (r) await makeVariation(r); }),
+  bidea: () => { const r = rec(V.id); if (!r) return; const ings = ingsOf(r.id).slice(0, 6).map(i => i.name.toLowerCase()); post("rb:idea", { text: `${r.name}${ings.length ? ": " + ings.join(", ") : ""}` }); },
+  tplan: () => { const r = rec(V.id); if (r) planSheet(r); },
   tpsave: () => guard(savePlan),
-  tlog: () => { const r = book(V.id); if (r) trialSheet(r); },
-  tedit: el => { const r = book(V.id), t = S.trials.find(x => x.id === el.dataset.id); if (r && t) trialSheet(r, t); },
+  tlog: () => { const r = rec(V.id); if (r) trialSheet(r); },
+  tedit: el => { const r = rec(V.id), t = S.trials.find(x => x.id === el.dataset.id); if (r && t) trialSheet(r, t); },
   trsave: el => guard(() => saveTrial(el.dataset.id || null)),
-  trdel: el => guard(async () => { if (!confirm("Delete this test?")) return; await DB.del("bk_book_trials", [el.dataset.id]); await load(); closeSheet(); post("rb:changed"); render(); })
+  trdel: el => guard(async () => { if (!confirm("Delete this test?")) return; await DB.del("bk_recipe_trials", [el.dataset.id]); await load(); closeSheet(); changed(); render(); })
 };
 document.addEventListener("click", e => { const a = e.target.closest("[data-act]"); if (!a) return; const fn = ACT[a.dataset.act]; if (fn) { e.preventDefault(); fn(a); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#scrim")) closeSheet(); });
-document.addEventListener("input", e => { if (e.target.id === "rSearch") { V.q = e.target.value; renderCards(); } });
-document.addEventListener("change", e => { if (e.target.id === "rTarget") { const r = book(V.id), y = recYield(r); const v = +e.target.value; if (y && v > 0) { V.x = v / y.q; renderRecipe(r); } } });
+document.addEventListener("input", e => {
+  if (e.target.id === "rSearch") { V.q = e.target.value; renderCards(); }
+  const row = e.target.closest?.(".bing[data-ing]");
+  if (row && ["name", "kos"].includes(e.target.dataset.f)) { if (e.target.dataset.f === "name") delete row.dataset.nosug; clearTimeout(KSUG_T); KSUG_T = setTimeout(() => ksug(row), 250); }
+  if (e.target.id === "pSearch") { V.q = e.target.value; const pos = e.target.selectionStart; renderProducts(); const s = $("#pSearch"); s.focus(); try { s.setSelectionRange(pos, pos); } catch {} }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "rTarget") { const r = rec(V.id), y = recYield(r); const v = +e.target.value; if (y && v > 0) { V.x = v / y.q; renderRecipe(r); } }
+  if (e.target.id === "pN") { const v = Math.round(+e.target.value); if (v > 0) { V.n = v; renderProduct(prod(V.pid)); } }
+});
 window.addEventListener("message", e => {
   if (e.origin !== location.origin || !e.data) return;
   const d = e.data;
-  if (d.type === "rb:open") { if (!book(d.id)) guard(load).then(() => open(d.id, d.x, d.from)); else open(d.id, d.x, d.from); }
-  if (d.type === "rb:list") { V.id = null; V.from = null; render(); }
+  if (d.type === "rb:open") { const known = !d.id || d.id === "products" || d.id === "components" || (d.id.startsWith("p/") ? prod(d.id.slice(2)) : rec(d.id)); if (!known) guard(load).then(() => openKey(d.id, d.x, d.from)); else openKey(d.id, d.x, d.from); }
+  if (d.type === "rb:list") { V.id = V.pid = null; V.from = null; render(); }
+  if (d.type === "rb:reload") guard(load).then(render);
   if (d.type === "rb:draft") guard(() => addDraft(d.draft || {}));
-  if (d.type === "rb:log") { const t = S.trials.find(x => x.id === d.trial); if (t) { V.id = t.recipe_id; render(); trialSheet(book(t.recipe_id), t); } }
+  if (d.type === "rb:log") { const t = S.trials.find(x => x.id === d.trial); if (t) { V.pid = null; V.id = t.recipe_id; render(); trialSheet(rec(t.recipe_id), t); } }
 });
 (async () => {
   if (!EMBED) return;
   const th = store.get("bk.theme", null); if (th) document.documentElement.dataset.theme = th;
   await guard(async () => {
     if (!(await AUTH.session())) { $("#main").innerHTML = `<p class="muted">Sign in on the planner first.</p>`; return; }
-    await load(); render();
+    await load(); render(); kitchen().then(() => { if (V.pid && prod(V.pid)) renderProduct(prod(V.pid)); });
   });
   post("rb:ready");
 })();
