@@ -206,6 +206,11 @@ button.pc:hover,button.pb:hover{border-color:var(--accent)}
 .tg::before,.tgchip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--tgc,var(--muted));flex:none}
 .tg-s{--tgc:var(--accent)}.tg-o{--tgc:var(--part)}.tg-b{--tgc:var(--post)}.tg-a{--tgc:var(--muted)}.tg-u{--tgc:var(--sv)}.tg-h{--tgc:var(--sv)}.tg-k{--tgc:var(--oven)}.tg-t{--tgc:var(--oven)}.tg-r{--tgc:var(--part)}.tg-f{--tgc:var(--new)}.tg-n{--tgc:var(--accent)}
 .tgrow{margin:0 0 10px;align-items:center}
+.gmode{margin:0 0 12px}
+.flist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+.fcard h3{font-size:17px;margin:0 0 4px}
+.fsl{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:14px}
+.fsl .glbl{display:inline-block;min-width:74px;margin-right:6px}
 .str{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap;border:1px solid var(--line);color:var(--ink);display:inline-flex;align-items:center;gap:5px}
 .str::before,.strchip::before{content:"";flex:none;width:13px;height:8px;--s1:var(--accent);--s2:var(--accent);--s3:var(--accent);background:linear-gradient(to right,var(--s1) 0 3px,transparent 3px 5px,var(--s2) 5px 8px,transparent 8px 10px,var(--s3) 10px 13px);border-radius:1px}
 .str-S::before,.strchip.str-S::before{--s3:var(--line)}
@@ -3448,7 +3453,7 @@ const TEXG = [
 ];
 const SLOTORD = ["d","f","a","c","x"];
 const SLOTLBL = {d:"Dough", f:"Filling", a:"Accent", c:"Crunch", x:"Finish"};
-const CON = { side:null, fi:null, sl:{}, locks:{}, prof:"any", tex:"any", n:3, adv:"bal", hist:[], lead:null };
+const CON = { side:null, fi:null, sl:{}, locks:{}, prof:"any", tex:"any", n:3, adv:"bal", hist:[], lead:null, mode:"item", ffi:null, flist:null, fkey:"" };
 const rnd = a => a[Math.floor(Math.random()*a.length)];
 const wpick = arr => { const tot=arr.reduce((a,x)=>a+Math.max(x.w,0.01),0); let r=Math.random()*tot; for(const x of arr){ r-=Math.max(x.w,0.01); if(r<=0) return x; } return arr[arr.length-1]; };
 let SEASONAL = null;
@@ -3622,7 +3627,51 @@ function techLink(c){
   if(r) return `<button type="button" class="aglink small" data-r="${r.id}">Lab recipe: ${esc(r.n)} →</button>`;
   return TB[c.tech] ? `<button type="button" class="aglink small" data-t="${c.tech}">Technique: ${esc(TB[c.tech].n)} →</button>` : "";
 }
+/* ---------- flavours for an item you already make (v21): only the filling / topping side changes ---------- */
+const FTARGETS = () => FORMATS.map((f,i)=>[f,i]).filter(([f])=>f.sl.includes("f"));
+const fKind = F => /topping/i.test(F.fl||"") ? "topping" : F.g==="Cookies & small cakes" && !F.sl.includes("a") ? "bake" : "filling";
+function flavourTitle(){ const n=conIngs().map(i=>shortN(PAIR[i])); const t = n.length>1 ? n.slice(0,-1).join(", ")+" & "+n[n.length-1] : (n[0]||"Plain"); return t[0].toUpperCase()+t.slice(1); }
+function flavourSet(){
+  const keep = JSON.parse(JSON.stringify({ fi:CON.fi, sl:CON.sl, locks:CON.locks, side:CON.side, hist:CON.hist }));
+  const out=[], seen=new Set(), F=FORMATS[CON.ffi];
+  for(let k=0;k<30 && out.length<6;k++){
+    CON.fi=CON.ffi; CON.side = F.side==="both" ? (CON.side==="savoury"?"savoury":"sweet") : F.side; CON.locks={fmt:true}; CON.sl={};
+    conRun();
+    if(CON.sl.d && CON.sl.d.i!=null) CON.sl.d = neutralFor("d");
+    const ing=conIngs(), key=ing.slice().sort().join(","); if(!ing.length || seen.has(key)) continue; seen.add(key);
+    const slots = SLOTORD.filter(s=>CON.sl[s] && CON.sl[s].i!=null && s!=="d").map(s=>({ s, lbl:(s==="f"&&F.fl)||SLOTLBL[s], label:CON.sl[s].label, tech:CON.sl[s].tech }));
+    out.push({ sl:JSON.parse(JSON.stringify(CON.sl)), title:flavourTitle(), slots, why:conWhy(), leads:ing.filter(i=>PAIR[i].st==="L").length, tags:[...new Set(ing.flatMap(i=>PAIR[i].t))].slice(0,4) });
+  }
+  Object.assign(CON, { fi:keep.fi, sl:keep.sl, locks:keep.locks, side:keep.side, hist:keep.hist });
+  return out;
+}
+function renderFlavours(){
+  if(CON.ffi==null){ const b=FORMATS.findIndex(f=>f.n==="Sweet bun"); CON.ffi = b>=0 ? b : FTARGETS()[0][1]; }
+  const F=FORMATS[CON.ffi], key=[CON.ffi,CON.prof,CON.adv,CON.n,CON.lead,CON.side].join("|");
+  if(!CON.flist || CON.fkey!==key){ CON.flist=flavourSet(); CON.fkey=key; }
+  const groups=[...new Set(FTARGETS().map(([f])=>f.g))], kind=fKind(F);
+  $("p-gen").innerHTML = `<p class="panel-intro">New flavours for something you already make: pick the item, get six ${esc((F.fl||"filling").toLowerCase())} ideas that pair and balance. Open one in the generator to tweak it.</p>
+   ${genModeBar()}
+   <div class="gen">
+     <div class="gctl">
+       <div class="gfield"><label for="fTarget" class="ulbl">For</label><select id="fTarget">${groups.map(g=>`<optgroup label="${esc(g)}">${FTARGETS().filter(([f])=>f.g===g).map(([f,i])=>`<option value="${i}"${i===CON.ffi?" selected":""}>${esc(f.n)} · ${esc((f.fl||"filling").toLowerCase())}</option>`).join("")}</optgroup>`).join("")}</select></div>
+       <div class="gfield"><label for="gLead" class="ulbl">With</label><input id="gLead" list="gList" placeholder="Any ingredient" autocomplete="off" value="${CON.lead!=null?esc(PAIR[CON.lead].n):""}"><datalist id="gList">${PAIR.map(p=>kindOf(p)?`<option value="${esc(p.n)}"></option>`:"").join("")}</datalist></div>
+       <div class="pchips grow"><span class="ulbl">Taste</span>${PROF.map(p=>`<button type="button" class="chip" data-gprof="${p.id}" aria-pressed="${CON.prof===p.id}">${esc(p.n)}</button>`).join("")}</div>
+       <div class="pchips grow"><span class="ulbl">Flavours</span>${[2,3,4].map(n=>`<button type="button" class="chip" data-gn="${n}" aria-pressed="${CON.n===n}">${n}</button>`).join("")}<span class="ulbl gsep">Pairings</span>${[["classic","Classic"],["bal","Balanced"],["bold","Adventurous"]].map(([k,l])=>`<button type="button" class="chip" data-gadv="${k}" aria-pressed="${CON.adv===k}">${l}</button>`).join("")}</div>
+     </div>
+     <div class="flist">${CON.flist.map((x,i)=>{ const text=`${x.title} (${(F.fl||"filling").toLowerCase()} for ${F.n.toLowerCase()}): ${x.slots.map(z=>`${z.lbl} – ${z.label}`).join("; ")}`;
+       const draft={ name:x.title, kind, status:"idea", origin:`Taste Lab flavour for ${F.n}`, ings:x.slots.map(z=>({ name:z.label[0].toUpperCase()+z.label.slice(1), qty:null, unit:"g", grp:z.lbl, note:z.tech&&TB[z.tech]?TB[z.tech].n:null })), notes:x.why };
+       return `<div class="lcard fcard" data-bkt="${encodeURIComponent(text)}" data-bkd="${encodeURIComponent(JSON.stringify(draft))}" data-bkkind="${kind}"><h3>${esc(x.title)}</h3>
+         ${x.tags.length?`<div class="tgs">${x.tags.map(c=>`<span class="tg tg-${c}">${esc(TAGS[c])}</span>`).join("")}</div>`:""}
+         <ul class="fsl">${x.slots.map(z=>`<li><span class="glbl">${esc(z.lbl)}</span>${esc(z.label)}</li>`).join("")}</ul>
+         <p class="small muted">${esc(x.why)}</p>
+         <div class="tl"><button type="button" class="tlink" data-fopen="${i}">Open in generator →</button><button type="button" class="tlink" data-fcopy="${i}">Copy</button></div></div>`; }).join("") || `<div class="empty">No pairings fit these options. Try another taste or fewer flavours.</div>`}</div>
+     <div class="gfoot"><button type="button" class="gbig" data-fnew="1">Six more</button></div>
+   </div>`;
+}
+const genModeBar = () => `<div class="pv-tabs gmode" role="group" aria-label="What to make"><button type="button" data-gmode="item" aria-pressed="${CON.mode==="item"}">New item</button><button type="button" data-gmode="flavour" aria-pressed="${CON.mode==="flavour"}">Flavours for something I make</button></div>`;
 function renderGen(){
+  if(CON.mode==="flavour") return renderFlavours();
   if(CON.fi==null) conRun();
   const F = FORMATS[CON.fi], month = SEASON[new Date().getMonth()];
   const ing = conIngs(), tags = [...new Set(ing.flatMap(i=>PAIR[i].t))];
@@ -3636,6 +3685,7 @@ function renderGen(){
       <div class="gbtn"><button type="button" data-reroll="${s}" aria-label="New ingredient for ${esc(lbl)}" title="${plain?"Add a flavour":"New ingredient"}">↻</button>${plain?"":`<button type="button" data-gform="${s}" aria-label="Another way to use it" title="Another way to use it">⇄</button>`}<button type="button" data-lock="${s}" aria-pressed="${!!CON.locks[s]}" aria-label="Lock ${esc(lbl)}">${CON.locks[s]?"Locked":"Lock"}</button></div>
     </div>`; };
   $("p-gen").innerHTML = `<p class="panel-intro">Builds a new bakery item: a format, a taste direction and two to five ingredients that pair with each other. You get the idea and its building blocks, not a finished recipe. Lock what you like and shuffle the rest.</p>
+   ${genModeBar()}
    <div class="gen">
      <details class="gopts" id="gOpts"${(CON.opts ?? matchMedia("(min-width:700px)").matches)?" open":""}><summary><span class="ulbl">Options</span><span class="gsum">${esc([CON.locks.fmt?F.n:"Any format", CON.lead!=null?"from "+shortN(PAIR[CON.lead]):"", PROF.find(x=>x.id===CON.prof).n, TEXG.find(x=>x.id===CON.tex).n, CON.n+" flavours", {classic:"Classic",bal:"Balanced",bold:"Adventurous"}[CON.adv]].filter(Boolean).join(" · "))}</span></summary>
      <div class="gctl">
@@ -4204,6 +4254,13 @@ document.addEventListener("click",e=>{
   const gfm=e.target.closest("[data-gform]");
   if(gfm){ conForm(gfm.dataset.gform); renderGen(); return; }
   if(e.target.closest("[data-shuffle]")){ conRun(); renderGen(); return; }
+  const gm=e.target.closest("[data-gmode]");
+  if(gm){ CON.mode=gm.dataset.gmode; renderGen(); return; }
+  if(e.target.closest("[data-fnew]")){ CON.flist=null; renderGen(); return; }
+  const fo=e.target.closest("[data-fopen]");
+  if(fo){ const x=CON.flist[+fo.dataset.fopen]; if(x){ CON.fi=CON.ffi; CON.sl=JSON.parse(JSON.stringify(x.sl)); CON.locks={fmt:true}; const F=FORMATS[CON.fi]; if(F.side!=="both") CON.side=F.side; remember(); CON.mode="item"; renderGen(); window.scrollTo({top:0}); } return; }
+  const fc=e.target.closest("[data-fcopy]");
+  if(fc){ const card=fc.closest(".fcard"), txt=decodeURIComponent(card.dataset.bkt); const done=()=>{ fc.textContent="Copied"; setTimeout(()=>fc.textContent="Copy",1500); }; try{ navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt)); }catch(err){ fallbackCopy(txt); } return; }
   const gp=e.target.closest("[data-gprof]");
   if(gp){ CON.prof=gp.dataset.gprof; conRun(); renderGen(); return; }
   const gt=e.target.closest("[data-gtex]");
@@ -4234,6 +4291,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{ if(e.key==="Enter" && e.target.matches("[data-r]")) e.target.click(); });
 document.addEventListener("toggle",e=>{ if(e.target.id==="gOpts") CON.opts=e.target.open; },true);
 document.addEventListener("change",e=>{
+  if(e.target.id==="fTarget"){ CON.ffi=+e.target.value; CON.flist=null; renderGen(); return; }
   if(e.target.id==="gFmt"){ const v=e.target.value; if(v===""){ CON.locks.fmt=false; conRun(); } else { CON.locks.fmt=true; reformat(+v); } renderGen(); return; }
   if(e.target.id==="gLead"){ const v=e.target.value.trim(); if(!v){ CON.lead=null; conRun(); renderGen(); return; } const i=PAIR.findIndex(p=>p.n.toLowerCase()===v.toLowerCase()); const j = i>=0 ? i : findPair(v); if(j>=0 && kindOf(PAIR[j])){ CON.lead=j; CON.locks.f=false; if(!formsFor(j,"f",formSide(CON.fi,"f"),CON.fi).length) CON.locks.fmt=false; conRun(); renderGen(); } return; }
 });
@@ -4270,7 +4328,7 @@ S.f = defaultF(S.tab); setTabs(); chips(); render();
   @keyframes bkp{50%{box-shadow:0 0 0 6px rgba(22,132,111,.12)}}
   @media (prefers-reduced-motion:reduce){html[data-bkpick="1"] button.bkuse{animation:none}}`;
   document.head.appendChild(st);
-  const btn = (text, src, label) => `<button type="button" class="bkuse" data-bk="${encodeURIComponent(text)}" data-bksrc="${src}">${label || "Use in planner →"}</button>`;
+  const btn = (text, src, label, kind) => `<button type="button" class="bkuse" data-bk="${encodeURIComponent(text)}" data-bksrc="${src}"${kind ? ` data-bkkind="${kind}"` : ""}>${label || "Use in planner →"}</button>`;
   const rbtn = (draft, label) => draft ? `<button type="button" class="bkuse bkrec" data-rbd="${encodeURIComponent(JSON.stringify(draft))}">${label || "Add to Recipes →"}</button>` : "";
   const KINDOF = { cust: "filling", gan: "filling", air: "filling", fruit: "filling", sug: "filling", tex: "topping", fin: "glaze", lab: "other", sv_base: "filling", sv_dairy: "filling", sv_dip: "filling", sv_cond: "filling", sv_sauce: "other", sv_acid: "other", sv_tex: "topping" };
   const parseAmt = v => { const m = /^\s*([\d.,]+)(\s*[–-]\s*[\d.,]+)?\s*(g|kg|ml|l|pcs)?\b/.exec(String(v)); return m ? { qty: +m[1].replace(",", "."), unit: m[3] || "g", note: m[2] ? String(v) : null } : { qty: null, unit: "g", note: String(v) }; };
@@ -4316,6 +4374,11 @@ S.f = defaultF(S.tab); setTabs(); chips(); render();
         const txt = idea.textContent.replace(/^\s*Try:\s*/, "").trim(), names = [...card.querySelectorAll(".pchips .pb")].map(x => x.textContent.trim()).join(" · ");
         (card.querySelector(".tl") || card).insertAdjacentHTML("beforeend", btn(txt, "trio", "Use →") + rbtn({ name: txt.length > 60 ? txt.slice(0, 57) + "…" : txt, kind: "bake", status: "idea", origin: "Taste Lab trio" + (names ? " · " + names : ""), notes: txt }, "Recipe →"));
       });
+      document.querySelectorAll("#p-gen .fcard[data-bkd]").forEach(card => {
+        if (card.querySelector(".bkuse")) return;
+        let d = null; try { d = JSON.parse(decodeURIComponent(card.dataset.bkd)); } catch {}
+        (card.querySelector(".tl") || card).insertAdjacentHTML("beforeend", btn(decodeURIComponent(card.dataset.bkt), "flavour", "Use for a day →", card.dataset.bkkind) + rbtn(d, "Save as idea →"));
+      });
       const fs = document.querySelector("#p-find .fsel");
       if (fs && typeof FIND !== "undefined" && FIND.length && !fs.querySelector(".bkuse"))
         fs.insertAdjacentHTML("beforeend", btn(FIND.map(i => PAIR[i].n).join(" + "), "pairing", "Use these →") + rbtn({ name: FIND.map(i => PAIR[i].n).join(" + "), kind: "bake", status: "idea", origin: "Taste Lab pairing finder", notes: "Pairing: " + FIND.map(i => PAIR[i].n).join(", ") }, "Start a recipe →"));
@@ -4327,7 +4390,7 @@ S.f = defaultF(S.tab); setTabs(); chips(); render();
     const b = e.target.closest(".bkuse"); if (!b) return;
     e.preventDefault(); e.stopPropagation();
     if (b.classList.contains("bkrec")) { try { window.parent.postMessage({ type: "bk:recipe", draft: JSON.parse(decodeURIComponent(b.dataset.rbd)) }, location.origin); } catch {} b.classList.add("sent"); b.textContent = "Added ✓"; return; }
-    window.parent.postMessage({ type: "bk:idea", text: decodeURIComponent(b.dataset.bk), src: b.dataset.bksrc }, location.origin);
+    window.parent.postMessage({ type: "bk:idea", text: decodeURIComponent(b.dataset.bk), src: b.dataset.bksrc, kind: b.dataset.bkkind || null }, location.origin);
     b.classList.add("sent"); b.textContent = "Sent ✓";
   }, true);
   window.addEventListener("message", e => {

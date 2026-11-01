@@ -535,6 +535,48 @@ body.rbpage{background:var(--bg)}
 .cmiss ul{margin:6px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
 .rcost{margin-top:10px}
 
+/* ===== step editor & method by steps ===== */
+.steprow{display:block;grid-template-columns:none;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:6px}
+.steprow.dragging{opacity:.5;outline:2px dashed var(--accent)}
+.stepday.over{outline:2px dashed var(--accent);outline-offset:2px}
+.sthead{display:grid;grid-template-columns:auto auto minmax(0,1fr) 120px 64px auto;gap:6px;align-items:center}
+.grip{cursor:grab;color:var(--muted);font-size:16px;padding:0 2px;user-select:none;touch-action:none}
+.stno{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:18px}
+.stmove{display:inline-flex;gap:2px}
+.steprow textarea{width:100%;margin-top:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px;font:inherit;font-size:14px;min-height:38px;resize:vertical}
+.stopts{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin-top:4px;font-size:13px;color:var(--muted)}
+.stopts label{display:inline-flex;gap:5px;align-items:center}
+.stuses{flex-basis:100%}
+@media (max-width:560px){.sthead{grid-template-columns:auto auto minmax(0,1fr)}.sthead select,.sthead [data-f=minutes]{grid-column:span 1}.stmove{grid-column:1 / -1;justify-content:flex-end}}
+.bing{grid-template-columns:minmax(0,2fr) minmax(64px,.7fr) minmax(70px,.8fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.2fr) auto}
+.bing [data-f=step]{min-width:0;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 4px;color:var(--muted)}
+.bing [data-f=step].set{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+@media (max-width:640px){.bing [data-f=step]{grid-column:1 / 3}}
+.mday{font-family:var(--f-mono);font-size:12px!important;letter-spacing:.06em;text-transform:uppercase;color:var(--rb);margin:14px 0 6px!important}
+.method.steps li p{margin:3px 0 0;color:var(--ink)}
+.suses{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:13px;color:var(--muted)}
+.suses b{color:var(--ink);font-weight:600}
+.tsteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+/* ===== costs ===== */
+.ilist .icost{position:relative;min-width:66px;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;padding-left:4px;white-space:nowrap}
+.ilist .icost i{position:absolute;left:0;bottom:-3px;height:3px;background:color-mix(in srgb,var(--rb) 55%,transparent);border-radius:2px}
+.ilist .icost.none{opacity:.5}
+.ptable{display:flex;flex-direction:column;max-width:560px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.prow{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:15px}
+.prow:last-child{border-bottom:0}
+.prow b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.prow.total{background:var(--sunk);font-weight:700}
+.prow.ours input{width:90px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:15px}
+.prow.ours > span{display:inline-flex;gap:8px;align-items:center}
+
+.kpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+.kopt{position:relative;display:flex}
+.kopt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.kopt span{flex:1;display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}
+.kopt small{color:var(--muted);font-size:12px}
+.kopt input:checked+span{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+.kopt input:focus-visible+span{outline:2px solid var(--accent)}
+
 </style>
 </head>
 <body class="rbpage">
@@ -693,7 +735,7 @@ function needsFor(RB, rid, factor, out = { lines: [], gaps: [] }, via = "", dept
       if (f != null) { needsFor(RB, sub.id, f, out, sub.name, depth + 1); continue; }
     }
     const b = toBase(i.qty * factor, i.unit), k = RB.kos ? RB.kos(i.ingredient_id) : null;
-    out.lines.push({ key: i.ingredient_id || "n:" + i.name.trim().toLowerCase(), name: i.name, kid: i.ingredient_id || null, q: b.q, u: b.u, oq: i.qty * factor, ou: i.unit, g: gramsFor(i.name, i.qty * factor, i.unit, k), via: via || r.name });
+    out.lines.push({ key: i.ingredient_id || "n:" + i.name.trim().toLowerCase(), name: i.name, kid: i.ingredient_id || null, q: b.q, u: b.u, oq: i.qty * factor, ou: i.unit, g: gramsFor(i.name, i.qty * factor, i.unit, k), via: via || r.name, sid: depth ? null : i.step_id || null });
   }
   return out;
 }
@@ -787,7 +829,10 @@ function kosAmount(l, k) {
    ingredient_id points at Kitchen OS ingredients by id; Kitchen OS itself is only read. */
 const EMBED = window.parent !== window;
 if (!EMBED) { const m = /^#r\/(.+)$/.exec(location.hash); location.replace("index.html#recipes" + (m ? "/" + m[1] : "")); }
-const S = { recipes: [], ings: [], steps: [], trials: [], products: [], parts: [], tmpl: [], kIngr: [] };
+const S = { recipes: [], ings: [], steps: [], trials: [], products: [], parts: [], tmpl: [], kIngr: [], costing: {} };
+/* costing rates (Setup → Settings → Costing in the planner) */
+const COSTDEF = { hourly: 12, vat: 21, other: 10, margin: 65, ovenKw: 3, kwh: 0.2 };
+const CR = () => ({ ...COSTDEF, ...(S.costing || {}) });
 const V = { tab: store.get("bk.rtab", "products"), id: null, pid: null, x: 1, n: null, status: "all", q: "", from: null };
 const RKINDS = [["dough", "Doughs"], ["bake", "Bakes"], ["filling", "Fillings & creams"], ["topping", "Toppings"], ["glaze", "Glazes & finishes"], ["other", "Other"]];
 const RKIND1 = { dough: "Dough", bake: "Bake", filling: "Filling", topping: "Topping", glaze: "Glaze", other: "Other" };
@@ -817,10 +862,10 @@ const readyLbl = o => !o ? "ready on the sale day" : `ready ${-o} day${o < -1 ? 
 
 async function load() {
   const safe = p => p.catch(() => []);
-  const [recipes, ings, steps, trials, products, parts, tmpl] = await Promise.all([
+  const [recipes, ings, steps, trials, products, parts, tmpl, settings] = await Promise.all([
     DB.sel("bk_recipes", { order: [["position"], ["name"]] }), DB.sel("bk_recipe_ingredients", { order: [["position"]] }), DB.sel("bk_recipe_steps"),
-    safe(DB.sel("bk_recipe_trials", { order: [["date"]] })), DB.sel("bk_products", { order: [["position"], ["name"]] }), DB.sel("bk_product_parts"), safe(DB.sel("bk_template_items"))]);
-  Object.assign(S, { recipes, ings, steps, trials, products, parts, tmpl });
+    safe(DB.sel("bk_recipe_trials", { order: [["date"]] })), DB.sel("bk_products", { order: [["position"], ["name"]] }), DB.sel("bk_product_parts"), safe(DB.sel("bk_template_items")), safe(DB.sel("bk_settings", { eq: { key: "costing" } }))]);
+  Object.assign(S, { recipes, ings, steps, trials, products, parts, tmpl, costing: (settings[0] || {}).value || {} });
 }
 async function kitchen() { if (S.kIngr.length) return; try { S.kIngr = await DB.sel("ingredients", { cols: KCOLS, order: [["name"]] }); } catch { S.kIngr = []; } }
 /* structure changed (products, parts, steps): the planner rebuilds its generated steps */
@@ -909,9 +954,9 @@ function timeline(p) {
   for (const x of partsOf(p.id)) {
     const r = rec(x.recipe_id); if (!r) continue;
     const N = daysOf(r.id), off = p.stock_mode ? 0 : (x.ready_offset || 0);
-    const st = stepsOf(r.id);
-    if (!st.length) rows.push({ rel: off, r, title: `${r.name} ready`, tod: "", none: true });
-    for (const s of st) rows.push({ rel: off - (N - s.day), r, title: s.title, tod: s.time_hint || "" });
+    const cs = cardsOf(r.id);
+    if (!cs.length) rows.push({ rel: off, r, title: `${r.name} ready`, tod: "", none: true });
+    for (const c of cs) rows.push({ rel: off - (N - c.s.day), r, title: c.s.title + (c.subs.length ? ` (+${c.subs.length} step${c.subs.length > 1 ? "s" : ""})` : ""), tod: c.s.time_hint || "" });
   }
   return rows.sort((a, b) => a.rel - b.rel || todRank(a.tod) - todRank(b.tod));
 }
@@ -927,6 +972,17 @@ function costLines(lines) {
   }
   return out;
 }
+/* cost of one ingredient row (a row naming another component costs that component's share) */
+function rowCost(i, x = 1) {
+  if (i.qty == null || i.qty === "") return null;
+  const q = i.qty * x, sub = !i.ingredient_id ? RBX.byName(i.name) : null;
+  if (sub && sub.id !== i.recipe_id) { const f = recFactor(sub, ingsOf(sub.id), q, i.unit); if (f == null) return null; const c = costLines(needsFor(RBX, sub.id, f).lines); return c.priced ? c.cost : null; }
+  const b = toBase(q, i.unit), k = kos(i.ingredient_id); if (!k || k.price_per_unit == null) return null;
+  const a = kosAmount({ q: b.q, u: b.u, g: gramsFor(i.name, q, i.unit, k), name: i.name }, k); return a == null ? null : a * k.price_per_unit;
+}
+const costCell = (c, max) => c == null ? `<span class="icost none" title="No price">–</span>` : `<span class="icost" title="${money(c)}"><i style="width:${max > 0 ? Math.max(4, Math.round(100 * c / max)) : 0}%"></i>${c < 0.01 ? "<€0.01" : money(c)}</span>`;
+/* calendar cards: a step marked as its own card (or the first of a day) plus the steps under it on that day */
+function cardsOf(rid) { const out = []; for (const s of stepsOf(rid)) { const last = out[out.length - 1]; if (s.card === false && last && last.s.day === s.day) last.subs.push(s); else out.push({ s, subs: [] }); } return out; }
 const missHtml = c => c.missing.length ? `<details class="cmiss"><summary>${c.missing.length} without a price</summary><ul>${c.missing.map(m => `<li><b>${esc(m.name)}</b> <span class="muted">${esc(m.why)}</span></li>`).join("")}</ul><p class="small muted">Prices come from Kitchen OS. Link rows in the component editor, or add the price in Kitchen OS.</p></details>` : "";
 /* ingredients for n pieces of a product, per component, plus cost where Kitchen OS has prices */
 function productNeeds(p, n) {
@@ -941,6 +997,22 @@ function productNeeds(p, n) {
     if (c) { all.cost += c.cost; all.priced += c.priced; all.lines += c.lines; c.missing.forEach(m => { if (!all.missing.some(z => z.name.toLowerCase() === m.name.toLowerCase())) all.missing.push(m); }); }
   }
   return { comps, ...all };
+}
+/* what one piece costs: ingredients + hands-on work + oven + other costs; recommended price at the target margin */
+function pricing(p) {
+  const c = CR(), one = productNeeds(p, 1); let work = 0, oven = 0; const gaps = [];
+  for (const x of partsOf(p.id)) {
+    const r = rec(x.recipe_id); if (!r) continue;
+    const f = x.qty_per_unit != null ? recFactor(r, ingsOf(r.id), x.qty_per_unit, x.unit) : null;
+    const mins = stepsOf(r.id).filter(st => !st.hands_off).reduce((a, st) => a + (+st.minutes || 0), 0), om = ovenMin(r.oven);
+    if (f == null) { if (mins || om) gaps.push(`${r.name}: can't work out its share per piece`); continue; }
+    work += mins * f; oven += om * f;
+    if (!stepsOf(r.id).some(st => st.minutes)) gaps.push(`${r.name}: no minutes on its steps`);
+  }
+  const ing = one.cost, workC = work / 60 * c.hourly, ovenC = oven / 60 * c.ovenKw * c.kwh, base = ing + workC + ovenC, other = base * c.other / 100, cost = base + other;
+  const rec0 = cost / (1 - c.margin / 100), recV = rec0 * (1 + c.vat / 100);
+  const net = p.price != null ? p.price / (1 + c.vat / 100) : null, margin = net ? (net - cost) / net * 100 : null;
+  return { c, ing, ingMissing: one.missing, work, workC, oven, ovenC, other, cost, rec0, recV, net, margin, gaps };
 }
 /* the product's options when a part is picked per day: components of the slot's kind, with cost per piece */
 function slotOptions(p) {
@@ -957,6 +1029,7 @@ function slotOptions(p) {
 function renderProduct(p) {
   const c = prodColor(p), parts = partsOf(p.id), tl = timeline(p), d = prodDays(p.id), n = V.n || p.batch_size || p.default_qty || 1;
   const need = productNeeds(p, n), wk = S.tmpl.filter(x => x.product_id === p.id);
+  const maxL = Math.max(0, ...need.comps.flatMap(cp => cp.need ? cp.need.lines.map(l => l.cost || 0) : []));
   const groups = []; tl.forEach(t => { let G = groups.find(g => g.rel === t.rel); if (!G) groups.push(G = { rel: t.rel, items: [] }); G.items.push(t); });
   const amtLbl = x => x.qty_per_unit != null ? fmtQty(x.qty_per_unit, x.unit) : `<span class="muted">amount not set</span>`;
   $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← Products</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="pedit" data-id="${p.id}">Edit</button></div>
@@ -981,10 +1054,23 @@ function renderProduct(p) {
       </section>
       <section class="rsec"><h3>Ingredients for <label class="rtarget noprint"><input type="number" id="pN" min="1" step="1" value="${n}" inputmode="numeric" aria-label="Pieces"></label><span class="printonly">${n}</span> ${esc(p.unit_label || "pcs")}</h3>
         ${need.comps.map(cp => `<h4 class="igrp">${esc(cp.r.name)}${cp.amt != null ? ` <span class="muted">· ${fmtQty(cp.amt, cp.x.unit)}${cp.f != null ? ` · ${Math.round(cp.f * 100) / 100}× the recipe` : ""}</span>` : ""}</h4>
-          ${cp.need ? `<ul class="ilist">${cp.need.lines.map(l => `<li><span class="iname">${esc(l.name)}${l.via !== cp.r.name ? ` <span class="muted">${esc(l.via)}</span>` : ""}</span><b>${fmtQty(l.oq, l.ou)}</b>${mh(l.name, l.oq, l.ou, kos(l.kid))}</li>`).join("")}</ul>${cp.need.gaps.length ? `<p class="small muted">${esc(cp.need.gaps.join(" · "))}</p>` : ""}`
+          ${cp.need ? `<ul class="ilist">${cp.need.lines.map(l => `<li><span class="iname">${esc(l.name)}${l.via !== cp.r.name ? ` <span class="muted">${esc(l.via)}</span>` : ""}</span><b>${fmtQty(l.oq, l.ou)}</b>${mh(l.name, l.oq, l.ou, kos(l.kid))}${costCell(l.cost, maxL)}</li>`).join("")}</ul>${cp.need.gaps.length ? `<p class="small muted">${esc(cp.need.gaps.join(" · "))}</p>` : ""}`
             : `<p class="small muted">${cp.x.qty_per_unit == null ? "Set the amount per piece (Edit) to work this out." : !ingsOf(cp.r.id).length ? "No ingredients in this component yet." : `Can't scale: the component's yield is in ${esc(recYield(cp.r)?.u || "?")} but the product uses ${esc(cp.x.unit)}. Set “Makes” on the component, or the amount per piece in grams.`}</p>`}`).join("")}
         ${need.lines ? `<p class="small"><b>Ingredient cost ${need.missing.length ? "≥" : "≈"} ${money(need.cost)}</b> for ${n} · ${money(need.cost / n)} each${p.price != null && !need.missing.length ? ` · ${Math.round(100 * (need.cost / n) / p.price)}% of the price` : ""}${need.missing.length ? ` <span class="muted">(${need.lines - need.missing.length >= 0 ? `priced ${need.priced} of ${need.lines} lines` : ""})</span>` : ""}</p>${missHtml(need)}` : ""}
       </section>
+      ${(() => { const q = pricing(p), c = q.c, row = (l, v, sub) => `<div class="prow"><span>${l}${sub ? ` <span class="small muted">${sub}</span>` : ""}</span><b>${v}</b></div>`;
+        return `<section class="rsec pricing"><h3>Cost & price <span class="small muted">per ${esc(p.unit_label === "pcs" ? "piece" : p.unit_label || "piece")}</span></h3>
+        <div class="ptable">
+          ${row("Ingredients", `${q.ingMissing.length ? "≥ " : ""}${money(q.ing)}`, q.ingMissing.length ? `${q.ingMissing.length} without a price` : "")}
+          ${row("Work", money(q.workC), `${Math.round(q.work * 10) / 10} min hands-on × €${c.hourly}/h`)}
+          ${row("Oven", money(q.ovenC), `${Math.round(q.oven * 10) / 10} min × ${c.ovenKw} kW × €${c.kwh}/kWh`)}
+          ${row("Other costs", money(q.other), `${c.other}% (packaging, rent, waste…)`)}
+          <div class="prow total"><span>Cost</span><b>${q.ingMissing.length ? "≥ " : ""}${money(q.cost)}</b></div>
+          ${row("Recommended price", `${money(q.recV)}`, `${money(q.rec0)} + VAT ${c.vat}%, at a ${c.margin}% margin`)}
+          <div class="prow ours"><label for="pPrice">Your price <span class="small muted">incl. VAT</span></label><span><input type="number" id="pPrice" step="0.05" min="0" value="${p.price ?? ""}" placeholder="€" inputmode="decimal"> ${q.margin != null ? `<span class="b ${q.margin >= c.margin ? "ok" : q.margin >= c.margin - 15 ? "sea" : "warn"}">${Math.round(q.margin)}% margin</span>` : ""}</span></div>
+        </div>
+        ${q.gaps.length ? `<p class="small muted">${esc(q.gaps.join(" · "))}</p>` : ""}
+        <p class="small muted noprint">Work and oven are counted per recipe batch and shared by the pieces it makes (minutes on steps that aren't hands-off). <button type="button" class="linkbtn" data-act="costset">Change rates</button></p></section>`; })()}
       ${p.notes ? `<section class="rsec"><h3>Notes</h3><p class="rnotes">${esc(p.notes)}</p></section>` : ""}
     </article>`;
 }
@@ -1064,6 +1150,9 @@ function renderRecipe(r) {
   const target = y ? Math.round(y.q * x * 100) / 100 : null;
   const tr = trialsOf(r.id), par = r.parent_id && rec(r.parent_id), kids = kidsOf(r.id);
   const subOf = i => !i.ingredient_id ? RBX.byName(i.name) : null;
+  const cost = new Map(ings.map(i => [i.id, rowCost(i, x)])), maxC = Math.max(0, ...[...cost.values()].filter(v => v != null));
+  const stepMode = chain.some(s => s.body) || ings.some(i => i.step_id);
+  const days = [...new Set(chain.map(s => s.day))].sort((a, b) => a - b);
   $("#main").innerHTML = `<div class="bar noprint"><button type="button" class="btn sm ghost" data-act="bback">← Components</button><span class="spacer"></span><button type="button" class="btn sm" data-act="bprint">Print</button><button type="button" class="btn sm primary" data-act="bedit" data-id="${r.id}">Edit</button></div>
     <article class="rpage">
       <header class="rhead ${r.color ? "rc" : ""}"${cvar(r.color)}>
@@ -1081,19 +1170,20 @@ function renderRecipe(r) {
             ${y ? `<label class="rtarget">Make <input type="number" id="rTarget" min="0" step="any" value="${target}" inputmode="decimal"> ${esc(y.u)}</label>` : ""}</div>
           ${x !== 1 ? `<p class="small muted">Scaled ×${Math.round(x * 100) / 100}${y ? ` · ${fmtQty(target, y.u)}` : ""}</p>` : ""}
           <h3>Ingredients</h3>
-          ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => { const sb = subOf(i); return `<li><span class="iname">${sb ? `<button type="button" class="linkbtn" data-act="bopen" data-id="${sb.id}">${esc(i.name)}</button>` : esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b>${mh(i.name, i.qty == null ? null : i.qty * x, i.unit, kos(i.ingredient_id))}</li>`; }).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
+          ${ings.length ? groups.map(G => `${G.g ? `<h4 class="igrp">${esc(G.g)}</h4>` : ""}<ul class="ilist">${G.items.map(i => { const sb = subOf(i); return `<li><span class="iname">${sb ? `<button type="button" class="linkbtn" data-act="bopen" data-id="${sb.id}">${esc(i.name)}</button>` : esc(i.name)}${i.note ? ` <span class="muted">${esc(i.note)}</span>` : ""}</span><b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b>${mh(i.name, i.qty == null ? null : i.qty * x, i.unit, kos(i.ingredient_id))}${costCell(cost.get(i.id), maxC)}</li>`; }).join("")}</ul>`).join("") : `<p class="muted">No ingredients yet. Tap Edit to add them.</p>`}
           ${(() => { if (!ings.length) return ""; const c = costLines(needsFor(RBX, r.id, x).lines); return `<p class="small rcost"><b>Ingredient cost ${c.missing.length ? "≥" : "≈"} ${money(c.cost)}</b>${y ? ` · ${money(c.cost / (y.q * x))} per ${esc(y.u === "pcs" ? "piece" : y.u)}` : ""}${x !== 1 ? ` (×${Math.round(x * 100) / 100})` : ""}</p>${missHtml(c)}`; })()}
         </section>
         <section class="rcol">
           <h3>Method</h3>
-          ${method.length ? `<ol class="method">${method.map(m => `<li>${esc(m)}</li>`).join("")}</ol>` : `<p class="muted">No method yet.</p>`}
+          ${stepMode ? days.map(d => `<h4 class="mday">Day ${d}${d === cdays && cdays > 1 ? " · ready" : ""}</h4><ol class="method steps">${chain.filter(st => st.day === d).map(st => { const us = ings.filter(i => i.step_id === st.id); return `<li><b>${esc(st.title)}</b>${[st.time_hint, st.minutes ? `${st.minutes} min${st.hands_off ? " hands-off" : ""}` : "", st.card !== false ? "on the calendar" : ""].filter(Boolean).length ? ` <span class="small muted">${esc([st.time_hint, st.minutes ? `${st.minutes} min${st.hands_off ? " hands-off" : ""}` : ""].filter(Boolean).join(" · "))}</span>` : ""}${st.body ? `<p>${esc(st.body)}</p>` : ""}${us.length ? `<div class="suses">${us.map(i => `<span>${esc(i.name)} <b>${fmtQty(i.qty == null ? null : i.qty * x, i.unit)}</b></span>`).join("")}</div>` : ""}</li>`; }).join("")}</ol>`).join("") + (method.length ? `<h4>Method notes</h4><ol class="method">${method.map(m => `<li>${esc(m)}</li>`).join("")}</ol>` : "")
+            : method.length ? `<ol class="method">${method.map(m => `<li>${esc(m)}</li>`).join("")}</ol>` : `<p class="muted">No method yet.</p>`}
           ${(r.oven || []).length ? `<div class="oven"><h4>Oven</h4>${r.oven.map(s => `<div class="ost"><b>${s.t} °C</b><span>${s.m} min</span>${s.n ? `<span class="muted">${esc(s.n)}</span>` : ""}</div>`).join("")}<div class="small muted">${ovenMin(r.oven)} min in total</div></div>` : ""}
           ${r.notes ? `<h4>Notes</h4><p class="rnotes">${esc(r.notes)}</p>` : ""}
           ${r.source ? `<p class="small muted">Source: ${esc(r.source)}</p>` : ""}
         </section>
       </div>
-      <section class="rsec"><h3>Days & steps</h3>
-        ${chain.length ? `<div class="chain">${chain.map(s => `<div class="st"><span class="d">Day ${s.day}${s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(s.title)}${s.minutes ? ` <span class="small muted">${s.minutes} min</span>` : ""}</span>${s.time_hint ? `<span class="small muted">${esc(s.time_hint)}</span>` : ""}</div>`).join("")}</div><p class="small muted noprint">The planner puts these on the calendar for every product that uses this component. The last day is when it's ready.</p>`
+      <section class="rsec"><h3>${stepMode ? "On the calendar" : "Days & steps"}</h3>
+        ${stepMode && chain.length ? `<div class="chain">${cardsOf(r.id).map(c => `<div class="st"><span class="d">Day ${c.s.day}${c.s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(c.s.title)}${c.subs.length ? ` <span class="small muted">+ ${c.subs.length} step${c.subs.length > 1 ? "s" : ""}</span>` : ""}</span>${c.s.time_hint ? `<span class="small muted">${esc(c.s.time_hint)}</span>` : ""}</div>`).join("")}</div>` : chain.length ? `<div class="chain">${chain.map(s => `<div class="st"><span class="d">Day ${s.day}${s.day === cdays ? " · ready" : ""}</span><span class="grow">${esc(s.title)}${s.minutes ? ` <span class="small muted">${s.minutes} min</span>` : ""}</span>${s.time_hint ? `<span class="small muted">${esc(s.time_hint)}</span>` : ""}</div>`).join("")}</div><p class="small muted noprint">The planner puts these on the calendar for every product that uses this component. The last day is when it's ready.</p>`
           : `<p class="small muted">No steps yet. Add them with Edit so products using this get it on the calendar.</p>`}
         ${uses.length ? `<div class="pchips">${uses.map(u => `<button type="button" class="pc" data-act="popen" data-id="${u.p.id}">${esc(u.p.name)}${u.x.qty_per_unit != null ? ` · ${fmtQty(u.x.qty_per_unit, u.x.unit)} each` : ""}</button>`).join("")}</div>` : ""}
       </section>
@@ -1125,10 +1215,19 @@ function editSheet(id, preset) {
       <input type="text" data-f="grp" list="bGroups" value="${esc(i.grp || "")}" placeholder="Group" aria-label="Group">
       <input type="text" data-f="note" value="${esc(i.note || "")}" placeholder="Note" aria-label="Note">
       <input type="text" data-f="kos" list="kIngr" value="${esc(kName(i))}" placeholder="Kitchen OS item (optional)" aria-label="Kitchen OS item" class="${i.ingredient_id ? "linked" : ""}">
+      <select data-f="step" data-cur="${i.step_id || ""}" aria-label="Used in step"><option value="">Step…</option></select>
       <button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove ingredient">✕</button>
       <div class="ksug" hidden></div></div>`;
   const ovRow = o => `<div class="boven" data-oven><input type="number" data-f="t" value="${o.t ?? ""}" placeholder="°C" aria-label="Temperature"><input type="number" data-f="m" value="${o.m ?? ""}" placeholder="min" aria-label="Minutes"><input type="text" data-f="n" value="${esc(o.n || "")}" placeholder="Note (e.g. turn the tin)" aria-label="Note"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove stage">✕</button></div>`;
-  const stepRow = s => `<div class="steprow" data-step="${s.id || "new"}"><input type="text" data-f="title" value="${esc(s.title || "")}" placeholder="Step, e.g. Mix dough, bulk ferment" aria-label="Step"><select data-f="time_hint" aria-label="Time of day"><option value="">any time</option>${TOD.map(x => `<option ${x === (s.time_hint || "").toLowerCase() ? "selected" : ""}>${x}</option>`).join("")}</select><input type="number" data-f="minutes" value="${s.minutes ?? ""}" placeholder="min" aria-label="Minutes"><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove step">✕</button><input type="hidden" data-f="day" value="${s.day || 1}"></div>`;
+  const stepRow = s => `<div class="steprow" data-step="${s.id || "new"}" data-key="${s.id || "n" + uid()}" draggable="false">
+      <div class="sthead"><span class="grip" title="Drag to move" aria-hidden="true">⠿</span><span class="stno"></span>
+        <input type="text" data-f="title" value="${esc(s.title || "")}" placeholder="Step, e.g. Brown the butter" aria-label="Step">
+        <select data-f="time_hint" aria-label="Time of day"><option value="">any time</option>${TOD.map(x => `<option ${x === (s.time_hint || "").toLowerCase() ? "selected" : ""}>${x}</option>`).join("")}</select>
+        <input type="number" data-f="minutes" value="${s.minutes ?? ""}" placeholder="min" aria-label="Minutes" title="Minutes">
+        <span class="stmove"><button type="button" class="btn sm ghost" data-act="stup" aria-label="Move up">↑</button><button type="button" class="btn sm ghost" data-act="stdown" aria-label="Move down">↓</button><button type="button" class="btn sm ghost" data-act="rmrow" aria-label="Remove step">✕</button></span></div>
+      <textarea data-f="body" rows="2" placeholder="What to do (optional): e.g. Cut paper, butter the tin, line it." aria-label="Instructions">${esc(s.body || "")}</textarea>
+      <div class="stopts"><label><input type="checkbox" data-f="card" ${s.card !== false ? "checked" : ""}> own card on the calendar</label><label><input type="checkbox" data-f="hands_off" ${s.hands_off ? "checked" : ""}> hands-off (not counted as work time)</label><span class="stuses small muted"></span></div>
+      <input type="hidden" data-f="day" value="${s.day || 1}"></div>`;
   const maxDay = Math.max(1, ...steps.map(s => s.day));
   const dayBox = d => `<div class="stepday" data-day="${d}"><h5>Day ${d}${d === maxDay ? " · ready" : ""}</h5><div class="dsteps">${steps.filter(s => s.day === d).map(stepRow).join("")}</div><button type="button" class="btn sm" data-act="addstep">+ Step</button></div>`;
   openSheet(`${head(id ? esc(r.name) : "New component", "Ingredients, method, oven and its days & steps. Names that match Kitchen OS ingredients get linked for costing and shopping.")}
@@ -1145,17 +1244,48 @@ function editSheet(id, preset) {
         <datalist id="rNames">${[...new Set(S.ings.map(i => i.name.trim()))].sort((a, b) => a.localeCompare(b)).map(n => `<option value="${esc(n)}"></option>`).join("")}${S.recipes.filter(x => x.id !== r.id).map(x => `<option value="${esc(x.name)}" label="component"></option>`).join("")}</datalist>
         <datalist id="bGroups">${groups.map(g => `<option value="${esc(g)}"></option>`).join("")}</datalist>
         <p class="small muted">Write names in English; the name field suggests ones you've used before. The last field links a row to a Kitchen OS item for costing and shopping: suggestions appear under the row, but it's optional, so new pastry ingredients can stay bakery-only. Same group name keeps rows together (Dry, Wet, Topping). An ingredient named exactly like another component (e.g. “Honey mascarpone cream”) is counted through that component's own ingredients.</p></div>
-      <label class="f">Method <span class="small muted">one step per line</span><textarea name="method" style="min-height:160px">${esc(r.method || "")}</textarea></label>
-      <div class="sec"><h4>Oven</h4><div id="bOven">${(r.oven || []).map(ovRow).join("")}</div><button type="button" class="btn sm" data-act="badov">+ Oven stage</button><template id="bOvTpl">${ovRow({})}</template></div>
-      <div class="sec"><h4>Days & steps</h4><p class="small muted">What goes on the calendar. Spread the work over days; the last day is when it's ready (e.g. a 3-day focaccia: poolish, mix and fold, pan and bake).</p>
+      <div class="sec"><h4>Method: days & steps</h4><p class="small muted">Each step can have its instructions and the ingredients it uses (pick the step on the ingredient rows). Spread them over days; the last day is when it's ready. Steps marked <b>own card</b> show on the calendar; the others are listed inside the card above them. Drag ⠿ or use ↑ ↓ to reorder and move steps between days. Minutes on steps that aren't hands-off count as work time in the product's costing.</p>
         <div id="rDays">${Array.from({ length: maxDay }, (_, i) => dayBox(i + 1)).join("")}</div>
         <button type="button" class="btn sm" data-act="addday">+ Day</button>
-        <template id="stepTpl">${stepRow({ day: 1 })}</template></div>
+        <template id="stepTpl">${stepRow({ day: 1, card: false })}</template></div>
+      ${(r.method || "").trim() ? `<div class="sec"><h4>Method (text)</h4><p class="small muted">Older method text. Turn each line into a step to attach instructions and ingredients to it.</p><textarea name="method" style="min-height:120px">${esc(r.method || "")}</textarea><div class="row" style="margin-top:6px"><button type="button" class="btn sm" data-act="splitmethod">Turn lines into steps</button></div></div>` : `<input type="hidden" name="method" value="">`}
+      <div class="sec"><h4>Oven</h4><div id="bOven">${(r.oven || []).map(ovRow).join("")}</div><button type="button" class="btn sm" data-act="badov">+ Oven stage</button><template id="bOvTpl">${ovRow({})}</template></div>
       <label class="f">Notes<textarea name="notes">${esc(r.notes || "")}</textarea></label>
       <div class="grid2"><label class="f">Source<input type="text" name="source" value="${esc(r.source || "")}" placeholder="Book, page, link"></label><label class="f">Came from<input type="text" name="origin" value="${esc(r.origin || "")}" placeholder="e.g. Taste Lab · Crème pâtissière"></label></div>
       <div class="sec"><h4>Colour on the calendar</h4><div class="swatches" role="radiogroup" aria-label="Colour">${PALETTE.map(c => `<label class="sw" style="--c:${c}" title="${c}"><input type="radio" name="color" value="${c}" ${r.color === c ? "checked" : ""}><span></span></label>`).join("")}<label class="sw none" title="No colour"><input type="radio" name="color" value="" ${!r.color ? "checked" : ""}><span>×</span></label></div></div>
       <div class="row sec"><button type="submit" class="btn primary">Save</button><span class="spacer"></span>${id ? `<button type="button" class="btn warn" data-act="bdelete" data-id="${id}">Delete</button>` : ""}</div>
-    </form>`, sh => { const f = sh.querySelector("#bForm"); f.addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); $$("#bIngs [data-ing]", f).forEach(ksug); });
+    </form>`, sh => { const f = sh.querySelector("#bForm"); f.addEventListener("submit", e => { e.preventDefault(); guard(() => saveRecipe(r, e.target)); }); $$("#bIngs [data-ing]", f).forEach(ksug); relabelDays(f); stepDnD(f); });
+}
+/* step editor: numbering, day boxes, ingredient → step selects */
+function refreshStepRefs(form) {
+  const rows = $$("#rDays [data-step]", form), opts = rows.map(el => { const d = el.closest(".stepday").dataset.day, n = $(".stno", el).textContent; return [el.dataset.key, `Day ${d} · ${n} ${$("[data-f=title]", el).value.trim() || "(untitled)"}`]; });
+  for (const sel of $$("#bIngs [data-f=step]", form)) {
+    const cur = sel.value || sel.dataset.cur || "";
+    sel.innerHTML = `<option value="">Step…</option>` + opts.map(([k, l]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${esc(l)}</option>`).join("");
+    if (cur && !opts.some(o => o[0] === cur)) sel.value = ""; sel.dataset.cur = sel.value;
+    sel.classList.toggle("set", !!sel.value);
+  }
+  for (const el of rows) { const names = $$("#bIngs [data-ing]", form).filter(i => $("[data-f=step]", i).value === el.dataset.key).map(i => $("[data-f=name]", i).value.trim()).filter(Boolean); $(".stuses", el).textContent = names.length ? "Uses: " + names.join(", ") : ""; }
+}
+function stepDnD(form) {
+  let drag = null;
+  form.addEventListener("pointerdown", e => { const g = e.target.closest(".grip"); if (g) g.closest("[data-step]").draggable = true; });
+  form.addEventListener("dragstart", e => { drag = e.target.closest?.("[data-step]"); if (!drag) return; drag.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", "step"); } catch {} });
+  form.addEventListener("dragend", () => { if (drag) { drag.classList.remove("dragging"); drag.draggable = false; } drag = null; $$(".stepday.over", form).forEach(b => b.classList.remove("over")); relabelDays(form); });
+  form.addEventListener("dragover", e => {
+    if (!drag) return; const box = e.target.closest(".stepday"); if (!box) return; e.preventDefault();
+    $$(".stepday.over", form).forEach(b => b !== box && b.classList.remove("over")); box.classList.add("over");
+    const list = $(".dsteps", box), after = [...list.querySelectorAll("[data-step]:not(.dragging)")].find(el => { const r = el.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+    if (after) list.insertBefore(drag, after); else list.appendChild(drag);
+  });
+  form.addEventListener("drop", e => { if (drag) e.preventDefault(); });
+}
+/* ↑ ↓ on a step: within its day, or across to the end/start of the next/previous day */
+function moveStep(el, dir) {
+  const row = el.closest("[data-step]"), form = el.closest("form"), box = row.closest(".stepday"), boxes = $$("#rDays .stepday", form), list = $(".dsteps", box);
+  if (dir < 0) { const prev = row.previousElementSibling; if (prev) list.insertBefore(row, prev); else { const pb = boxes[boxes.indexOf(box) - 1]; if (pb) $(".dsteps", pb).appendChild(row); } }
+  else { const next = row.nextElementSibling; if (next) list.insertBefore(next, row); else { const nb = boxes[boxes.indexOf(box) + 1]; if (nb) { const l2 = $(".dsteps", nb); l2.insertBefore(row, l2.firstChild); } } }
+  relabelDays(form); $("[data-act=" + (dir < 0 ? "stup" : "stdown") + "]", row)?.focus();
 }
 /* Kitchen OS suggestions under an ingredient row: a nudge, never forced */
 function ksug(row) {
@@ -1171,7 +1301,11 @@ function ksug(row) {
   box.hidden = false;
 }
 let KSUG_T = null;
-function relabelDays(form) { const boxes = $$("#rDays .stepday", form); boxes.forEach((b, i) => { b.dataset.day = i + 1; $("h5", b).textContent = `Day ${i + 1}${i === boxes.length - 1 ? " · ready" : ""}`; $$("[data-f=day]", b).forEach(h => h.value = i + 1); }); }
+function relabelDays(form) {
+  const boxes = $$("#rDays .stepday", form);
+  boxes.forEach((b, i) => { b.dataset.day = i + 1; $("h5", b).textContent = `Day ${i + 1}${i === boxes.length - 1 ? " · ready" : ""}`; $$("[data-step]", b).forEach((el, n) => { $("[data-f=day]", el).value = i + 1; $(".stno", el).textContent = `${n + 1}.`; if (n === 0) $("[data-f=card]", el).checked = true; $("[data-f=card]", el).disabled = n === 0; }); });
+  refreshStepRefs(form);
+}
 async function saveRecipe(r, form) {
   const fd = new FormData(form), g = k => (fd.get(k) ?? "").toString();
   const oven = $$("#bOven [data-oven]", form).map(el => ({ t: +$("[data-f=t]", el).value || null, m: +$("[data-f=m]", el).value || null, n: $("[data-f=n]", el).value.trim() })).filter(o => o.t || o.m);
@@ -1180,25 +1314,29 @@ async function saveRecipe(r, form) {
   if (!row.name) throw new Error("Give the component a name.");
   let id = r.id;
   if (id) await DB.upd("bk_recipes", id, row); else { row.position = S.recipes.length + 1; if (r.parent_id) row.parent_id = r.parent_id; id = (await DB.ins("bk_recipes", row))[0].id; }
-  await saveIngs(id, $$("#bIngs [data-ing]", form).map(el => { const v = f => $(`[data-f=${f}]`, el).value.trim(); return { name: v("name"), qty: v("qty") === "" ? null : +v("qty"), unit: v("unit") || "g", grp: v("grp") || null, note: v("note") || null, kos: v("kos") }; }));
-  const stepsChanged = await saveSteps(id, $$("#rDays [data-step]", form).map((el, i) => ({ id: el.dataset.step, day: +$("[data-f=day]", el).value || 1, title: $("[data-f=title]", el).value.trim(), time_hint: $("[data-f=time_hint]", el).value || null, minutes: $("[data-f=minutes]", el).value === "" ? null : +$("[data-f=minutes]", el).value, position: i })));
+  const { changed: stepsChanged, ids: keyId } = await saveSteps(id, $$("#rDays [data-step]", form).map((el, i) => ({ key: el.dataset.key, id: el.dataset.step, day: +$("[data-f=day]", el).value || 1, title: $("[data-f=title]", el).value.trim(), time_hint: $("[data-f=time_hint]", el).value || null, minutes: $("[data-f=minutes]", el).value === "" ? null : +$("[data-f=minutes]", el).value, body: $("[data-f=body]", el).value.trim() || null, card: $("[data-f=card]", el).checked || $("[data-f=card]", el).disabled, hands_off: $("[data-f=hands_off]", el).checked, position: i })));
+  await saveIngs(id, $$("#bIngs [data-ing]", form).map(el => { const v = f => $(`[data-f=${f}]`, el).value.trim(); return { name: v("name"), qty: v("qty") === "" ? null : +v("qty"), unit: v("unit") || "g", grp: v("grp") || null, note: v("note") || null, kos: v("kos"), step_id: keyId.get(v("step")) || null }; }));
   await load(); closeSheet(); toast("Saved."); changed(stepsChanged || !!usesOf(id).length); open(id, 1, null);
 }
+/* returns { changed, ids: step key → saved step id } */
 async function saveSteps(id, list) {
-  const steps = list.filter(s => s.title), old = stepsOf(id);
-  const same = old.length === steps.length && old.every((o, i) => o.id === steps[i].id && o.day === steps[i].day && o.title === steps[i].title && (o.time_hint || null) === steps[i].time_hint && (o.minutes ?? null) === steps[i].minutes);
-  if (same) return false;
+  const steps = list.filter(s => s.title || s.body).map(s => ({ ...s, title: s.title || s.body.split(/[.\n]/)[0].slice(0, 60) })), old = stepsOf(id), ids = new Map();
+  const F = ["day", "title", "time_hint", "minutes", "body", "card", "hands_off", "position"];
+  const same = old.length === steps.length && old.every((o, i) => o.id === steps[i].id && F.every(f => (o[f] ?? null) === (steps[i][f] ?? null) || (f === "card" && (o.card !== false) === steps[i].card) || (f === "hands_off" && !!o.hands_off === steps[i].hands_off)));
+  steps.forEach(s => { if (s.id !== "new") ids.set(s.key, s.id); });
+  if (same) return { changed: false, ids };
   await DB.del("bk_recipe_steps", old.filter(o => !steps.some(s => s.id === o.id)).map(o => o.id));
-  for (const s of steps.filter(s => s.id !== "new")) { const { id: sid, ...rest } = s; await DB.upd("bk_recipe_steps", sid, rest); }
-  const ns = steps.filter(s => s.id === "new").map(({ id: _, ...rest }) => ({ ...rest, recipe_id: id })); if (ns.length) await DB.ins("bk_recipe_steps", ns);
-  return true;
+  for (const s of steps.filter(s => s.id !== "new")) { const { id: sid, key, ...rest } = s; await DB.upd("bk_recipe_steps", sid, rest); }
+  const ns = steps.filter(s => s.id === "new");
+  if (ns.length) { const made = await DB.ins("bk_recipe_steps", ns.map(({ id: _, key, ...rest }) => ({ ...rest, recipe_id: id }))); ns.forEach((s, i) => ids.set(s.key, made[i].id)); }
+  return { changed: true, ids };
 }
 async function saveIngs(id, list) {
   await kitchen();
   const find = t => t ? S.kIngr.find(x => x.name.toLowerCase() === t.toLowerCase()) : null;
   /* kos = the Kitchen OS field from the editor (undefined for copies and drafts, which keep their link) */
   const link = i => { const k = find(i.kos) || find(i.name); return k ? k.id : i.kos === undefined ? (i.ingredient_id || null) : null; };
-  const rows = list.filter(i => i.name).map((i, n) => ({ recipe_id: id, name: i.name, ingredient_id: link(i), qty: i.qty ?? null, unit: i.unit || "g", grp: i.grp || null, note: i.note || null, position: n + 1 }));
+  const rows = list.filter(i => i.name).map((i, n) => ({ recipe_id: id, name: i.name, ingredient_id: link(i), qty: i.qty ?? null, unit: i.unit || "g", grp: i.grp || null, note: i.note || null, step_id: i.step_id || null, position: n + 1 }));
   await DB.del("bk_recipe_ingredients", S.ings.filter(i => i.recipe_id === id).map(i => i.id));
   if (rows.length) await DB.ins("bk_recipe_ingredients", rows);
 }
@@ -1249,8 +1387,9 @@ async function saveTrial(id) {
 async function makeVariation(r) {
   const row = { name: `${r.name} (variation)`, kind: r.kind, status: "testing", yield_qty: r.yield_qty, yield_unit: r.yield_unit, yield_note: r.yield_note, method: r.method, oven: r.oven || [], notes: r.notes, source: r.source, origin: r.origin, color: r.color, parent_id: r.id, position: S.recipes.length + 1 };
   const id = (await DB.ins("bk_recipes", row))[0].id;
-  await saveIngs(id, ingsOf(r.id).map(i => ({ ...i })));
-  const st = stepsOf(r.id).map(({ id: _, recipe_id: __, ...s }) => ({ ...s, recipe_id: id })); if (st.length) await DB.ins("bk_recipe_steps", st);
+  const old = stepsOf(r.id), st = old.map(({ id: _, recipe_id: __, ...s }) => ({ ...s, recipe_id: id }));
+  const made = st.length ? await DB.ins("bk_recipe_steps", st) : [], map = new Map(old.map((o, i) => [o.id, made[i]?.id]));
+  await saveIngs(id, ingsOf(r.id).map(i => ({ ...i, step_id: i.step_id ? map.get(i.step_id) || null : null })));
   await load(); changed(); open(id, 1, `A copy of ${r.name}. Change what you want to try, then plan a test bake.`); await kitchen(); editSheet(id);
 }
 /* drafts arriving from the Taste Lab or a planner idea */
@@ -1286,14 +1425,21 @@ const ACT = {
   padd: () => { const p = prod(V.pid); if (p) addDaySheet(p); },
   adsave: () => guard(saveAddDay),
   ptmpl: () => post("rb:goto", { view: "setup", tab: "template" }),
+  costset: () => post("rb:goto", { view: "setup", tab: "settings" }),
   kpick: el => { const row = el.closest("[data-ing]"); $("[data-f=kos]", row).value = el.dataset.v; ksug(row); },
   knone: el => { const row = el.closest("[data-ing]"); row.dataset.nosug = "1"; ksug(row); },
   addpart: () => $("#pParts").insertAdjacentHTML("beforeend", $("#partTpl").innerHTML),
-  bading: () => { $("#bIngs").insertAdjacentHTML("beforeend", $("#bIngTpl").innerHTML); const rows = $$("#bIngs [data-ing]"); const last = rows[rows.length - 1], prev = rows[rows.length - 2]; if (prev) $("[data-f=grp]", last).value = $("[data-f=grp]", prev).value; $("[data-f=name]", last).focus(); },
+  bading: () => { $("#bIngs").insertAdjacentHTML("beforeend", $("#bIngTpl").innerHTML); refreshStepRefs($("#bForm")); const rows = $$("#bIngs [data-ing]"); const last = rows[rows.length - 1], prev = rows[rows.length - 2]; if (prev) $("[data-f=grp]", last).value = $("[data-f=grp]", prev).value; $("[data-f=name]", last).focus(); },
   badov: () => $("#bOven").insertAdjacentHTML("beforeend", $("#bOvTpl").innerHTML),
-  addstep: el => { const box = el.closest(".stepday"); $(".dsteps", box).insertAdjacentHTML("beforeend", $("#stepTpl").innerHTML.replace('value="1"', `value="${box.dataset.day}"`)); const t = $$("[data-f=title]", box); t[t.length - 1]?.focus(); },
-  addday: el => { const days = $("#rDays"); const n = $$(".stepday", days).length + 1; days.insertAdjacentHTML("beforeend", `<div class="stepday" data-day="${n}"><h5></h5><div class="dsteps">${$("#stepTpl").innerHTML.replace('value="1"', `value="${n}"`)}</div><button type="button" class="btn sm" data-act="addstep">+ Step</button></div>`); relabelDays(el.closest("form")); },
-  rmrow: el => { const row = el.closest("[data-ing],[data-oven],[data-part],[data-step]"); const form = el.closest("form"); row.remove(); if (form && $("#rDays", form)) { const boxes = $$("#rDays .stepday", form); const last = boxes[boxes.length - 1]; if (boxes.length > 1 && last && !$("[data-step]", last)) { last.remove(); relabelDays(form); } } },
+  addstep: el => { const box = el.closest(".stepday"); $(".dsteps", box).insertAdjacentHTML("beforeend", $("#stepTpl").innerHTML.replace(/data-key="[^"]*"/, `data-key="n${uid()}"`)); relabelDays(el.closest("form")); const t = $$("[data-f=title]", box); t[t.length - 1]?.focus(); },
+  addday: el => { const days = $("#rDays"); const n = $$(".stepday", days).length + 1; days.insertAdjacentHTML("beforeend", `<div class="stepday" data-day="${n}"><h5></h5><div class="dsteps">${$("#stepTpl").innerHTML.replace(/data-key="[^"]*"/, `data-key="n${uid()}"`)}</div><button type="button" class="btn sm" data-act="addstep">+ Step</button></div>`); relabelDays(el.closest("form")); },
+  stup: el => moveStep(el, -1),
+  stdown: el => moveStep(el, 1),
+  splitmethod: el => { const form = el.closest("form"), ta = form.querySelector("[name=method]"); const lines = ta.value.split(/\n+/).map(x => x.trim()).filter(Boolean); if (!lines.length) return;
+    let box = $("#rDays .stepday", form); if (!box) return; const list = $(".dsteps", box);
+    for (const l of lines) { list.insertAdjacentHTML("beforeend", $("#stepTpl").innerHTML.replace(/data-key="[^"]*"/, `data-key="n${uid()}"`)); const row = list.lastElementChild; $("[data-f=title]", row).value = l.split(/(?<=[.!?])\s/)[0].replace(/[.!?]$/, "").slice(0, 70); $("[data-f=body]", row).value = l; }
+    ta.value = ""; el.closest(".sec").hidden = true; relabelDays(form); toast(`${lines.length} steps added to day 1. Move them where they belong, then save.`); },
+  rmrow: el => { const row = el.closest("[data-ing],[data-oven],[data-part],[data-step]"); const form = el.closest("form"); row.remove(); if (form && $("#rDays", form)) { const boxes = $$("#rDays .stepday", form); const last = boxes[boxes.length - 1]; if (boxes.length > 1 && last && !$("[data-step]", last)) last.remove(); relabelDays(form); } },
   bdelete: el => guard(async () => { const r = rec(el.dataset.id); if (!r) return; const u = [...new Set(usesOf(r.id).map(x => x.p.name))]; if (!confirm(`Delete ${r.name}?${u.length ? ` ${u.join(", ")} will lose this component.` : ""}`)) return; await DB.del("bk_recipes", [r.id]); await load(); closeSheet(); changed(!!u.length); V.id = null; render(); toast("Deleted."); }),
   bx: el => { V.x = +el.dataset.x; renderRecipe(rec(V.id)); },
   bprint: () => window.print(),
@@ -1311,12 +1457,15 @@ document.addEventListener("click", e => { const a = e.target.closest("[data-act]
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#scrim")) closeSheet(); });
 document.addEventListener("input", e => {
   if (e.target.id === "rSearch") { V.q = e.target.value; renderCards(); }
+  if (e.target.closest?.("#rDays") && e.target.dataset.f === "title") refreshStepRefs(e.target.closest("form"));
   const row = e.target.closest?.(".bing[data-ing]");
   if (row && ["name", "kos"].includes(e.target.dataset.f)) { if (e.target.dataset.f === "name") delete row.dataset.nosug; clearTimeout(KSUG_T); KSUG_T = setTimeout(() => ksug(row), 250); }
   if (e.target.id === "pSearch") { V.q = e.target.value; const pos = e.target.selectionStart; renderProducts(); const s = $("#pSearch"); s.focus(); try { s.setSelectionRange(pos, pos); } catch {} }
 });
 document.addEventListener("change", e => {
+  if (e.target.matches?.("#bIngs [data-f=step]")) { e.target.dataset.cur = e.target.value; refreshStepRefs(e.target.closest("form")); }
   if (e.target.id === "rTarget") { const r = rec(V.id), y = recYield(r); const v = +e.target.value; if (y && v > 0) { V.x = v / y.q; renderRecipe(r); } }
+  if (e.target.id === "pPrice") { const p = prod(V.pid), v = e.target.value === "" ? null : Math.max(0, +e.target.value); if (p) guard(async () => { await DB.upd("bk_products", p.id, { price: v }); await load(); renderProduct(prod(p.id)); changed(); toast("Price saved."); }); }
   if (e.target.id === "pN") { const v = Math.round(+e.target.value); if (v > 0) { V.n = v; renderProduct(prod(V.pid)); } }
 });
 window.addEventListener("message", e => {
